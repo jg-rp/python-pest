@@ -1,6 +1,6 @@
-from python_pest.lexer import tokenize
+from python_pest.scanner import tokenize
 
-with open("grammar.pest", encoding="utf-8") as fd:
+with open("tests/grammars/http.pest", encoding="utf-8") as fd:
     grammar = fd.read()
 
 tokens = tokenize(grammar)

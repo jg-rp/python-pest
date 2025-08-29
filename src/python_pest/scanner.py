@@ -198,7 +198,7 @@ class Scanner:
         self.skip_trivia()
 
         if self.peek() == "|":
-            self.emit(TokenKind.CHOICE, self.next())
+            self.emit(TokenKind.CHOICE_OP, self.next())
             self.skip_trivia()
 
         self.accept_term()
@@ -206,11 +206,11 @@ class Scanner:
         while True:
             self.skip_trivia()
             if self.peek() == "~":
-                self.emit(TokenKind.SEQUENCE, self.next())
+                self.emit(TokenKind.SEQUENCE_OP, self.next())
                 self.skip_trivia()
                 self.accept_term()
             elif self.peek() == "|":
-                self.emit(TokenKind.CHOICE, self.next())
+                self.emit(TokenKind.CHOICE_OP, self.next())
                 self.skip_trivia()
                 self.accept_term()
             else:

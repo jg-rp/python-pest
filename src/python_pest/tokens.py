@@ -19,8 +19,8 @@ class TokenKind(Enum):
     MODIFIER = auto()  # _, @, $, !
     LBRACE = auto()  # {
     RBRACE = auto()  # }
-    CHOICE = auto()  # |
-    SEQUENCE = auto()  # ~
+    CHOICE_OP = auto()  # |
+    SEQUENCE_OP = auto()  # ~
     TAG = auto()  # #tag
     PREDICATE = auto()  # &, !
     BLOCK_COMMENT = auto()  # /* .. */
