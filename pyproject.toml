@@ -1,0 +1,131 @@
+[project]
+name = "python-pest"
+version = "0.1.0"
+description = "A general purpose parser written in Python."
+readme = "README.md"
+authors = [
+    { name = "James Prior", email = "jamesgr.prior@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "regex>=2025.7.34",
+    "typing-extensions>=4.15.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.8.4,<0.9.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.17.1",
+    "pytest>=8.4.1",
+    "pytest-cov>=6.2.1",
+    "ruff>=0.12.10",
+    "types-regex>=2025.7.34.20250809",
+]
+
+
+[tool.mypy]
+files = "src"
+python_version = "3.10"
+disallow_subclassing_any = true
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+no_implicit_optional = true
+local_partial_types = true
+no_implicit_reexport = true
+strict = true
+warn_redundant_casts = true
+warn_unused_configs = true
+warn_unused_ignores = false
+warn_return_any = true
+warn_unreachable = true
+
+[tool.ruff]
+# Exclude a variety of commonly ignored directories.
+exclude = [
+  ".bzr",
+  ".direnv",
+  ".eggs",
+  ".git",
+  ".hg",
+  ".mypy_cache",
+  ".nox",
+  ".pants.d",
+  ".pytype",
+  ".ruff_cache",
+  ".svn",
+  ".tox",
+  ".venv",
+  "__pypackages__",
+  "_build",
+  "buck-out",
+  "build",
+  "dist",
+  "node_modules",
+  "venv",
+  "tests/nts",
+]
+
+# Same as Black.
+line-length = 88
+
+# Assume Python 3.10.
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+  "A",
+  "ARG",
+  "B",
+  "BLE",
+  "C4",
+  "D",
+  "E",
+  "F",
+  "FBT",
+  "I",
+  "ICN",
+  "ISC",
+  "N",
+  "PIE",
+  "PL",
+  "PT",
+  "Q",
+  "RET",
+  "RSE",
+  "S",
+  "SIM",
+  "SLF",
+  "T10",
+  "T20",
+  "TCH",
+  "TID",
+  "YTT",
+]
+
+ignore = [
+  "S105",
+  "S101",
+  "D107",
+  "D105",
+  "PLR0913",
+  "SIM108",
+  "PT001",
+  "A005",
+  "PLW1641",
+]
+
+fixable = ["I"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.lint.isort]
+force-single-line = true
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
