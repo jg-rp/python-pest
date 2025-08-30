@@ -22,13 +22,13 @@ class Expression(ABC):
     """
 
     @abstractmethod
-    def parse(self, state: ParserState, pos: int) -> tuple[Node, int] | None:
-        """Attempt to match this expression against the input at `pos`.
+    def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
+        """Attempt to match this expression against the input at `start`.
 
         Args:
             state: The current parser state, including input text and
                    any memoization or error-tracking structures.
-            pos:   The index in the input string where parsing begins.
+            start: The index in the input string where parsing begins.
 
         Returns:
             If parsing succeeds, a `Node` representing the result of the

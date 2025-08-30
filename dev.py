@@ -1,4 +1,4 @@
-from python_pest.scanner import tokenize
+from pest.scanner import tokenize
 
 with open("tests/grammars/http.pest", encoding="utf-8") as fd:
     grammar = fd.read()
