@@ -22,11 +22,12 @@ class Term(Expression):
         expression: Expression,
         tag: Token | None = None,
         prefix_op: Token | None = None,
-        postfix_op: Token | None = None,
+        postfix_op: list[Token] | None = None,
     ):
         self.expression = expression
         self.tag = tag
         self.prefix_op = prefix_op
+        # TODO: preprocess postfix op
         self.postfix_op = postfix_op
 
     def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:

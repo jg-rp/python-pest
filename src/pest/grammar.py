@@ -1,6 +1,6 @@
 """A pest grammar."""
 
-from .rule import Rule
+from .expressions import Rule
 from .tokens import Token
 
 

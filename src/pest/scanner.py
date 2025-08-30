@@ -27,6 +27,7 @@ RE_MODIFIER = re.compile(r"[_@\$!]")
 RE_TAG = re.compile(r"#[_a-zA-z][_a-zA-Z0-9](?=\s*=)")
 RE_PREFIX_OP = re.compile(r"[&!]")
 RE_NUMBER = re.compile(r"[0-9]+")
+RE_INTEGER = re.compile(r"-?[0-9]+")
 RE_PUSH_LITERAL = re.compile(r"PUSH_LITERAL")
 RE_PUSH = re.compile(r"PUSH")
 RE_PEEK = re.compile(r"PEEK")
@@ -297,7 +298,7 @@ class Scanner:
 
             self.skip_trivia()
 
-            if value := self.scan(RE_NUMBER):
+            if value := self.scan(RE_INTEGER):
                 self.emit(TokenKind.NUMBER, value)
                 self.skip_trivia()
 
@@ -306,7 +307,7 @@ class Scanner:
             else:
                 self.error("expected a range operator")
 
-            if value := self.scan(RE_NUMBER):
+            if value := self.scan(RE_INTEGER):
                 self.emit(TokenKind.NUMBER, value)
                 self.skip_trivia()
 

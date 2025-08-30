@@ -1,11 +1,12 @@
 """The sequence (`~`) expression."""
 
+from pest import Expression
 from pest import Node
 from pest import ParserState
 from pest.expressions import Term
 
 
-class Sequence(Term):
+class Sequence(Expression):
     """Expression that matches a sequence of sub-expressions in order.
 
     This corresponds to the `~` operator in pest.
