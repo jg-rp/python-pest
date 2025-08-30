@@ -1,21 +1,18 @@
 """The sequence (`~`) expression."""
 
-from pest.expression import Expression
-from pest.node import Node
-from pest.state import ParserState
+from pest import Node
+from pest import ParserState
+from pest.expressions import Term
 
 
-class Sequence(Expression):
+class Sequence(Term):
     """Expression that matches a sequence of sub-expressions in order.
 
     This corresponds to the `~` operator in pest.
     """
 
-    # TODO: change Expression to Term
-    # TODO: Term combines a node with its prefix, postfix and tag.
-
-    def __init__(self, *terms: Expression):
-        self.terms: list[Expression] = list(terms)
+    def __init__(self, *terms: Term):
+        self.terms: tuple[Term, ...] = terms
 
     def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
         """Try to parse all parts in sequence starting at `pos`.
