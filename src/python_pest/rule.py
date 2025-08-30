@@ -3,7 +3,7 @@ from .tokens import Token
 
 
 class Rule:
-    """"""
+    """A logical grammar rule."""
 
     __slots__ = ("identifier", "modifier", "expression", "doc")
 
