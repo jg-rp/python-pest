@@ -47,6 +47,7 @@ class TokenKind(Enum):
     STRING = auto()  # "abc"
     STRING_CI = auto()  # ^"abc"
     NUMBER = auto()  # 123
+    INTEGER = auto()  # 123 or -123
 
 
 class Token(NamedTuple):

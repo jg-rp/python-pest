@@ -88,7 +88,7 @@ class Identifier(Expression):
         # TODO:
 
 
-class String(Expression):
+class Literal(Expression):
     """A terminal string literal."""
 
     __slots__ = ("token",)

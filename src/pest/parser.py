@@ -4,7 +4,9 @@ from .exceptions import PestGrammarSyntaxError
 from .expression import Expression
 from .expressions import CaseInsensitiveString
 from .expressions import Choice
+from .expressions import Group
 from .expressions import Identifier
+from .expressions import Literal
 from .expressions import NegativePredicate
 from .expressions import Optional
 from .expressions import PeekSlice
@@ -20,7 +22,6 @@ from .expressions import RepeatOnce
 from .expressions import RepeatRange
 from .expressions import Rule
 from .expressions import Sequence
-from .expressions import String
 from .grammar import Grammar
 from .tokens import Token
 from .tokens import TokenKind
@@ -39,15 +40,6 @@ INFIX_OPERATORS = frozenset(
     [
         TokenKind.CHOICE_OP,
         TokenKind.SEQUENCE_OP,
-    ]
-)
-
-POSTFIX_OPERATORS = frozenset(
-    [
-        TokenKind.OPTION_OP,
-        TokenKind.REPEAT_OP,
-        TokenKind.REPEAT_ONCE_OP,
-        TokenKind.RBRACE,
     ]
 )
 
@@ -119,15 +111,15 @@ class Parser:
         return rules
 
     def parse_modifier(self) -> Token | None:
-        if self.peek().kind == TokenKind.MODIFIER:
+        if self.current().kind == TokenKind.MODIFIER:
             return self.next()
         return None
 
-    def parse_expression(self, precedence: int = PRECEDENCE_LOWEST) -> Expression:
-        if self.peek().kind == TokenKind.CHOICE_OP:
+    def parse_expression(self, precedence: int = PRECEDENCE_LOWEST) -> Expression:  # noqa: PLR0912
+        if self.current().kind == TokenKind.CHOICE_OP:
             self.next()  # Ignore leading choice operator.
 
-        if self.peek().kind == TokenKind.TAG:
+        if self.current().kind == TokenKind.TAG:
             tag: Token | None = self.next()
             self.eat(TokenKind.ASSIGN_OP)
         else:
@@ -139,18 +131,40 @@ class Parser:
         left: Expression
 
         if left_kind == TokenKind.STRING:
-            left = String(self.next(), tag=tag)
+            left = Literal(self.next(), tag=tag)
+        elif left_kind == TokenKind.STRING_CI:
+            left = CaseInsensitiveString(self.next(), tag=tag)
         elif left_kind == TokenKind.LPAREN:
-            left = self.parse_group()
+            self.pos += 1
+            left = Group(self.parse_expression(), tag=tag)
+            self.eat(TokenKind.RPAREN)
         elif left_kind == TokenKind.IDENTIFIER:
             left = Identifier(self.next(), tag=tag)
-        # TODO: other terminals
+        elif left_kind == TokenKind.PUSH_LITERAL:
+            self.pos += 1
+            self.eat(TokenKind.LPAREN)
+            left = PushLiteral(self.eat(TokenKind.STRING), tag=tag)
+            self.eat(TokenKind.RPAREN)
+        elif left_kind == TokenKind.PUSH:
+            self.pos += 1
+            self.eat(TokenKind.LPAREN)
+            left = Push(self.parse_expression(), tag=tag)
+            self.eat(TokenKind.RPAREN)
+        elif left_kind == TokenKind.PEEK:
+            self.pos += 1
+            left = self.parse_peek_expression(tag)
+        elif left_kind == TokenKind.CHAR:
+            start = self.eat(TokenKind.CHAR)
+            self.eat(TokenKind.RANGE_OP)
+            left = Range(start, self.eat(TokenKind.CHAR), tag=tag)
         elif left_kind == TokenKind.POSITIVE_PREDICATE:
             self.pos += 1
             left = PositivePredicate(self.parse_expression(PRECEDENCE_PREFIX), tag=tag)
         elif left_kind == TokenKind.NEGATIVE_PREDICATE:
             self.pos += 1
             left = NegativePredicate(self.parse_expression(PRECEDENCE_PREFIX), tag=tag)
+        else:
+            raise PestGrammarSyntaxError(f"unexpected token {token.kind}", token=token)
 
         while True:
             kind = self.current().kind
@@ -164,10 +178,7 @@ class Parser:
 
             left = self.parse_infix_expression(left)
 
-        if self.current().kind in POSTFIX_OPERATORS:
-            left = self.parse_postfix_expression(left)
-
-        return left
+        return self.parse_postfix_expression(left)
 
     def parse_infix_expression(self, left: Expression) -> Expression:
         token = self.next()
@@ -183,8 +194,69 @@ class Parser:
 
         raise PestGrammarSyntaxError(f"unexpected operator {kind}", token=token)
 
-    def parse_postfix_expression(self, left: Expression) -> Expression:
+    def parse_postfix_expression(self, expr: Expression) -> Expression:
+        token = self.current()
+        kind = token.kind
+
+        # XXX: attach tag to postfix expression or inner expression?
+
+        if kind == TokenKind.OPTION_OP:
+            self.pos += 1
+            return Optional(expr)
+
+        if kind == TokenKind.REPEAT_OP:
+            self.pos += 1
+            return Repeat(expr)
+
+        if kind == TokenKind.REPEAT_ONCE_OP:
+            self.pos += 1
+            return RepeatOnce(expr)
+
+        if kind == TokenKind.LBRACE:
+            self.pos += 1
+            return self.parse_repeat_expression(expr)
+
+        return expr
+
+    def parse_repeat_expression(self, expr: Expression) -> Expression:
         token = self.next()
         kind = token.kind
 
-        # TODO:
+        if kind == TokenKind.NUMBER:
+            number = token
+            if self.current().kind == TokenKind.RBRACE:
+                self.pos += 1
+                return RepeatExact(expr, int(number.value))
+
+            self.eat(TokenKind.COMMA)
+
+            if self.current().kind == TokenKind.RBRACE:
+                self.pos += 1
+                return RepeatMin(expr, int(number.value))
+
+            stop = self.eat(TokenKind.NUMBER)
+            self.eat(TokenKind.RBRACE)
+            return RepeatRange(expr, int(number.value), int(stop.value))
+
+        if kind == TokenKind.COMMA:
+            number = self.eat(TokenKind.NUMBER)
+            return RepeatMax(expr, int(number.value))
+
+        raise PestGrammarSyntaxError("expected a number or a comma", token=token)
+
+    def parse_peek_expression(self, tag: Token | None) -> Expression:
+        self.eat(TokenKind.LBRACKET)
+        if self.current().kind == TokenKind.INTEGER:
+            start: Token | None = self.next()
+        else:
+            start = None
+
+        self.eat(TokenKind.RANGE_OP)
+
+        if self.current().kind == TokenKind.INTEGER:
+            stop: Token | None = self.next()
+        else:
+            stop = None
+
+        self.eat(TokenKind.RBRACKET)
+        return PeekSlice(start, stop, tag=tag)

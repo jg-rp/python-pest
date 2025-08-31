@@ -299,7 +299,7 @@ class Scanner:
             self.skip_trivia()
 
             if value := self.scan(RE_INTEGER):
-                self.emit(TokenKind.NUMBER, value)
+                self.emit(TokenKind.INTEGER, value)
                 self.skip_trivia()
 
             if value := self.scan(RE_RANGE_OP):
@@ -308,7 +308,7 @@ class Scanner:
                 self.error("expected a range operator")
 
             if value := self.scan(RE_INTEGER):
-                self.emit(TokenKind.NUMBER, value)
+                self.emit(TokenKind.INTEGER, value)
                 self.skip_trivia()
 
             if self.peek() == ")":
@@ -425,5 +425,5 @@ class Scanner:
                 self.error(f"unclosed string starting at index {self.start}")
 
             if c == '"':
-                self.emit(TokenKind.STRING, self.grammar[self.start : self.pos - 1])
+                self.emit(TokenKind.STRING_CI, self.grammar[self.start : self.pos - 1])
                 return True

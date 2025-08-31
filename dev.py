@@ -1,9 +1,9 @@
 from pest.scanner import tokenize
+from pest.parser import Parser
 
 with open("tests/grammars/http.pest", encoding="utf-8") as fd:
-    grammar = fd.read()
+    source = fd.read()
 
-tokens = tokenize(grammar)
-
-for token in tokens:
-    print(token)
+tokens = tokenize(source)
+parser = Parser(tokens)
+grammar = parser.parse()

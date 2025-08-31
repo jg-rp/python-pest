@@ -1,4 +1,5 @@
 from .choice import Choice
+from .group import Group
 from .postfix import Optional
 from .postfix import Repeat
 from .postfix import RepeatExact
@@ -16,10 +17,11 @@ from .terminals import PeekSlice
 from .terminals import Push
 from .terminals import PushLiteral
 from .terminals import Range
-from .terminals import String
+from .terminals import Literal
 
 __all__ = (
     "Choice",
+    "Group",
     "Rule",
     "Sequence",
     "CaseInsensitiveString",
@@ -28,7 +30,7 @@ __all__ = (
     "Push",
     "PushLiteral",
     "Range",
-    "String",
+    "Literal",
     "PositivePredicate",
     "NegativePredicate",
     "Optional",
