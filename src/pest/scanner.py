@@ -16,7 +16,7 @@ from .tokens import TokenKind
 StateFn: TypeAlias = Callable[[], Optional["StateFn"]]
 
 RE_GRAMMAR_DOC = re.compile(r"//!")
-RE_LINE_DOC = re.compile(r"///")
+RE_RULE_DOC = re.compile(r"///")
 RE_NEWLINE = re.compile(r"\r?\n")
 RE_WHITESPACE = re.compile(r"[ \t\n\r]+")
 RE_IDENTIFIER = re.compile(r"[_a-zA-Z][_a-zA-Z0-9]*")
@@ -138,9 +138,9 @@ class Scanner:
     def scan_grammar_rule(self) -> StateFn | None:  # noqa: PLR0911
         self.skip_trivia()
 
-        if value := self.scan(RE_LINE_DOC):
-            self.emit(TokenKind.LINE_DOC, value)
-            return self.scan_line_doc_inner
+        if value := self.scan(RE_RULE_DOC):
+            self.emit(TokenKind.RULE_DOC, value)
+            return self.scan_rule_doc_inner
 
         self.skip_trivia()
 
@@ -179,7 +179,7 @@ class Scanner:
         # TODO: or loop
         return self.scan_grammar_rule
 
-    def scan_line_doc_inner(self) -> StateFn | None:
+    def scan_rule_doc_inner(self) -> StateFn | None:
         if self.peek() in (" ", "\t"):
             self.pos += 1
             self.start = self.pos

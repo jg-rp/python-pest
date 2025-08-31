@@ -83,8 +83,9 @@ class Parser:
 
     def parse(self) -> Grammar:
         grammar_doc: list[Token] = []
-        while self.peek().kind == TokenKind.GRAMMAR_DOC:
-            grammar_doc.append(self.next())
+        while self.current().kind == TokenKind.GRAMMAR_DOC:
+            self.pos += 1
+            grammar_doc.append(self.eat(TokenKind.COMMENT_TEXT))
 
         rules = self.parse_rules()
         return Grammar(rules, grammar_doc)
@@ -93,12 +94,13 @@ class Parser:
         rules: dict[str, Rule] = {}
 
         while True:
-            if self.peek().kind == TokenKind.EOI:
+            if self.current().kind == TokenKind.EOI:
                 break
 
             rule_doc: list[Token] = []
-            while self.peek().kind == TokenKind.RULE_DOC:
-                rule_doc.append(self.next())
+            while self.current().kind == TokenKind.RULE_DOC:
+                self.pos += 1
+                rule_doc.append(self.eat(TokenKind.COMMENT_TEXT))
 
             identifier = self.eat(TokenKind.IDENTIFIER)
             self.eat(TokenKind.ASSIGN_OP)
