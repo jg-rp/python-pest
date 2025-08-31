@@ -20,6 +20,9 @@ class Group(Expression):
         super().__init__(tag)
         self.expression = expression
 
+    def __str__(self) -> str:
+        return f"({self.expression})"
+
     def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
         """Try to parse all parts in sequence starting at `pos`.
 

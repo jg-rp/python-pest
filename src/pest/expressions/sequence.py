@@ -19,6 +19,9 @@ class Sequence(Expression):
         self.left = left
         self.right = right
 
+    def __str__(self) -> str:
+        return f"{self.left} ~ {self.right}"
+
     def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
         """Try to parse all parts in sequence starting at `pos`.
 

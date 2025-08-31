@@ -15,6 +15,10 @@ class PushLiteral(Expression):
         super().__init__(tag)
         self.token = token
 
+    def __str__(self) -> str:
+        # TODO: tag
+        return f'PUSH("{self.token.value}")'
+
     def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
         """Try to parse all parts in sequence starting at `pos`.
 
@@ -33,6 +37,10 @@ class Push(Expression):
     def __init__(self, expression: Expression, tag: Token | None = None):
         super().__init__(tag)
         self.expression = expression
+
+    def __str__(self) -> str:
+        # TODO: tag
+        return f"PUSH( {self.expression} )"
 
     def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
         """Try to parse all parts in sequence starting at `pos`.
@@ -59,6 +67,12 @@ class PeekSlice(Expression):
         self.start = start
         self.stop = stop
 
+    def __str__(self) -> str:
+        # TODO: tag
+        start = self.start.value if self.start else ""
+        stop = self.stop.value if self.stop else ""
+        return f"PEEK[{start}..{stop}]"
+
     def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
         """Try to parse all parts in sequence starting at `pos`.
 
@@ -78,6 +92,10 @@ class Identifier(Expression):
         super().__init__(tag)
         self.token = token
 
+    def __str__(self) -> str:
+        # TODO: tag
+        return self.token.value
+
     def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
         """Try to parse all parts in sequence starting at `pos`.
 
@@ -96,6 +114,11 @@ class Literal(Expression):
     def __init__(self, token: Token, tag: Token | None = None):
         super().__init__(tag)
         self.token = token
+        # TODO: unescape token.value
+
+    def __str__(self) -> str:
+        # TODO: tag
+        return f'"{self.token.value}"'
 
     def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
         """Try to parse all parts in sequence starting at `pos`.
@@ -115,6 +138,11 @@ class CaseInsensitiveString(Expression):
     def __init__(self, token: Token, tag: Token | None = None):
         super().__init__(tag)
         self.token = token
+        # TODO: unescape token.value
+
+    def __str__(self) -> str:
+        # TODO: tag
+        return f'^"{self.token.value}"'
 
     def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
         """Try to parse all parts in sequence starting at `pos`.
@@ -135,6 +163,11 @@ class Range(Expression):
         super().__init__(tag)
         self.start = start
         self.stop = stop
+        # TODO: unescape start and stop?
+
+    def __str__(self) -> str:
+        # TODO: tag
+        return f"'{self.start.value}'..'{self.stop.value}'"
 
     def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
         """Try to parse all parts in sequence starting at `pos`.

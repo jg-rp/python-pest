@@ -20,6 +20,9 @@ class PositivePredicate(Expression):
         super().__init__(tag)
         self.expression = expression
 
+    def __str__(self) -> str:
+        return f"&{self.expression}"
+
     def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
         """Try to parse all parts in sequence starting at `pos`.
 
@@ -41,6 +44,9 @@ class NegativePredicate(Expression):
     def __init__(self, expression: Expression, tag: Token | None = None):
         super().__init__(tag)
         self.expression = expression
+
+    def __str__(self) -> str:
+        return f"!{self.expression}"
 
     def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
         """Try to parse all parts in sequence starting at `pos`.

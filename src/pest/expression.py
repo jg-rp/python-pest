@@ -41,3 +41,5 @@ class Expression(ABC):
             matched expression and any child expressions. Or `None` if the
             expression fails to match at `pos`.
         """
+
+    # TODO: def children() -> list[Expression]

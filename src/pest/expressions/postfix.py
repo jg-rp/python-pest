@@ -20,6 +20,9 @@ class Optional(Expression):
         super().__init__(tag)
         self.expression = expression
 
+    def __str__(self) -> str:
+        return f"{self.expression}?"
+
     def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
         """Try to parse all parts in sequence starting at `pos`.
 
@@ -42,6 +45,9 @@ class Repeat(Expression):
         super().__init__(tag)
         self.expression = expression
 
+    def __str__(self) -> str:
+        return f"{self.expression}*"
+
     def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
         """Try to parse all parts in sequence starting at `pos`.
 
@@ -63,6 +69,9 @@ class RepeatOnce(Expression):
     def __init__(self, expression: Expression, tag: Token | None = None):
         super().__init__(tag)
         self.expression = expression
+
+    def __str__(self) -> str:
+        return f"{self.expression}+"
 
     def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
         """Try to parse all parts in sequence starting at `pos`.
@@ -90,6 +99,9 @@ class RepeatExact(Expression):
         self.expression = expression
         self.number = number
 
+    def __str__(self) -> str:
+        return f"{self.expression}{{{self.number}}}"
+
     def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
         """Try to parse all parts in sequence starting at `pos`.
 
@@ -116,6 +128,9 @@ class RepeatMin(Expression):
         self.expression = expression
         self.number = number
 
+    def __str__(self) -> str:
+        return f"{self.expression}{{{self.number},}}"
+
     def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
         """Try to parse all parts in sequence starting at `pos`.
 
@@ -141,6 +156,9 @@ class RepeatMax(Expression):
         super().__init__(tag)
         self.expression = expression
         self.number = number
+
+    def __str__(self) -> str:
+        return f"{self.expression}{{,{self.number}}}"
 
     def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
         """Try to parse all parts in sequence starting at `pos`.
@@ -171,6 +189,9 @@ class RepeatRange(Expression):
         self.expression = expression
         self.min = min_
         self.max = max_
+
+    def __str__(self) -> str:
+        return f"{self.expression}{{{self.min}, {self.max}}}"
 
     def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
         """Try to parse all parts in sequence starting at `pos`.

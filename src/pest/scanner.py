@@ -181,8 +181,7 @@ class Scanner:
 
     def scan_rule_doc_inner(self) -> StateFn | None:
         if self.peek() in (" ", "\t"):
-            self.pos += 1
-            self.start = self.pos
+            self.next()
 
         if value := self.scan_until(RE_NEWLINE):
             self.emit(TokenKind.COMMENT_TEXT, value)

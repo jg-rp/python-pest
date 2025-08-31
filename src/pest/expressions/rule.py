@@ -26,6 +26,12 @@ class Rule(Expression):
         self.modifier = modifier
         self.doc = doc
 
+    def __str__(self) -> str:
+        doc = "".join(f"///{token.value}\n" for token in self.doc) if self.doc else ""
+
+        modifier = self.modifier.value if self.modifier else ""
+        return f"{doc}{self.identifier.value} = {modifier}{{ {self.expression} }}"
+
     def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
         """Attempt to match this expression against the input at `start`.
 

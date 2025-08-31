@@ -117,7 +117,7 @@ class Parser:
             return self.next()
         return None
 
-    def parse_expression(self, precedence: int = PRECEDENCE_LOWEST) -> Expression:  # noqa: PLR0912
+    def parse_expression(self, precedence: int = PRECEDENCE_LOWEST) -> Expression:  # noqa: PLR0912, PLR0915
         if self.current().kind == TokenKind.CHOICE_OP:
             self.next()  # Ignore leading choice operator.
 
@@ -168,6 +168,8 @@ class Parser:
         else:
             raise PestGrammarSyntaxError(f"unexpected token {token.kind}", token=token)
 
+        left = self.parse_postfix_expression(left)
+
         while True:
             kind = self.current().kind
 
@@ -180,7 +182,7 @@ class Parser:
 
             left = self.parse_infix_expression(left)
 
-        return self.parse_postfix_expression(left)
+        return left
 
     def parse_infix_expression(self, left: Expression) -> Expression:
         token = self.next()
