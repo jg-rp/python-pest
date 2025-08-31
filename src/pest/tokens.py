@@ -22,7 +22,8 @@ class TokenKind(Enum):
     CHOICE_OP = auto()  # |
     SEQUENCE_OP = auto()  # ~
     TAG = auto()  # #tag
-    PREDICATE = auto()  # &, !
+    POSITIVE_PREDICATE = auto()  # &
+    NEGATIVE_PREDICATE = auto()  # !
     BLOCK_COMMENT = auto()  # /* .. */
     CHAR = auto()  # 'a' or '\u{10FFFF}' or '\x00' or '\n' etc.
     COMMA = auto()  # ,

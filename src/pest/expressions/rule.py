@@ -5,6 +5,8 @@ from pest.node import Node
 from pest.state import ParserState
 from pest.tokens import Token
 
+# TODO: should Rule be an Expression?
+
 
 class Rule(Expression):
     """A logical grammar rule."""
@@ -18,6 +20,7 @@ class Rule(Expression):
         modifier: Token | None = None,
         doc: list[Token] | None = None,
     ):
+        super().__init__(tag=None)
         self.identifier = identifier
         self.expression = expression
         self.modifier = modifier

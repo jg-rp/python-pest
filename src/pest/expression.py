@@ -5,6 +5,7 @@ from abc import abstractmethod
 
 from .node import Node
 from .state import ParserState
+from .tokens import Token
 
 
 class Expression(ABC):
@@ -20,6 +21,11 @@ class Expression(ABC):
 
     A rule binds a name to a single top-level Expression.
     """
+
+    __slots__ = ("tag",)
+
+    def __init__(self, tag: Token | None = None):
+        self.tag = tag
 
     @abstractmethod
     def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:

@@ -13,8 +13,6 @@ from .exceptions import PestGrammarSyntaxError
 from .tokens import Token
 from .tokens import TokenKind
 
-# ruff: noqa: D102
-
 StateFn: TypeAlias = Callable[[], Optional["StateFn"]]
 
 RE_GRAMMAR_DOC = re.compile(r"//!")
@@ -25,7 +23,6 @@ RE_IDENTIFIER = re.compile(r"[_a-zA-Z][_a-zA-Z0-9]*")
 RE_ASSIGN_OP = re.compile(r"=")  # TODO: scan until ch?
 RE_MODIFIER = re.compile(r"[_@\$!]")
 RE_TAG = re.compile(r"#[_a-zA-z][_a-zA-Z0-9](?=\s*=)")
-RE_PREFIX_OP = re.compile(r"[&!]")
 RE_NUMBER = re.compile(r"[0-9]+")
 RE_INTEGER = re.compile(r"-?[0-9]+")
 RE_PUSH_LITERAL = re.compile(r"PUSH_LITERAL")
@@ -225,8 +222,11 @@ class Scanner:
             self.emit(TokenKind.ASSIGN_OP, self.next())
             self.skip_trivia()
 
-        if value := self.scan(RE_PREFIX_OP):
-            self.emit(TokenKind.PREDICATE, value)
+        if self.peek() == "&":
+            self.emit(TokenKind.POSITIVE_PREDICATE, self.next())
+            self.skip_trivia()
+        elif self.peek() == "!":
+            self.emit(TokenKind.NEGATIVE_PREDICATE, self.next())
             self.skip_trivia()
 
         if self.accept_terminal():

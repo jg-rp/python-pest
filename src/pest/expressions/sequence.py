@@ -3,7 +3,7 @@
 from pest import Expression
 from pest import Node
 from pest import ParserState
-from pest.expressions import Term
+from pest import Token
 
 
 class Sequence(Expression):
@@ -12,8 +12,12 @@ class Sequence(Expression):
     This corresponds to the `~` operator in pest.
     """
 
-    def __init__(self, *terms: Term):
-        self.terms: tuple[Term, ...] = terms
+    __slots__ = ("left", "right")
+
+    def __init__(self, left: Expression, right: Expression, tag: Token | None = None):
+        super().__init__(tag)
+        self.left = left
+        self.right = right
 
     def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
         """Try to parse all parts in sequence starting at `pos`.
@@ -25,11 +29,16 @@ class Sequence(Expression):
         children: list[Node] = []
         position = start
 
-        for term in self.terms:
-            result = term.parse(state, position)
-            if result is None:
-                return None  # fail immediately
-            node, position = result
-            children.append(node)
+        if result := self.left.parse(state, position):
+            children.append(result[0])
+            position = result[1]
+        else:
+            return None
+
+        if result := self.right.parse(state, position):
+            children.append(result[0])
+            position = result[1]
+        else:
+            return None
 
         return (Node(start=start, end=position, children=children), position)

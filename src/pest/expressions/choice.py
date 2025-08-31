@@ -3,7 +3,7 @@
 from pest import Expression
 from pest import Node
 from pest import ParserState
-from pest.expressions import Term
+from pest import Token
 
 
 class Choice(Expression):
@@ -12,8 +12,12 @@ class Choice(Expression):
     This corresponds to the `|` operator in pest.
     """
 
-    def __init__(self, *terms: Term):
-        self.terms: tuple[Term, ...] = terms
+    __slots__ = ("left", "right")
+
+    def __init__(self, left: Expression, right: Expression, tag: Token | None = None):
+        super().__init__(tag)
+        self.left = left
+        self.right = right
 
     def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
         """Try to parse all parts in sequence starting at `pos`.
@@ -22,4 +26,10 @@ class Choice(Expression):
             - (Node, new_pos) if all parts match in order.
             - None if any part fails.
         """
-        # TODO:
+        if result := self.left.parse(state, start):
+            return (Node(start=start, end=result[1], children=[result[0]]), result[1])
+
+        if result := self.right.parse(state, start):
+            return (Node(start=start, end=result[1], children=[result[0]]), result[1])
+
+        return None

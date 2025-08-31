@@ -1,4 +1,6 @@
-"""Terminal expressions."""
+"""pest postfix operators."""
+
+from __future__ import annotations
 
 from pest import Expression
 from pest import Node
@@ -6,27 +8,11 @@ from pest import ParserState
 from pest import Token
 
 
-class PushLiteral(Expression):
-    """A PUSH terminal with a string literal argument."""
+class Optional(Expression):
+    """A optional pest grammar expression.
 
-    __slots__ = ("token",)
-
-    def __init__(self, token: Token, tag: Token | None = None):
-        super().__init__(tag)
-        self.token = token
-
-    def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
-        """Try to parse all parts in sequence starting at `pos`.
-
-        Returns:
-            - (Node, new_pos) if all parts match in order.
-            - None if any part fails.
-        """
-        # TODO:
-
-
-class Push(Expression):
-    """A PUSH terminal with an expression."""
+    This corresponds to the `?` operator in pest.
+    """
 
     __slots__ = ("expression",)
 
@@ -44,97 +30,147 @@ class Push(Expression):
         # TODO:
 
 
-class PeekSlice(Expression):
-    """A PEEK terminal with a range expression."""
+class Repeat(Expression):
+    """A pest grammar expression repeated zero or more times.
 
-    __slots__ = ("start", "stop")
+    This corresponds to the `*` operator in pest.
+    """
+
+    __slots__ = ("expression",)
+
+    def __init__(self, expression: Expression, tag: Token | None = None):
+        super().__init__(tag)
+        self.expression = expression
+
+    def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
+        """Try to parse all parts in sequence starting at `pos`.
+
+        Returns:
+            - (Node, new_pos) if all parts match in order.
+            - None if any part fails.
+        """
+        # TODO:
+
+
+class RepeatOnce(Expression):
+    """A pest grammar expression repeated one or more times.
+
+    This corresponds to the `+` operator in pest.
+    """
+
+    __slots__ = ("expression",)
+
+    def __init__(self, expression: Expression, tag: Token | None = None):
+        super().__init__(tag)
+        self.expression = expression
+
+    def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
+        """Try to parse all parts in sequence starting at `pos`.
+
+        Returns:
+            - (Node, new_pos) if all parts match in order.
+            - None if any part fails.
+        """
+        # TODO:
+
+
+class RepeatExact(Expression):
+    """A pest grammar expression repeated a specified number of times.
+
+    This corresponds to the `{n}` postfix expression in pest.
+    """
+
+    __slots__ = (
+        "expression",
+        "number",
+    )
+
+    def __init__(self, expression: Expression, number: int, tag: Token | None = None):
+        super().__init__(tag)
+        self.expression = expression
+        self.number = number
+
+    def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
+        """Try to parse all parts in sequence starting at `pos`.
+
+        Returns:
+            - (Node, new_pos) if all parts match in order.
+            - None if any part fails.
+        """
+        # TODO:
+
+
+class RepeatMin(Expression):
+    """A pest grammar expression repeated at least a specified number of times.
+
+    This corresponds to the `{n,}` postfix expression in pest.
+    """
+
+    __slots__ = (
+        "expression",
+        "number",
+    )
+
+    def __init__(self, expression: Expression, number: int, tag: Token | None = None):
+        super().__init__(tag)
+        self.expression = expression
+        self.number = number
+
+    def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
+        """Try to parse all parts in sequence starting at `pos`.
+
+        Returns:
+            - (Node, new_pos) if all parts match in order.
+            - None if any part fails.
+        """
+        # TODO:
+
+
+class RepeatMax(Expression):
+    """A pest grammar expression repeated at most a specified number of times.
+
+    This corresponds to the `{,n}` postfix expression in pest.
+    """
+
+    __slots__ = (
+        "expression",
+        "number",
+    )
+
+    def __init__(self, expression: Expression, number: int, tag: Token | None = None):
+        super().__init__(tag)
+        self.expression = expression
+        self.number = number
+
+    def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
+        """Try to parse all parts in sequence starting at `pos`.
+
+        Returns:
+            - (Node, new_pos) if all parts match in order.
+            - None if any part fails.
+        """
+        # TODO:
+
+
+class RepeatRange(Expression):
+    """A pest grammar expression repeated a specified range of times.
+
+    This corresponds to the `{n,m}` postfix expression in pest.
+    """
+
+    __slots__ = (
+        "expression",
+        "min",
+        "max",
+    )
 
     def __init__(
-        self,
-        start: Token | None = None,
-        stop: Token | None = None,
-        tag: Token | None = None,
+        self, expression: Expression, min_: int, max_: int, tag: Token | None = None
     ):
         super().__init__(tag)
-        self.start = start
-        self.stop = stop
-
-    def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
-        """Try to parse all parts in sequence starting at `pos`.
-
-        Returns:
-            - (Node, new_pos) if all parts match in order.
-            - None if any part fails.
-        """
-        # TODO:
-
-
-class Identifier(Expression):
-    """A terminal pointing to rule, possibly a built-in rule."""
-
-    __slots__ = ("token",)
-
-    def __init__(self, token: Token, tag: Token | None = None):
-        super().__init__(tag)
-        self.token = token
-
-    def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
-        """Try to parse all parts in sequence starting at `pos`.
-
-        Returns:
-            - (Node, new_pos) if all parts match in order.
-            - None if any part fails.
-        """
-        # TODO:
-
-
-class String(Expression):
-    """A terminal string literal."""
-
-    __slots__ = ("token",)
-
-    def __init__(self, token: Token, tag: Token | None = None):
-        super().__init__(tag)
-        self.token = token
-
-    def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
-        """Try to parse all parts in sequence starting at `pos`.
-
-        Returns:
-            - (Node, new_pos) if all parts match in order.
-            - None if any part fails.
-        """
-        # TODO:
-
-
-class CaseInsensitiveString(Expression):
-    """A terminal string literal that matches case insensitively."""
-
-    __slots__ = ("token",)
-
-    def __init__(self, token: Token, tag: Token | None = None):
-        super().__init__(tag)
-        self.token = token
-
-    def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
-        """Try to parse all parts in sequence starting at `pos`.
-
-        Returns:
-            - (Node, new_pos) if all parts match in order.
-            - None if any part fails.
-        """
-        # TODO:
-
-
-class Range(Expression):
-    """A terminal range of characters."""
-
-    __slots__ = ("start", "stop")
-
-    def __init__(self, start: Token, stop: Token, tag: Token | None = None):
-        super().__init__(tag)
-        self.start = start
-        self.stop = stop
+        self.expression = expression
+        self.min = min_
+        self.max = max_
 
     def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
         """Try to parse all parts in sequence starting at `pos`.
