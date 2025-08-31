@@ -1,8 +1,8 @@
-from .expression import Expression
+from .grammar.expression import Expression
+from .grammar.tokens import Token
+from .grammar.tokens import TokenKind
 from .node import Node
 from .state import ParserState
-from .tokens import Token
-from .tokens import TokenKind
 
 __all__ = (
     "Expression",

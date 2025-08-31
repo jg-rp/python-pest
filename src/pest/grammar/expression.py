@@ -3,9 +3,8 @@
 from abc import ABC
 from abc import abstractmethod
 
-from .node import Node
-from .state import ParserState
-from .tokens import Token
+from pest.result import ParseResult
+from pest.state import ParserState
 
 
 class Expression(ABC):
@@ -24,11 +23,11 @@ class Expression(ABC):
 
     __slots__ = ("tag",)
 
-    def __init__(self, tag: Token | None = None):
+    def __init__(self, tag: str | None = None):
         self.tag = tag
 
     @abstractmethod
-    def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
+    def parse(self, state: ParserState, start: int) -> ParseResult | None:
         """Attempt to match this expression against the input at `start`.
 
         Args:
@@ -41,5 +40,9 @@ class Expression(ABC):
             matched expression and any child expressions. Or `None` if the
             expression fails to match at `pos`.
         """
+
+    def tag_str(self) -> str:
+        """Return a string representation of this expressions tag."""
+        return f"{self.tag} = " if self.tag else ""
 
     # TODO: def children() -> list[Expression]

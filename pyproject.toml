@@ -136,6 +136,7 @@ convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
 "src/pest/__init__.py" = ["D104"]
-"src/pest/expressions/__init__.py" = ["D104"]
-"src/pest/parser.py" = ["D102"]
-"src/pest/scanner.py" = ["D102"]
+"src/pest/grammar/__init__.py" = ["D104"]
+"src/pest/grammar/expressions/__init__.py" = ["D104"]
+"src/pest/grammar/parser.py" = ["D102"]
+"src/pest/grammar/scanner.py" = ["D102"]

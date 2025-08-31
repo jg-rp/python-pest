@@ -97,10 +97,10 @@ class Parser:
             if self.current().kind == TokenKind.EOI:
                 break
 
-            rule_doc: list[Token] = []
+            rule_doc: list[str] = []
             while self.current().kind == TokenKind.RULE_DOC:
                 self.pos += 1
-                rule_doc.append(self.eat(TokenKind.COMMENT_TEXT))
+                rule_doc.append(self.eat(TokenKind.COMMENT_TEXT).value)
 
             identifier = self.eat(TokenKind.IDENTIFIER)
             self.eat(TokenKind.ASSIGN_OP)
@@ -108,13 +108,15 @@ class Parser:
             self.eat(TokenKind.LBRACE)
             expression = self.parse_expression()
             self.eat(TokenKind.RBRACE)
-            rules[identifier.value] = Rule(identifier, expression, modifier, rule_doc)
+            rules[identifier.value] = Rule(
+                identifier.value, expression, modifier, rule_doc
+            )
 
         return rules
 
-    def parse_modifier(self) -> Token | None:
+    def parse_modifier(self) -> str | None:
         if self.current().kind == TokenKind.MODIFIER:
-            return self.next()
+            return self.next().value
         return None
 
     def parse_expression(self, precedence: int = PRECEDENCE_LOWEST) -> Expression:  # noqa: PLR0912, PLR0915
@@ -122,7 +124,7 @@ class Parser:
             self.next()  # Ignore leading choice operator.
 
         if self.current().kind == TokenKind.TAG:
-            tag: Token | None = self.next()
+            tag: str | None = self.next().value
             self.eat(TokenKind.ASSIGN_OP)
         else:
             tag = None
@@ -133,19 +135,19 @@ class Parser:
         left: Expression
 
         if left_kind == TokenKind.STRING:
-            left = Literal(self.next(), tag=tag)
+            left = Literal(self.next().value, tag=tag)
         elif left_kind == TokenKind.STRING_CI:
-            left = CaseInsensitiveString(self.next(), tag=tag)
+            left = CaseInsensitiveString(self.next().value, tag=tag)
         elif left_kind == TokenKind.LPAREN:
             self.pos += 1
             left = Group(self.parse_expression(), tag=tag)
             self.eat(TokenKind.RPAREN)
         elif left_kind == TokenKind.IDENTIFIER:
-            left = Identifier(self.next(), tag=tag)
+            left = Identifier(self.next().value, tag=tag)
         elif left_kind == TokenKind.PUSH_LITERAL:
             self.pos += 1
             self.eat(TokenKind.LPAREN)
-            left = PushLiteral(self.eat(TokenKind.STRING), tag=tag)
+            left = PushLiteral(self.eat(TokenKind.STRING).value, tag=tag)
             self.eat(TokenKind.RPAREN)
         elif left_kind == TokenKind.PUSH:
             self.pos += 1
@@ -156,9 +158,9 @@ class Parser:
             self.pos += 1
             left = self.parse_peek_expression(tag)
         elif left_kind == TokenKind.CHAR:
-            start = self.eat(TokenKind.CHAR)
+            start = self.eat(TokenKind.CHAR).value
             self.eat(TokenKind.RANGE_OP)
-            left = Range(start, self.eat(TokenKind.CHAR), tag=tag)
+            left = Range(start, self.eat(TokenKind.CHAR).value, tag=tag)
         elif left_kind == TokenKind.POSITIVE_PREDICATE:
             self.pos += 1
             left = PositivePredicate(self.parse_expression(PRECEDENCE_PREFIX), tag=tag)
@@ -248,17 +250,17 @@ class Parser:
 
         raise PestGrammarSyntaxError("expected a number or a comma", token=token)
 
-    def parse_peek_expression(self, tag: Token | None) -> Expression:
+    def parse_peek_expression(self, tag: str | None) -> Expression:
         self.eat(TokenKind.LBRACKET)
         if self.current().kind == TokenKind.INTEGER:
-            start: Token | None = self.next()
+            start: str | None = self.next().value
         else:
             start = None
 
         self.eat(TokenKind.RANGE_OP)
 
         if self.current().kind == TokenKind.INTEGER:
-            stop: Token | None = self.next()
+            stop: str | None = self.next().value
         else:
             stop = None
 

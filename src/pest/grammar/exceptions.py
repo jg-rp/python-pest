@@ -1,7 +1,12 @@
-from .tokens import Token
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .tokens import Token
 
 
-class PestError(Exception):
+class PestGrammarError(Exception):
     def __init__(self, *args: object, token: Token | None = None) -> None:
         super().__init__(*args)
         self.token = token
@@ -72,5 +77,5 @@ class PestError(Exception):
         return line_number, column_number, previous_line, current_line, next_line
 
 
-class PestGrammarSyntaxError(PestError):
+class PestGrammarSyntaxError(PestGrammarError):
     """An exception raised due to invalid pest grammar."""

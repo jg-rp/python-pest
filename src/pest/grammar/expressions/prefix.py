@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
-from pest import Expression
-from pest import Node
-from pest import ParserState
-from pest import Token
+from typing import TYPE_CHECKING
+
+from pest.grammar import Expression
+
+if TYPE_CHECKING:
+    from pest.result import ParseResult
+    from pest.state import ParserState
 
 
 class PositivePredicate(Expression):
@@ -16,14 +19,14 @@ class PositivePredicate(Expression):
 
     __slots__ = ("expression",)
 
-    def __init__(self, expression: Expression, tag: Token | None = None):
+    def __init__(self, expression: Expression, tag: str | None = None):
         super().__init__(tag)
         self.expression = expression
 
     def __str__(self) -> str:
-        return f"&{self.expression}"
+        return f"{self.tag_str()}&{self.expression}"
 
-    def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
+    def parse(self, state: ParserState, start: int) -> ParseResult | None:
         """Try to parse all parts in sequence starting at `pos`.
 
         Returns:
@@ -41,14 +44,14 @@ class NegativePredicate(Expression):
 
     __slots__ = ("expression",)
 
-    def __init__(self, expression: Expression, tag: Token | None = None):
+    def __init__(self, expression: Expression, tag: str | None = None):
         super().__init__(tag)
         self.expression = expression
 
     def __str__(self) -> str:
-        return f"!{self.expression}"
+        return f"{self.tag_str()}!{self.expression}"
 
-    def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
+    def parse(self, state: ParserState, start: int) -> ParseResult | None:
         """Try to parse all parts in sequence starting at `pos`.
 
         Returns:

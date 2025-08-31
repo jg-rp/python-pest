@@ -1,25 +1,29 @@
 """Terminal expressions."""
 
-from pest import Expression
-from pest import Node
-from pest import ParserState
-from pest import Token
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from pest.grammar.expression import Expression
+
+if TYPE_CHECKING:
+    from pest.result import ParseResult
+    from pest.state import ParserState
 
 
 class PushLiteral(Expression):
     """A PUSH terminal with a string literal argument."""
 
-    __slots__ = ("token",)
+    __slots__ = ("value",)
 
-    def __init__(self, token: Token, tag: Token | None = None):
+    def __init__(self, value: str, tag: str | None = None):
         super().__init__(tag)
-        self.token = token
+        self.value = value
 
     def __str__(self) -> str:
-        # TODO: tag
-        return f'PUSH("{self.token.value}")'
+        return f'{self.tag_str()}PUSH("{self.value}")'
 
-    def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
+    def parse(self, state: ParserState, start: int) -> ParseResult | None:
         """Try to parse all parts in sequence starting at `pos`.
 
         Returns:
@@ -34,15 +38,14 @@ class Push(Expression):
 
     __slots__ = ("expression",)
 
-    def __init__(self, expression: Expression, tag: Token | None = None):
+    def __init__(self, expression: Expression, tag: str | None = None):
         super().__init__(tag)
         self.expression = expression
 
     def __str__(self) -> str:
-        # TODO: tag
-        return f"PUSH( {self.expression} )"
+        return f"{self.tag_str()}PUSH( {self.expression} )"
 
-    def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
+    def parse(self, state: ParserState, start: int) -> ParseResult | None:
         """Try to parse all parts in sequence starting at `pos`.
 
         Returns:
@@ -59,21 +62,20 @@ class PeekSlice(Expression):
 
     def __init__(
         self,
-        start: Token | None = None,
-        stop: Token | None = None,
-        tag: Token | None = None,
+        start: str | None = None,
+        stop: str | None = None,
+        tag: str | None = None,
     ):
         super().__init__(tag)
         self.start = start
         self.stop = stop
 
     def __str__(self) -> str:
-        # TODO: tag
-        start = self.start.value if self.start else ""
-        stop = self.stop.value if self.stop else ""
-        return f"PEEK[{start}..{stop}]"
+        start = self.start if self.start else ""
+        stop = self.stop if self.stop else ""
+        return f"{self.tag_str()}PEEK[{start}..{stop}]"
 
-    def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
+    def parse(self, state: ParserState, start: int) -> ParseResult | None:
         """Try to parse all parts in sequence starting at `pos`.
 
         Returns:
@@ -86,17 +88,16 @@ class PeekSlice(Expression):
 class Identifier(Expression):
     """A terminal pointing to rule, possibly a built-in rule."""
 
-    __slots__ = ("token",)
+    __slots__ = ("value",)
 
-    def __init__(self, token: Token, tag: Token | None = None):
+    def __init__(self, value: str, tag: str | None = None):
         super().__init__(tag)
-        self.token = token
+        self.value = value
 
     def __str__(self) -> str:
-        # TODO: tag
-        return self.token.value
+        return f"{self.tag_str()}{self.value}"
 
-    def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
+    def parse(self, state: ParserState, start: int) -> ParseResult | None:
         """Try to parse all parts in sequence starting at `pos`.
 
         Returns:
@@ -109,18 +110,17 @@ class Identifier(Expression):
 class Literal(Expression):
     """A terminal string literal."""
 
-    __slots__ = ("token",)
+    __slots__ = ("value",)
 
-    def __init__(self, token: Token, tag: Token | None = None):
+    def __init__(self, value: str, tag: str | None = None):
         super().__init__(tag)
-        self.token = token
-        # TODO: unescape token.value
+        self.value = value
+        # TODO: unescape value
 
     def __str__(self) -> str:
-        # TODO: tag
-        return f'"{self.token.value}"'
+        return f'{self.tag_str()}"{self.value}"'
 
-    def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
+    def parse(self, state: ParserState, start: int) -> ParseResult | None:
         """Try to parse all parts in sequence starting at `pos`.
 
         Returns:
@@ -133,18 +133,17 @@ class Literal(Expression):
 class CaseInsensitiveString(Expression):
     """A terminal string literal that matches case insensitively."""
 
-    __slots__ = ("token",)
+    __slots__ = ("value",)
 
-    def __init__(self, token: Token, tag: Token | None = None):
+    def __init__(self, value: str, tag: str | None = None):
         super().__init__(tag)
-        self.token = token
+        self.value = value
         # TODO: unescape token.value
 
     def __str__(self) -> str:
-        # TODO: tag
-        return f'^"{self.token.value}"'
+        return f'{self.tag_str()}^"{self.value}"'
 
-    def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
+    def parse(self, state: ParserState, start: int) -> ParseResult | None:
         """Try to parse all parts in sequence starting at `pos`.
 
         Returns:
@@ -159,17 +158,16 @@ class Range(Expression):
 
     __slots__ = ("start", "stop")
 
-    def __init__(self, start: Token, stop: Token, tag: Token | None = None):
+    def __init__(self, start: str, stop: str, tag: str | None = None):
         super().__init__(tag)
         self.start = start
         self.stop = stop
         # TODO: unescape start and stop?
 
     def __str__(self) -> str:
-        # TODO: tag
-        return f"'{self.start.value}'..'{self.stop.value}'"
+        return f"{self.tag_str()}'{self.start}'..'{self.stop}'"
 
-    def parse(self, state: ParserState, start: int) -> tuple[Node, int] | None:
+    def parse(self, state: ParserState, start: int) -> ParseResult | None:
         """Try to parse all parts in sequence starting at `pos`.
 
         Returns:
