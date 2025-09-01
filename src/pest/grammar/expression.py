@@ -5,6 +5,7 @@ from __future__ import annotations
 from abc import ABC
 from abc import abstractmethod
 from typing import TYPE_CHECKING
+from typing import Iterable
 from typing import Iterator
 from typing import NamedTuple
 
@@ -56,4 +57,8 @@ class Expression(ABC):
         """Return a string representation of this expressions tag."""
         return f"{self.tag} = " if self.tag else ""
 
-    # TODO: def children() -> list[Expression]
+    def filter_silent(self, successes: Iterable[Success]) -> Iterator[Success]:
+        """Filter out silenced nodes from a success iterable."""
+        for success in successes:
+            if success.node:
+                yield success

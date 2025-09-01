@@ -6,10 +6,9 @@ from typing import TYPE_CHECKING
 from typing import Iterator
 
 from pest.grammar import Expression
-from pest.grammar.expression import Success
-from pest.node import Node
 
 if TYPE_CHECKING:
+    from pest.grammar.expression import Success
     from pest.state import ParserState
 
 
@@ -21,8 +20,8 @@ class Sequence(Expression):
 
     __slots__ = ("left", "right")
 
-    def __init__(self, left: Expression, right: Expression, tag: str | None = None):
-        super().__init__(tag)
+    def __init__(self, left: Expression, right: Expression):
+        super().__init__(None)
         self.left = left
         self.right = right
 
@@ -30,31 +29,21 @@ class Sequence(Expression):
         return f"{self.tag_str()}{self.left} ~ {self.right}"
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
-        """Try to parse left followed by right starting at `start`.
+        """Try to parse left followed by right starting at `start`."""
+        left_results = list(self.left.parse(state, start))
+        if not left_results:
+            return  # left failed
 
-        Yields:
-            - One `Success` if both sides matched.
-            - Nothing if either side fails.
-        """
-        # XXX: This is not right
-        for left_result in self.left.parse(state, start):
-            position = left_result.pos
-            children: list[Node] = []
+        position = left_results[-1].pos
+        implicit_results = list(state.parse_implicit_rules(position))
+        if implicit_results:
+            position = implicit_results[-1].pos
 
-            if left_result.node:
-                children.append(left_result.node)
+        right_results = list(self.right.parse(state, position))
+        if not right_results:
+            return  # right failed
 
-            for ws_result in state.parse_implicit_rules(position):
-                position = ws_result.pos
-                if ws_result.node:
-                    children.append(ws_result.node)
-
-            for right_result in self.right.parse(state, position):
-                position = right_result.pos
-                if right_result.node:
-                    children.append(right_result.node)
-
-                yield Success(
-                    Node(start=start, end=position, children=children, tag=self.tag),
-                    position,
-                )
+        # If both sides matched, yield everything in sequence.
+        yield from self.filter_silent(left_results)
+        yield from self.filter_silent(implicit_results)
+        yield from self.filter_silent(right_results)

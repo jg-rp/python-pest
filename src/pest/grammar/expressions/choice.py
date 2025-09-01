@@ -1,4 +1,4 @@
-"""The choice (`|`) expression."""
+"""The choice (`|`) operator."""
 
 from __future__ import annotations
 
@@ -20,8 +20,8 @@ class Choice(Expression):
 
     __slots__ = ("left", "right")
 
-    def __init__(self, left: Expression, right: Expression, tag: str | None = None):
-        super().__init__(tag)
+    def __init__(self, left: Expression, right: Expression):
+        super().__init__(None)
         self.left = left
         self.right = right
 
@@ -29,20 +29,15 @@ class Choice(Expression):
         return f"{self.tag_str()}{self.left} | {self.right}"
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
-        """Attempt to match this expression against the input at `start`.
-
-        Args:
-            state: The current parser state, including input text and
-                   any memoization or error-tracking structures.
-            start: The index in the input string where parsing begins.
-        """
+        """Attempt to match this expression against the input at `start`."""
         success = False
+
         for left_result in self.left.parse(state, start):
-            yield left_result
             success = True
+            if left_result.node:
+                yield left_result
 
-        # XXX: ?
-        if success:
-            return
-
-        yield from self.right.parse(state, start)
+        if not success:
+            for right_result in self.right.parse(state, start):
+                if right_result.node:
+                    yield right_result
