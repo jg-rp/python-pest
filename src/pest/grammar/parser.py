@@ -82,10 +82,10 @@ class Parser:
         return token
 
     def parse(self) -> Grammar:
-        grammar_doc: list[Token] = []
+        grammar_doc: list[str] = []
         while self.current().kind == TokenKind.GRAMMAR_DOC:
             self.pos += 1
-            grammar_doc.append(self.eat(TokenKind.COMMENT_TEXT))
+            grammar_doc.append(self.eat(TokenKind.COMMENT_TEXT).value)
 
         rules = self.parse_rules()
         return Grammar(rules, grammar_doc)
