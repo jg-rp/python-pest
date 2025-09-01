@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Iterator
 
 from pest.grammar import Expression
 
 if TYPE_CHECKING:
     from pest import ParserState
-    from pest.result import ParseResult
+    from pest.grammar.expression import Success
 
 
 class Group(Expression):
@@ -26,7 +27,7 @@ class Group(Expression):
     def __str__(self) -> str:
         return f"{self.tag_str()}({self.expression})"
 
-    def parse(self, state: ParserState, start: int) -> ParseResult | None:
+    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`.
 
         Returns:

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from pest.grammar.expression import Expression
 
 if TYPE_CHECKING:
-    from pest.result import ParseResult
+    from pest.grammar.expression import Success
     from pest.state import ParserState
 
 
@@ -23,7 +23,7 @@ class PushLiteral(Expression):
     def __str__(self) -> str:
         return f'{self.tag_str()}PUSH("{self.value}")'
 
-    def parse(self, state: ParserState, start: int) -> ParseResult | None:
+    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`.
 
         Returns:
@@ -45,7 +45,7 @@ class Push(Expression):
     def __str__(self) -> str:
         return f"{self.tag_str()}PUSH( {self.expression} )"
 
-    def parse(self, state: ParserState, start: int) -> ParseResult | None:
+    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`.
 
         Returns:
@@ -75,7 +75,7 @@ class PeekSlice(Expression):
         stop = self.stop if self.stop else ""
         return f"{self.tag_str()}PEEK[{start}..{stop}]"
 
-    def parse(self, state: ParserState, start: int) -> ParseResult | None:
+    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`.
 
         Returns:
@@ -97,7 +97,7 @@ class Identifier(Expression):
     def __str__(self) -> str:
         return f"{self.tag_str()}{self.value}"
 
-    def parse(self, state: ParserState, start: int) -> ParseResult | None:
+    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`.
 
         Returns:
@@ -120,7 +120,7 @@ class Literal(Expression):
     def __str__(self) -> str:
         return f'{self.tag_str()}"{self.value}"'
 
-    def parse(self, state: ParserState, start: int) -> ParseResult | None:
+    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`.
 
         Returns:
@@ -143,7 +143,7 @@ class CaseInsensitiveString(Expression):
     def __str__(self) -> str:
         return f'{self.tag_str()}^"{self.value}"'
 
-    def parse(self, state: ParserState, start: int) -> ParseResult | None:
+    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`.
 
         Returns:
@@ -167,7 +167,7 @@ class Range(Expression):
     def __str__(self) -> str:
         return f"{self.tag_str()}'{self.start}'..'{self.stop}'"
 
-    def parse(self, state: ParserState, start: int) -> ParseResult | None:
+    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`.
 
         Returns:

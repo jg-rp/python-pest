@@ -5,9 +5,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from dataclasses import field
 from typing import TYPE_CHECKING
+from typing import Iterator
 
 if TYPE_CHECKING:
-    from pest.result import ParseResult
+    from pest.grammar.expression import Success
 
     from .grammar import Grammar
 
@@ -25,7 +26,7 @@ class ParserState:
     atomic_depth: int = 0
     stack: list[object] = field(default_factory=list)
 
-    def parse_implicit_rules(self, pos: int) -> list[ParseResult]:
+    def parse_implicit_rules(self, pos: int) -> Iterator[Success]:
         """Parse any implicit rules (`WHITESPACE` and `COMMENT`) starting at `pos`.
 
         Returns a list of ParseResult instances. Each result represents one
@@ -33,14 +34,14 @@ class ParserState:
         the rule was silent.
         """
         if self.atomic_depth > 0:
-            return []
+            return
 
-        results: list[ParseResult] = []
+        # TODO: combine and cache whitespace and comment rules in to one?
         whitespace_rule = self.grammar.rules.get("WHITESPACE")
         comment_rule = self.grammar.rules.get("COMMENT")
 
         if not whitespace_rule and not comment_rule:
-            return []
+            return
 
         while True:
             new_pos = pos
@@ -49,14 +50,14 @@ class ParserState:
             if whitespace_rule:
                 result = whitespace_rule.parse(self, new_pos)
                 if result is not None:
-                    results.append(result)
+                    yield result
                     new_pos = result.pos
                     matched = True
 
             if comment_rule:
                 result = comment_rule.parse(self, new_pos)
                 if result is not None:
-                    results.append(result)
+                    yield result
                     new_pos = result.pos
                     matched = True
 
@@ -64,8 +65,6 @@ class ParserState:
                 break
 
             pos = new_pos
-
-        return results
 
     def push(self, value: object) -> None:
         """Push a value onto the stack."""

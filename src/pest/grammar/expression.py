@@ -1,10 +1,23 @@
 """Abstract base class for all grammar expressions."""
 
+from __future__ import annotations
+
 from abc import ABC
 from abc import abstractmethod
+from typing import TYPE_CHECKING
+from typing import Iterator
+from typing import NamedTuple
 
-from pest.result import ParseResult
-from pest.state import ParserState
+if TYPE_CHECKING:
+    from pest.node import Node
+    from pest.state import ParserState
+
+
+class Success(NamedTuple):
+    """A successful parse of an expression."""
+
+    node: Node | None
+    pos: int
 
 
 class Expression(ABC):
@@ -27,18 +40,16 @@ class Expression(ABC):
         self.tag = tag
 
     @abstractmethod
-    def parse(self, state: ParserState, start: int) -> ParseResult | None:
+    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Attempt to match this expression against the input at `start`.
+
+        Yield instances of `Success` for each parsed node.
+        Yield nothing if parsing fails.
 
         Args:
             state: The current parser state, including input text and
                    any memoization or error-tracking structures.
             start: The index in the input string where parsing begins.
-
-        Returns:
-            If parsing succeeds, a `Node` representing the result of the
-            matched expression and any child expressions. Or `None` if the
-            expression fails to match at `pos`.
         """
 
     def tag_str(self) -> str:

@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Iterator
 
 from pest.grammar import Expression
+from pest.grammar.expression import Success
 from pest.node import Node
-from pest.result import ParseResult
 
 if TYPE_CHECKING:
     from pest.state import ParserState
@@ -28,30 +29,32 @@ class Sequence(Expression):
     def __str__(self) -> str:
         return f"{self.tag_str()}{self.left} ~ {self.right}"
 
-    def parse(self, state: ParserState, start: int) -> ParseResult | None:
-        """Try to parse all parts in sequence starting at `pos`.
+    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
+        """Try to parse left followed by right starting at `start`.
 
-        Returns:
-            - (Node, new_pos) if all parts match in order.
-            - None if any part fails.
+        Yields:
+            - One `Success` if both sides matched.
+            - Nothing if either side fails.
         """
-        children: list[Node] = []
-        position = start
+        # XXX: This is not right
+        for left_result in self.left.parse(state, start):
+            position = left_result.pos
+            children: list[Node] = []
 
-        result = self.left.parse(state, position)
-        if result and result.node:
-            children.append(result.node)
-            position = result.pos
-        else:
-            return None
+            if left_result.node:
+                children.append(left_result.node)
 
-        # TODO: skip if WHITESPACE and/or COMMENT
+            for ws_result in state.parse_implicit_rules(position):
+                position = ws_result.pos
+                if ws_result.node:
+                    children.append(ws_result.node)
 
-        result = self.right.parse(state, position)
-        if result and result.node:
-            children.append(result.node)
-            position = result.pos
-        else:
-            return None
+            for right_result in self.right.parse(state, position):
+                position = right_result.pos
+                if right_result.node:
+                    children.append(right_result.node)
 
-        return ParseResult(Node(start=start, end=position, children=children), position)
+                yield Success(
+                    Node(start=start, end=position, children=children, tag=self.tag),
+                    position,
+                )

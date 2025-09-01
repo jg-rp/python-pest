@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Iterator
 
 from pest.grammar import Expression
+from pest.grammar.expression import Success
 from pest.node import Node
-from pest.result import ParseResult
 
 if TYPE_CHECKING:
     from pest.state import ParserState
@@ -35,18 +36,13 @@ class Rule(Expression):
         modifier = self.modifier if self.modifier else ""
         return f"{doc}{self.name} = {modifier}{{ {self.expression} }}"
 
-    def parse(self, state: ParserState, start: int) -> ParseResult | None:
+    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Attempt to match this expression against the input at `start`.
 
         Args:
             state: The current parser state, including input text and
                    any memoization or error-tracking structures.
             start: The index in the input string where parsing begins.
-
-        Returns:
-            If parsing succeeds, a `Node` representing the result of the
-            matched expression and any child expressions. Or `None` if the
-            expression fails to match at `pos`.
         """
         restore_atomic_depth = state.atomic_depth
 
@@ -55,33 +51,36 @@ class Rule(Expression):
         elif self.modifier == "!":
             state.atomic_depth = 0
 
-        try:
-            result = self.expression.parse(state, start)
-            if result is None:
-                return None
+        results = list(self.expression.parse(state, start))
+        if not results:
+            return
 
-            node, end = result.node, result.pos
+        end = results[-1].pos
 
+        if self.modifier == "_":
             # Silent rule succeeds, but no node is returned.
-            if self.modifier == "_":
-                return ParseResult(node=None, pos=end)
-
+            yield Success(None, end)
+        elif self.modifier == "$":
             # Compound-atomic rule discards children
-            if self.modifier == "$":
-                return ParseResult(
-                    node=Node(rule=self, start=start, end=end, children=[]),
-                    pos=end,
-                )
-
-            return ParseResult(
-                node=Node(
+            yield Success(
+                Node(
                     rule=self,
                     start=start,
                     end=end,
-                    children=[node] if node else [],
+                    children=[],
                 ),
                 pos=end,
             )
-        finally:
-            # Restore atomic depth to what it was before this rule
-            state.atomic_depth = restore_atomic_depth
+        else:
+            yield Success(
+                Node(
+                    rule=self,
+                    start=start,
+                    end=end,
+                    children=[success.node for success in results if success.node],
+                ),
+                pos=end,
+            )
+
+        # Restore atomic depth to what it was before this rule
+        state.atomic_depth = restore_atomic_depth

@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Iterator
 
 from pest.grammar import Expression
-from pest.node import Node
-from pest.result import ParseResult
 
 if TYPE_CHECKING:
     from pest import ParserState
+    from pest.grammar.expression import Success
 
 
 class Choice(Expression):
@@ -28,23 +28,21 @@ class Choice(Expression):
     def __str__(self) -> str:
         return f"{self.tag_str()}{self.left} | {self.right}"
 
-    def parse(self, state: ParserState, start: int) -> ParseResult | None:
-        """Try to parse left then right in sequence starting at `pos`.
+    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
+        """Attempt to match this expression against the input at `start`.
 
-        Returns:
-            - (Node, new_pos) if all parts match in order.
-            - None if any part fails.
+        Args:
+            state: The current parser state, including input text and
+                   any memoization or error-tracking structures.
+            start: The index in the input string where parsing begins.
         """
-        result = self.left.parse(state, start)
-        if result and result.node:
-            return ParseResult(
-                Node(start=start, end=result.pos, children=[result.node]), result.pos
-            )
+        success = False
+        for left_result in self.left.parse(state, start):
+            yield left_result
+            success = True
 
-        result = self.right.parse(state, start)
-        if result and result.node:
-            return ParseResult(
-                Node(start=start, end=result.pos, children=[result.node]), result.pos
-            )
+        # XXX: ?
+        if success:
+            return
 
-        return None
+        yield from self.right.parse(state, start)

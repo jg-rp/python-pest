@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Iterator
 
 from pest.grammar import Expression
+from pest.grammar.expression import Success
 
 if TYPE_CHECKING:
     from pest import ParserState
-    from pest.result import ParseResult
-
-# TODO: skip if WHITESPACE and/or COMMENT
 
 
 class Optional(Expression):
@@ -28,14 +27,19 @@ class Optional(Expression):
     def __str__(self) -> str:
         return f"{self.tag_str()}{self.expression}?"
 
-    def parse(self, state: ParserState, start: int) -> ParseResult | None:
-        """Try to parse all parts in sequence starting at `pos`.
+    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
+        """Attempt to match this expression against the input at `start`.
 
-        Returns:
-            - (Node, new_pos) if all parts match in order.
-            - None if any part fails.
+        Args:
+            state: The current parser state, including input text and
+                   any memoization or error-tracking structures.
+            start: The index in the input string where parsing begins.
         """
-        # TODO:
+        result = next(self.expression.parse(state, start), None)
+        if result:
+            yield result
+        else:
+            yield Success(None, start)
 
 
 class Repeat(Expression):
@@ -53,14 +57,19 @@ class Repeat(Expression):
     def __str__(self) -> str:
         return f"{self.tag_str()}{self.expression}*"
 
-    def parse(self, state: ParserState, start: int) -> ParseResult | None:
-        """Try to parse all parts in sequence starting at `pos`.
+    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
+        """Try to parse all parts in sequence starting at `pos`."""
+        position = start
+        while True:
+            result = next(self.expression.parse(state, position), None)
+            if not result:
+                break
+            position = result.pos
+            yield result
 
-        Returns:
-            - (Node, new_pos) if all parts match in order.
-            - None if any part fails.
-        """
-        # TODO:
+            for success in state.parse_implicit_rules(position):
+                position = success.pos
+                yield success
 
 
 class RepeatOnce(Expression):
@@ -78,7 +87,7 @@ class RepeatOnce(Expression):
     def __str__(self) -> str:
         return f"{self.tag_str()}{self.expression}+"
 
-    def parse(self, state: ParserState, start: int) -> ParseResult | None:
+    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`.
 
         Returns:
@@ -107,7 +116,7 @@ class RepeatExact(Expression):
     def __str__(self) -> str:
         return f"{self.tag_str()}{self.expression}{{{self.number}}}"
 
-    def parse(self, state: ParserState, start: int) -> ParseResult | None:
+    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`.
 
         Returns:
@@ -136,7 +145,7 @@ class RepeatMin(Expression):
     def __str__(self) -> str:
         return f"{self.tag_str()}{self.expression}{{{self.number},}}"
 
-    def parse(self, state: ParserState, start: int) -> ParseResult | None:
+    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`.
 
         Returns:
@@ -165,7 +174,7 @@ class RepeatMax(Expression):
     def __str__(self) -> str:
         return f"{self.tag_str()}{self.expression}{{,{self.number}}}"
 
-    def parse(self, state: ParserState, start: int) -> ParseResult | None:
+    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`.
 
         Returns:
@@ -198,7 +207,7 @@ class RepeatRange(Expression):
     def __str__(self) -> str:
         return f"{self.tag_str()}{self.expression}{{{self.min}, {self.max}}}"
 
-    def parse(self, state: ParserState, start: int) -> ParseResult | None:
+    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`.
 
         Returns:
