@@ -69,8 +69,7 @@ class Repeat(Expression):
 
             for success in state.parse_implicit_rules(position):
                 position = success.pos
-                if success.pair:
-                    yield success
+                yield success
 
         # Always succeed.
         # TODO: or a flag, in case previous successes don't consume anything.
@@ -95,31 +94,29 @@ class RepeatOnce(Expression):
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
-        result = next(self.expression.parse(state, start), None)
+        results = list(self.expression.parse(state, start))
 
-        if not result:
+        if not results:
             return
 
-        yield result
+        yield from results
 
-        position = result.pos
+        position = results[-1].pos
 
         for success in state.parse_implicit_rules(position):
             position = success.pos
-            if success.pair:
-                yield success
+            yield success
 
         while True:
-            result = next(self.expression.parse(state, position), None)
-            if not result:
+            results = list(self.expression.parse(state, position))
+            if not results:
                 break
-            position = result.pos
-            yield result
+            position = results[-1].pos
+            yield from results
 
             for success in state.parse_implicit_rules(position):
                 position = success.pos
-                if success.pair:
-                    yield success
+                yield success
 
 
 class RepeatExact(Expression):
@@ -158,7 +155,7 @@ class RepeatExact(Expression):
                 successes.append(result)
 
         if len(successes) == self.number:
-            yield from self.filter_silent(successes)
+            yield from successes
 
 
 class RepeatMin(Expression):
@@ -197,7 +194,7 @@ class RepeatMin(Expression):
                 successes.append(result)
 
         if len(successes) >= self.number:
-            yield from self.filter_silent(successes)
+            yield from successes
 
 
 class RepeatMax(Expression):
@@ -236,7 +233,7 @@ class RepeatMax(Expression):
                 successes.append(result)
 
         if len(successes) <= self.number:
-            yield from self.filter_silent(successes)
+            yield from successes
 
 
 class RepeatRange(Expression):
@@ -277,4 +274,4 @@ class RepeatRange(Expression):
                 successes.append(result)
 
         if len(successes) >= self.min and len(successes) <= self.max:
-            yield from self.filter_silent(successes)
+            yield from successes

@@ -57,8 +57,8 @@ class Expression(ABC):
         """Return a string representation of this expressions tag."""
         return f"{self.tag} = " if self.tag else ""
 
-    def filter_silent(self, successes: Iterable[Success]) -> Iterator[Success]:
-        """Filter out silenced nodes from a success iterable."""
-        for success in successes:
-            if success.pair:
-                yield success
+    # def filter_silent(self, successes: Iterable[Success]) -> Iterator[Success]:
+    #     """Filter out silenced nodes from a success iterable."""
+    #     for success in successes:
+    #         if success.pair:
+    #             yield success

@@ -51,7 +51,7 @@ class Push(Expression):
             return
 
         state.push(state.input[start : result[-1].pos])
-        yield from self.filter_silent(result)
+        yield from result
 
 
 class PeekSlice(Expression):
@@ -104,9 +104,7 @@ class Identifier(Expression):
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
         # Assumes the rule exists.
-        yield from self.filter_silent(
-            state.parser.rules[self.value].parse(state, start)
-        )
+        yield from state.parser.rules[self.value].parse(state, start)
 
 
 class Literal(Expression):

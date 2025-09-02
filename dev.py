@@ -1,14 +1,15 @@
-from pest.grammar import Parser
-from pest.grammar import tokenize
+from pest import Parser
 
-with open("tests/grammars/grammar.pest", encoding="utf-8") as fd:
-    source = fd.read()
 
-tokens = tokenize(source)
-parser = Parser(tokens)
-grammar = parser.parse()
+with open("tests/grammars/http.pest", encoding="utf-8") as fd:
+    grammar = fd.read()
 
-print(grammar)
+parser = Parser.from_grammar(grammar)
+
+pairs = parser.parse("version", "1.1")
+
+for token in pairs.tokens():
+    print(token)
 
 
 # [

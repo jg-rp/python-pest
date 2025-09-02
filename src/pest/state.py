@@ -2,18 +2,17 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from dataclasses import field
 from typing import TYPE_CHECKING
 from typing import Iterator
 
 if TYPE_CHECKING:
+    from pest.grammar.expression import Expression
     from pest.grammar.expression import Success
 
     from .parser import Parser
 
 
-@dataclass(slots=True)
 class ParserState:
     """Holds parsing state.
 
@@ -21,10 +20,27 @@ class ParserState:
     grammar operations.
     """
 
-    input: str
-    parser: Parser
-    atomic_depth: int = 0
-    stack: list[str] = field(default_factory=list)
+    __slots__ = ("parser", "input", "atomic_depth", "stack", "cache")
+
+    def __init__(self, parser: Parser, input_: str) -> None:
+        self.parser = parser
+        self.input = input_
+        self.atomic_depth = 0
+        self.stack: list[str] = field(default_factory=list)
+        self.cache: dict[tuple[int, Expression], list[Success] | None] = {}
+
+    def memoized_parse(self, expr: Expression, pos: int) -> Iterator[Success]:
+        """Parse `expr` or return a cached parse result."""
+        key = (pos, expr)
+        if key in self.cache:
+            cached = self.cache[key]
+            if cached is not None:
+                yield from cached
+            return
+
+        results = list(expr.parse(self, pos))
+        self.cache[key] = results if results else None
+        yield from results
 
     def parse_implicit_rules(self, pos: int) -> Iterator[Success]:
         """Parse any implicit rules (`WHITESPACE` and `COMMENT`) starting at `pos`.

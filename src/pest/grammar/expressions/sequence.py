@@ -44,6 +44,6 @@ class Sequence(Expression):
             return  # right failed
 
         # If both sides matched, yield everything in sequence.
-        yield from self.filter_silent(left_results)
-        yield from self.filter_silent(implicit_results)
-        yield from self.filter_silent(right_results)
+        yield from left_results
+        yield from implicit_results
+        yield from right_results
