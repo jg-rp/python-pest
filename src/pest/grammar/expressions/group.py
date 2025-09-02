@@ -8,8 +8,8 @@ from typing import Iterator
 from pest.grammar import Expression
 
 if TYPE_CHECKING:
-    from pest import ParserState
     from pest.grammar.expression import Success
+    from pest.state import ParserState
 
 
 class Group(Expression):

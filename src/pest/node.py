@@ -43,8 +43,8 @@ class Node:
 
     start: int
     end: int
+    rule: Rule
     children: list[Node] = field(default_factory=list)
-    rule: Rule | None = None  # forward reference
     tag: str | None = None
     source: str | None = None
 

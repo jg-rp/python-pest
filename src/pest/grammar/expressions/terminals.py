@@ -105,7 +105,7 @@ class Identifier(Expression):
         """Try to parse all parts in sequence starting at `pos`."""
         # Assumes the rule exists.
         yield from self.filter_silent(
-            state.grammar.rules[self.value].parse(state, start)
+            state.parser.rules[self.value].parse(state, start)
         )
 
 

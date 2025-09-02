@@ -9,7 +9,7 @@ from pest.grammar import Expression
 from pest.grammar.expression import Success
 
 if TYPE_CHECKING:
-    from pest import ParserState
+    from pest.state import ParserState
 
 
 class Optional(Expression):

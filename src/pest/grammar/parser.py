@@ -22,7 +22,6 @@ from .expressions import RepeatOnce
 from .expressions import RepeatRange
 from .expressions import Rule
 from .expressions import Sequence
-from .grammar import Grammar
 from .tokens import Token
 from .tokens import TokenKind
 
@@ -81,14 +80,13 @@ class Parser:
             )
         return token
 
-    def parse(self) -> Grammar:
+    def parse(self) -> tuple[dict[str, Rule], list[str]]:
         grammar_doc: list[str] = []
         while self.current().kind == TokenKind.GRAMMAR_DOC:
             self.pos += 1
             grammar_doc.append(self.eat(TokenKind.COMMENT_TEXT).value)
 
-        rules = self.parse_rules()
-        return Grammar(rules, grammar_doc)
+        return self.parse_rules(), grammar_doc
 
     def parse_rules(self) -> dict[str, Rule]:
         rules: dict[str, Rule] = {}

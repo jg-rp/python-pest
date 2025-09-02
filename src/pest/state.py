@@ -10,7 +10,7 @@ from typing import Iterator
 if TYPE_CHECKING:
     from pest.grammar.expression import Success
 
-    from .grammar import Grammar
+    from .parser import Parser
 
 
 @dataclass(slots=True)
@@ -22,7 +22,7 @@ class ParserState:
     """
 
     input: str
-    grammar: Grammar
+    parser: Parser
     atomic_depth: int = 0
     stack: list[str] = field(default_factory=list)
 
@@ -37,8 +37,8 @@ class ParserState:
             return
 
         # TODO: combine and cache whitespace and comment rules in to one?
-        whitespace_rule = self.grammar.rules.get("WHITESPACE")
-        comment_rule = self.grammar.rules.get("COMMENT")
+        whitespace_rule = self.parser.rules.get("WHITESPACE")
+        comment_rule = self.parser.rules.get("COMMENT")
 
         if not whitespace_rule and not comment_rule:
             return
