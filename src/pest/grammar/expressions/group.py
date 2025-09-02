@@ -34,4 +34,5 @@ class Group(Expression):
             - (Node, new_pos) if all parts match in order.
             - None if any part fails.
         """
-        # TODO:
+        # XXX: Do we need a `Group` expression?
+        yield from self.expression.parse(state, start)

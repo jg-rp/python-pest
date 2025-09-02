@@ -135,9 +135,9 @@ class Parser:
         left: Expression
 
         if left_kind == TokenKind.STRING:
-            left = Literal(self.next().value, tag=tag)
+            left = Literal(self.next().value)
         elif left_kind == TokenKind.STRING_CI:
-            left = CaseInsensitiveString(self.next().value, tag=tag)
+            left = CaseInsensitiveString(self.next().value)
         elif left_kind == TokenKind.LPAREN:
             self.pos += 1
             left = Group(self.parse_expression(), tag=tag)
@@ -160,6 +160,7 @@ class Parser:
         elif left_kind == TokenKind.CHAR:
             start = self.eat(TokenKind.CHAR).value
             self.eat(TokenKind.RANGE_OP)
+            # TODO: optimize range followed by repetition
             left = Range(start, self.eat(TokenKind.CHAR).value, tag=tag)
         elif left_kind == TokenKind.POSITIVE_PREDICATE:
             self.pos += 1
@@ -203,8 +204,6 @@ class Parser:
     def parse_postfix_expression(self, expr: Expression) -> Expression:
         token = self.current()
         kind = token.kind
-
-        # XXX: attach tag to postfix expression or inner expression?
 
         if kind == TokenKind.OPTION_OP:
             self.pos += 1

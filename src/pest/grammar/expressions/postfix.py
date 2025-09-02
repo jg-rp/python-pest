@@ -20,12 +20,12 @@ class Optional(Expression):
 
     __slots__ = ("expression",)
 
-    def __init__(self, expression: Expression, tag: str | None = None):
-        super().__init__(tag)
+    def __init__(self, expression: Expression):
+        super().__init__(None)
         self.expression = expression
 
     def __str__(self) -> str:
-        return f"{self.tag_str()}{self.expression}?"
+        return f"{self.expression}?"
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Attempt to match this expression against the input at `start`.
@@ -50,12 +50,12 @@ class Repeat(Expression):
 
     __slots__ = ("expression",)
 
-    def __init__(self, expression: Expression, tag: str | None = None):
-        super().__init__(tag)
+    def __init__(self, expression: Expression):
+        super().__init__(None)
         self.expression = expression
 
     def __str__(self) -> str:
-        return f"{self.tag_str()}{self.expression}*"
+        return f"{self.expression}*"
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
@@ -69,7 +69,13 @@ class Repeat(Expression):
 
             for success in state.parse_implicit_rules(position):
                 position = success.pos
-                yield success
+                if success.node:
+                    yield success
+
+        # Always succeed.
+        # TODO: or a flag, in case previous successes don't consume anything.
+        if position != start:
+            yield Success(None, start)
 
 
 class RepeatOnce(Expression):
@@ -88,13 +94,32 @@ class RepeatOnce(Expression):
         return f"{self.tag_str()}{self.expression}+"
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
-        """Try to parse all parts in sequence starting at `pos`.
+        """Try to parse all parts in sequence starting at `pos`."""
+        result = next(self.expression.parse(state, start), None)
 
-        Returns:
-            - (Node, new_pos) if all parts match in order.
-            - None if any part fails.
-        """
-        # TODO:
+        if not result:
+            return
+
+        yield result
+
+        position = result.pos
+
+        for success in state.parse_implicit_rules(position):
+            position = success.pos
+            if success.node:
+                yield success
+
+        while True:
+            result = next(self.expression.parse(state, position), None)
+            if not result:
+                break
+            position = result.pos
+            yield result
+
+            for success in state.parse_implicit_rules(position):
+                position = success.pos
+                if success.node:
+                    yield success
 
 
 class RepeatExact(Expression):
@@ -108,22 +133,32 @@ class RepeatExact(Expression):
         "number",
     )
 
-    def __init__(self, expression: Expression, number: int, tag: str | None = None):
-        super().__init__(tag)
+    def __init__(self, expression: Expression, number: int):
+        super().__init__(None)
         self.expression = expression
         self.number = number
 
     def __str__(self) -> str:
-        return f"{self.tag_str()}{self.expression}{{{self.number}}}"
+        return f"{self.expression}{{{self.number}}}"
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
-        """Try to parse all parts in sequence starting at `pos`.
+        """Try to parse all parts in sequence starting at `pos`."""
+        successes: list[Success] = []
+        position = start
 
-        Returns:
-            - (Node, new_pos) if all parts match in order.
-            - None if any part fails.
-        """
-        # TODO:
+        while True:
+            result = next(self.expression.parse(state, position), None)
+            if not result:
+                break
+            position = result.pos
+            successes.append(result)
+
+            for success in state.parse_implicit_rules(position):
+                position = success.pos
+                successes.append(result)
+
+        if len(successes) == self.number:
+            yield from self.filter_silent(successes)
 
 
 class RepeatMin(Expression):
@@ -137,22 +172,32 @@ class RepeatMin(Expression):
         "number",
     )
 
-    def __init__(self, expression: Expression, number: int, tag: str | None = None):
-        super().__init__(tag)
+    def __init__(self, expression: Expression, number: int):
+        super().__init__(None)
         self.expression = expression
         self.number = number
 
     def __str__(self) -> str:
-        return f"{self.tag_str()}{self.expression}{{{self.number},}}"
+        return f"{self.expression}{{{self.number},}}"
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
-        """Try to parse all parts in sequence starting at `pos`.
+        """Try to parse all parts in sequence starting at `pos`."""
+        successes: list[Success] = []
+        position = start
 
-        Returns:
-            - (Node, new_pos) if all parts match in order.
-            - None if any part fails.
-        """
-        # TODO:
+        while True:
+            result = next(self.expression.parse(state, position), None)
+            if not result:
+                break
+            position = result.pos
+            successes.append(result)
+
+            for success in state.parse_implicit_rules(position):
+                position = success.pos
+                successes.append(result)
+
+        if len(successes) >= self.number:
+            yield from self.filter_silent(successes)
 
 
 class RepeatMax(Expression):
@@ -166,22 +211,32 @@ class RepeatMax(Expression):
         "number",
     )
 
-    def __init__(self, expression: Expression, number: int, tag: str | None = None):
-        super().__init__(tag)
+    def __init__(self, expression: Expression, number: int):
+        super().__init__(None)
         self.expression = expression
         self.number = number
 
     def __str__(self) -> str:
-        return f"{self.tag_str()}{self.expression}{{,{self.number}}}"
+        return f"{self.expression}{{,{self.number}}}"
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
-        """Try to parse all parts in sequence starting at `pos`.
+        """Try to parse all parts in sequence starting at `pos`."""
+        successes: list[Success] = []
+        position = start
 
-        Returns:
-            - (Node, new_pos) if all parts match in order.
-            - None if any part fails.
-        """
-        # TODO:
+        while True:
+            result = next(self.expression.parse(state, position), None)
+            if not result:
+                break
+            position = result.pos
+            successes.append(result)
+
+            for success in state.parse_implicit_rules(position):
+                position = success.pos
+                successes.append(result)
+
+        if len(successes) <= self.number:
+            yield from self.filter_silent(successes)
 
 
 class RepeatRange(Expression):
@@ -196,22 +251,30 @@ class RepeatRange(Expression):
         "max",
     )
 
-    def __init__(
-        self, expression: Expression, min_: int, max_: int, tag: str | None = None
-    ):
-        super().__init__(tag)
+    def __init__(self, expression: Expression, min_: int, max_: int):
+        super().__init__(None)
         self.expression = expression
         self.min = min_
         self.max = max_
 
     def __str__(self) -> str:
-        return f"{self.tag_str()}{self.expression}{{{self.min}, {self.max}}}"
+        return f"{self.expression}{{{self.min}, {self.max}}}"
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
-        """Try to parse all parts in sequence starting at `pos`.
+        """Try to parse all parts in sequence starting at `pos`."""
+        successes: list[Success] = []
+        position = start
 
-        Returns:
-            - (Node, new_pos) if all parts match in order.
-            - None if any part fails.
-        """
-        # TODO:
+        while True:
+            result = next(self.expression.parse(state, position), None)
+            if not result:
+                break
+            position = result.pos
+            successes.append(result)
+
+            for success in state.parse_implicit_rules(position):
+                position = success.pos
+                successes.append(result)
+
+        if len(successes) >= self.min and len(successes) <= self.max:
+            yield from self.filter_silent(successes)

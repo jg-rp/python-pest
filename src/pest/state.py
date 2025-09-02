@@ -24,7 +24,7 @@ class ParserState:
     input: str
     grammar: Grammar
     atomic_depth: int = 0
-    stack: list[object] = field(default_factory=list)
+    stack: list[str] = field(default_factory=list)
 
     def parse_implicit_rules(self, pos: int) -> Iterator[Success]:
         """Parse any implicit rules (`WHITESPACE` and `COMMENT`) starting at `pos`.
@@ -48,25 +48,25 @@ class ParserState:
             matched = False
 
             if whitespace_rule:
-                result = whitespace_rule.parse(self, new_pos)
-                if result is not None:
-                    yield result
-                    new_pos = result.pos
+                for result in whitespace_rule.parse(self, new_pos):
                     matched = True
+                    new_pos = result.pos
+                    if result.node:
+                        yield result
 
             if comment_rule:
-                result = comment_rule.parse(self, new_pos)
-                if result is not None:
-                    yield result
-                    new_pos = result.pos
+                for result in comment_rule.parse(self, new_pos):
                     matched = True
+                    new_pos = result.pos
+                    if result.node:
+                        yield result
 
             if not matched:
                 break
 
             pos = new_pos
 
-    def push(self, value: object) -> None:
+    def push(self, value: str) -> None:
         """Push a value onto the stack."""
         self.stack.append(value)
 
@@ -76,7 +76,7 @@ class ParserState:
             raise IndexError("Cannot drop more elements than present in stack")
         del self.stack[-n:]
 
-    def peek(self) -> object | None:
+    def peek(self) -> str | None:
         """Peek at the top element of the stack.
 
         Returns:
@@ -84,9 +84,7 @@ class ParserState:
         """
         return self.stack[-1] if self.stack else None
 
-    def peek_slice(
-        self, start: int | None = None, end: int | None = None
-    ) -> list[object]:
+    def peek_slice(self, start: int | None = None, end: int | None = None) -> list[str]:
         """Peek at a slice of the stack, similar to pest's `PEEK(start..end)`.
 
         Args:

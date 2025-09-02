@@ -6,9 +6,9 @@ from typing import TYPE_CHECKING
 from typing import Iterator
 
 from pest.grammar import Expression
+from pest.grammar.expression import Success
 
 if TYPE_CHECKING:
-    from pest.grammar.expression import Success
     from pest.state import ParserState
 
 
@@ -28,13 +28,9 @@ class PositivePredicate(Expression):
         return f"{self.tag_str()}&{self.expression}"
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
-        """Try to parse all parts in sequence starting at `pos`.
-
-        Returns:
-            - (Node, new_pos) if all parts match in order.
-            - None if any part fails.
-        """
-        # TODO:
+        """Try to parse all parts in sequence starting at `pos`."""
+        if self.expression.parse(state, start):
+            yield Success(None, start)
 
 
 class NegativePredicate(Expression):
@@ -53,10 +49,6 @@ class NegativePredicate(Expression):
         return f"{self.tag_str()}!{self.expression}"
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
-        """Try to parse all parts in sequence starting at `pos`.
-
-        Returns:
-            - (Node, new_pos) if all parts match in order.
-            - None if any part fails.
-        """
-        # TODO:
+        """Try to parse all parts in sequence starting at `pos`."""
+        if not self.expression.parse(state, start):
+            yield Success(None, start)

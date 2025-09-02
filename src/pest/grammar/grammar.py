@@ -17,6 +17,8 @@ class Grammar:
         self.rules = rules
         self.doc = doc
         # TODO: built-in rules
+        # All built-in rules are silent
+        # - PEEK_ALL
 
     def __str__(self) -> str:
         doc = "".join(f"//!{line}\n" for line in self.doc) + "\n" if self.doc else ""
