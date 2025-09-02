@@ -38,6 +38,6 @@ class Parser:
         state = ParserState(input_, self)
         results = list(self.rules[rule].parse(state, 0))
         if results:
-            return Pairs([result.node for result in results if result.node])
+            return Pairs([result.pair for result in results if result.pair])
 
         raise PestParserError(f"could not parse input for rule {rule!r}")

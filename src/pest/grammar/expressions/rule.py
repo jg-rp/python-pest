@@ -7,7 +7,7 @@ from typing import Iterator
 
 from pest.grammar import Expression
 from pest.grammar.expression import Success
-from pest.node import Node
+from pest.pairs import Pair
 
 if TYPE_CHECKING:
     from pest.state import ParserState
@@ -63,7 +63,7 @@ class Rule(Expression):
         elif self.modifier == "$":
             # Compound-atomic rule discards children
             yield Success(
-                Node(
+                Pair(
                     rule=self,
                     start=start,
                     end=end,
@@ -73,11 +73,11 @@ class Rule(Expression):
             )
         else:
             yield Success(
-                Node(
+                Pair(
                     rule=self,
                     start=start,
                     end=end,
-                    children=[success.node for success in results if success.node],
+                    children=[success.pair for success in results if success.pair],
                 ),
                 pos=end,
             )

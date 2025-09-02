@@ -34,10 +34,10 @@ class Choice(Expression):
 
         for left_result in self.left.parse(state, start):
             success = True
-            if left_result.node:
+            if left_result.pair:
                 yield left_result
 
         if not success:
             for right_result in self.right.parse(state, start):
-                if right_result.node:
+                if right_result.pair:
                     yield right_result

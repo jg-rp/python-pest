@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Iterator
+from typing import NamedTuple
 
 if TYPE_CHECKING:
     from .grammar.expressions.rule import Rule
-    from .node import Node
 
 
 class Token:
@@ -39,47 +39,68 @@ class End(Token):
         return f"End(rule={self.rule.name!r}, pos={self.pos})"
 
 
+class Span(NamedTuple):
+    """A half-open interval [start, end) into the input string."""
+
+    start: int
+    end: int
+
+    def text(self, source: str) -> str:
+        """Return the slice of the source corresponding to this span."""
+        return source[self.start : self.end]
+
+
 class Pair:
-    """A single parsed element, corresponding to one rule match."""
+    __slots__ = ("rule", "start", "end", "children", "tag")
 
-    __slots__ = ("rule", "span", "_node")
+    def __init__(
+        self,
+        start: int,
+        end: int,
+        rule: Rule,
+        children: list[Pair] | None = None,
+        tag: str | None = None,
+    ):
+        self.rule = rule
+        self.start = start
+        self.end = end
+        self.children = children or []
+        self.tag = tag
 
-    def __init__(self, node: Node):
-        self._node = node
-        self.rule = node.rule
-        self.span = node.span()
+    # XXX: __str__
+    # TODO: get input from rule.parser?
+    # or store input on Pair?
 
-    def as_str(self, input_str: str) -> str:
-        """Return the substring of the original input matched by this pair."""
-        start, end = self.span
-        return input_str[start:end]
+    def as_str(self, input_: str) -> str:
+        return input_[self.start : self.end]
 
-    def into_inner(self) -> "Pairs":
-        """Return the child pairs of this pair."""
-        return Pairs(self._node.children)
+    # TODO: __iter__
+
+    def inner(self) -> Pairs:
+        return Pairs(self.children)
+
+    def tokens(self) -> Iterator[Token]:
+        yield Start(self.rule, self.start)
+        for child in self.children:
+            yield from child.tokens()
+        yield End(self.rule, self.end)
+
+    def span(self) -> Span:
+        """Return the (start, end) span of this node as a named tuple."""
+        return Span(self.start, self.end)
 
 
 class Pairs:
     """An iterable over instances of `Pair`."""
 
-    __slots__ = ("_nodes",)
+    __slots__ = ("_pairs",)
 
-    def __init__(self, nodes: list[Node]):
-        self._nodes = nodes
+    def __init__(self, pairs: list[Pair]):
+        self._pairs = pairs
 
     def __iter__(self) -> Iterator[Pair]:
-        for node in self._nodes:
-            yield Pair(node)
+        yield from self._pairs
 
-    def tokens(self) -> Iterator[Token]:
-        """Emit tokens in start/end order for each node (depth-first)."""
-        for node in self._nodes:
-            yield from self._tokens_from_node(node)
-
-    def _tokens_from_node(self, node: Node) -> Iterator[Token]:
-        yield Start(rule=node.rule, pos=node.start)
-
-        for child in node.children:
-            yield from self._tokens_from_node(child)
-
-        yield End(rule=node.rule, pos=node.end)
+    def tokens(self) -> Iterator["Token"]:
+        for pair in self._pairs:
+            yield from pair.tokens()

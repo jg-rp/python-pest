@@ -69,7 +69,7 @@ class Repeat(Expression):
 
             for success in state.parse_implicit_rules(position):
                 position = success.pos
-                if success.node:
+                if success.pair:
                     yield success
 
         # Always succeed.
@@ -106,7 +106,7 @@ class RepeatOnce(Expression):
 
         for success in state.parse_implicit_rules(position):
             position = success.pos
-            if success.node:
+            if success.pair:
                 yield success
 
         while True:
@@ -118,7 +118,7 @@ class RepeatOnce(Expression):
 
             for success in state.parse_implicit_rules(position):
                 position = success.pos
-                if success.node:
+                if success.pair:
                     yield success
 
 

@@ -10,14 +10,14 @@ from typing import Iterator
 from typing import NamedTuple
 
 if TYPE_CHECKING:
-    from pest.node import Node
+    from pest.pairs import Pair
     from pest.state import ParserState
 
 
 class Success(NamedTuple):
     """A successful parse of an expression."""
 
-    node: Node | None
+    pair: Pair | None
     pos: int
 
 
@@ -60,5 +60,5 @@ class Expression(ABC):
     def filter_silent(self, successes: Iterable[Success]) -> Iterator[Success]:
         """Filter out silenced nodes from a success iterable."""
         for success in successes:
-            if success.node:
+            if success.pair:
                 yield success

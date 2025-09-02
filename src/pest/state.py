@@ -51,14 +51,14 @@ class ParserState:
                 for result in whitespace_rule.parse(self, new_pos):
                     matched = True
                     new_pos = result.pos
-                    if result.node:
+                    if result.pair:
                         yield result
 
             if comment_rule:
                 for result in comment_rule.parse(self, new_pos):
                     matched = True
                     new_pos = result.pos
-                    if result.node:
+                    if result.pair:
                         yield result
 
             if not matched:
