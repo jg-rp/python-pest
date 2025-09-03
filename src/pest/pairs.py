@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from typing import TYPE_CHECKING
 from typing import Iterator
 from typing import NamedTuple
@@ -51,35 +52,42 @@ class Span(NamedTuple):
 
 
 class Pair:
-    __slots__ = ("rule", "start", "end", "children", "tag")
+    """A matching pair of Tokens and everything between them."""
+
+    __slots__ = ("input", "rule", "start", "end", "children", "tag")
 
     def __init__(
         self,
+        input_: str,
         start: int,
         end: int,
         rule: Rule,
         children: list[Pair] | None = None,
         tag: str | None = None,
     ):
+        self.input = input_
         self.rule = rule
         self.start = start
         self.end = end
         self.children = children or []
         self.tag = tag
 
-    # XXX: __str__
-    # TODO: get input from rule.parser?
-    # or store input on Pair?
+    def __str__(self) -> str:
+        return self.input[self.start : self.end]
 
-    def as_str(self, input_: str) -> str:
-        return input_[self.start : self.end]
+    def as_str(self) -> str:
+        """Return the substring pointed to by this token pair."""
+        return str(self)
 
-    # TODO: __iter__
+    def __iter__(self) -> Iterator[Pair]:
+        return iter(Pairs(self.children))
 
     def inner(self) -> Pairs:
+        """Return inner pairs between this token pair."""
         return Pairs(self.children)
 
     def tokens(self) -> Iterator[Token]:
+        """Yield start and end tokens for this pair and any children in between."""
         yield Start(self.rule, self.start)
         for child in self.children:
             yield from child.tokens()
@@ -89,16 +97,16 @@ class Pair:
         """Return the (start, end) span of this node as a named tuple."""
         return Span(self.start, self.end)
 
-    def as_dict(self, input_: str) -> dict[str, object]:
+    def as_dict(self) -> dict[str, object]:
         """Return a pest-debug-like JSON structure."""
         d: dict[str, object] = {
-            "rule": self.rule,
+            "rule": self.rule.name,
             "span": {
-                "str": input_[self.start : self.end],
+                "str": self.input[self.start : self.end],
                 "start": self.start,
                 "end": self.end,
             },
-            "inner": [child.as_dict(input_) for child in self.children],
+            "inner": [child.as_dict() for child in self.children],
         }
 
         if self.tag is not None:
@@ -107,7 +115,7 @@ class Pair:
         return d
 
 
-class Pairs:
+class Pairs(Iterable[Pair]):
     """An iterable over instances of `Pair`."""
 
     __slots__ = ("_pairs",)
@@ -119,9 +127,10 @@ class Pairs:
         yield from self._pairs
 
     def tokens(self) -> Iterator["Token"]:
+        """Yield start and end tokens for each pair."""
         for pair in self._pairs:
             yield from pair.tokens()
 
     def as_list(self) -> list[dict[str, object]]:
         """Return list of pest-debug-like JSON dicts."""
-        return [pair.as_dict(self._input) for pair in self._pairs]
+        return [pair.as_dict() for pair in self._pairs]

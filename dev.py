@@ -1,15 +1,19 @@
-from pest import Parser
+import json
 
+from pest import Parser
 
 with open("tests/grammars/http.pest", encoding="utf-8") as fd:
     grammar = fd.read()
 
+
 parser = Parser.from_grammar(grammar)
 
-pairs = parser.parse("version", "1.1")
+pairs = parser.parse("header", "Connection: keep-alive\n")
 
 for token in pairs.tokens():
     print(token)
+
+print(json.dumps(pairs.as_list(), indent=2))
 
 
 # [

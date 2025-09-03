@@ -79,6 +79,7 @@ class Rule(Expression):
             # Compound-atomic rule discards children
             yield Success(
                 Pair(
+                    input_=state.input,
                     rule=self,
                     start=start,
                     end=end,
@@ -89,6 +90,7 @@ class Rule(Expression):
         else:
             yield Success(
                 Pair(
+                    input_=state.input,
                     rule=self,
                     start=start,
                     end=end,
