@@ -5,6 +5,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Iterator
 
+from typing_extensions import Self
+
 from pest.grammar import Expression
 
 if TYPE_CHECKING:
@@ -28,6 +30,17 @@ class Sequence(Expression):
     def __str__(self) -> str:
         return f"{self.tag_str()}{self.left} ~ {self.right}"
 
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, self.__class__)
+            and self.left == other.left
+            and self.right == other.right
+            and self.tag == other.tag
+        )
+
+    def __hash__(self) -> int:
+        return hash((self.__class__, self.left, self.right, self.tag))
+
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse left followed by right starting at `start`."""
         left_results = list(self.left.parse(state, start))
@@ -47,3 +60,11 @@ class Sequence(Expression):
         yield from left_results
         yield from implicit_results
         yield from right_results
+
+    def children(self) -> list[Expression]:
+        """Return this expression's children."""
+        return [self.left, self.right]
+
+    def with_children(self, expressions: list[Expression]) -> Self:
+        """Return a new instance of this expression with child expressions replaced."""
+        return self.__class__(*expressions)

@@ -5,6 +5,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Iterator
 
+from typing_extensions import Self
+
 from pest.grammar import Expression
 from pest.grammar.expression import Success
 
@@ -27,11 +29,29 @@ class PositivePredicate(Expression):
     def __str__(self) -> str:
         return f"{self.tag_str()}&{self.expression}"
 
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, self.__class__)
+            and self.expression == other.expression
+            and self.tag == other.tag
+        )
+
+    def __hash__(self) -> int:
+        return hash((self.__class__, self.expression, self.tag))
+
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
         pairs = list(self.expression.parse(state, start))
         if pairs:
             yield Success(None, start)
+
+    def children(self) -> list[Expression]:
+        """Return this expression's children."""
+        return [self.expression]
+
+    def with_children(self, expressions: list[Expression]) -> Self:
+        """Return a new instance of this expression with child expressions replaced."""
+        return self.__class__(expressions[0], self.tag)
 
 
 class NegativePredicate(Expression):
@@ -49,8 +69,26 @@ class NegativePredicate(Expression):
     def __str__(self) -> str:
         return f"{self.tag_str()}!{self.expression}"
 
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, self.__class__)
+            and self.expression == other.expression
+            and self.tag == other.tag
+        )
+
+    def __hash__(self) -> int:
+        return hash((self.__class__, self.expression, self.tag))
+
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
         pairs = list(self.expression.parse(state, start))
         if not pairs:
             yield Success(None, start)
+
+    def children(self) -> list[Expression]:
+        """Return this expression's children."""
+        return [self.expression]
+
+    def with_children(self, expressions: list[Expression]) -> Self:
+        """Return a new instance of this expression with child expressions replaced."""
+        return self.__class__(expressions[0], self.tag)

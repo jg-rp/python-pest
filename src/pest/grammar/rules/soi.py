@@ -5,14 +5,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Iterator
 
-from pest.grammar.expression import Expression
 from pest.grammar.expression import Success
+from pest.grammar.expression import Terminal
 
 if TYPE_CHECKING:
     from pest.state import ParserState
 
 
-class SOI(Expression):
+class SOI(Terminal):
     """A built-in rule matching the start of input."""
 
     def __str__(self) -> str:
@@ -30,7 +30,7 @@ class SOI(Expression):
             yield Success(None, 0)
 
 
-class EOI(Expression):
+class EOI(Terminal):
     """A built-in rule matching the end of input."""
 
     def __str__(self) -> str:

@@ -5,6 +5,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Iterator
 
+from typing_extensions import Self
+
 from pest.grammar import Expression
 from pest.grammar.expression import Success
 from pest.pairs import Pair
@@ -36,12 +38,25 @@ class Rule(Expression):
         modifier = self.modifier if self.modifier else ""
         return f"{doc}{self.name} = {modifier}{{ {self.expression} }}"
 
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, self.__class__)
+            and self.expression == other.expression
+            and self.modifier == other.modifier
+            and self.doc == other.doc
+            and self.tag == other.tag
+        )
+
+    def __hash__(self) -> int:
+        return hash(
+            (self.__class__, self.expression, self.modifier, self.doc, self.tag)
+        )
+
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Attempt to match this expression against the input at `start`.
 
         Args:
-            state: The current parser state, including input text and
-                   any memoization or error-tracking structures.
+            state: The current parser state.
             start: The index in the input string where parsing begins.
         """
         restore_atomic_depth = state.atomic_depth
@@ -84,3 +99,11 @@ class Rule(Expression):
 
         # Restore atomic depth to what it was before this rule
         state.atomic_depth = restore_atomic_depth
+
+    def children(self) -> list[Expression]:
+        """Return this expression's children."""
+        return [self.expression]
+
+    def with_children(self, expressions: list[Expression]) -> Self:
+        """Return a new instance of this expression with child expressions replaced."""
+        return self.__class__(self.name, expressions[0], self.modifier, self.doc)

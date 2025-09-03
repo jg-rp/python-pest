@@ -5,6 +5,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Iterator
 
+from typing_extensions import Self
+
 from pest.grammar import Expression
 from pest.grammar.expression import Success
 
@@ -27,6 +29,16 @@ class Optional(Expression):
     def __str__(self) -> str:
         return f"{self.expression}?"
 
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, self.__class__)
+            and self.expression == other.expression
+            and self.tag == other.tag
+        )
+
+    def __hash__(self) -> int:
+        return hash((self.__class__, self.expression, self.tag))
+
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Attempt to match this expression against the input at `start`.
 
@@ -40,6 +52,14 @@ class Optional(Expression):
             yield result
         else:
             yield Success(None, start)
+
+    def children(self) -> list[Expression]:
+        """Return this expression's children."""
+        return [self.expression]
+
+    def with_children(self, expressions: list[Expression]) -> Self:
+        """Return a new instance of this expression with child expressions replaced."""
+        return self.__class__(*expressions)
 
 
 class Repeat(Expression):
@@ -56,6 +76,16 @@ class Repeat(Expression):
 
     def __str__(self) -> str:
         return f"{self.expression}*"
+
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, self.__class__)
+            and self.expression == other.expression
+            and self.tag == other.tag
+        )
+
+    def __hash__(self) -> int:
+        return hash((self.__class__, self.expression, self.tag))
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
@@ -76,6 +106,14 @@ class Repeat(Expression):
         if position != start:
             yield Success(None, start)
 
+    def children(self) -> list[Expression]:
+        """Return this expression's children."""
+        return [self.expression]
+
+    def with_children(self, expressions: list[Expression]) -> Self:
+        """Return a new instance of this expression with child expressions replaced."""
+        return self.__class__(*expressions)
+
 
 class RepeatOnce(Expression):
     """A pest grammar expression repeated one or more times.
@@ -85,12 +123,22 @@ class RepeatOnce(Expression):
 
     __slots__ = ("expression",)
 
-    def __init__(self, expression: Expression, tag: str | None = None):
-        super().__init__(tag)
+    def __init__(self, expression: Expression):
+        super().__init__(None)
         self.expression = expression
 
     def __str__(self) -> str:
         return f"{self.tag_str()}{self.expression}+"
+
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, self.__class__)
+            and self.expression == other.expression
+            and self.tag == other.tag
+        )
+
+    def __hash__(self) -> int:
+        return hash((self.__class__, self.expression, self.tag))
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
@@ -118,6 +166,14 @@ class RepeatOnce(Expression):
                 position = success.pos
                 yield success
 
+    def children(self) -> list[Expression]:
+        """Return this expression's children."""
+        return [self.expression]
+
+    def with_children(self, expressions: list[Expression]) -> Self:
+        """Return a new instance of this expression with child expressions replaced."""
+        return self.__class__(*expressions)
+
 
 class RepeatExact(Expression):
     """A pest grammar expression repeated a specified number of times.
@@ -138,6 +194,17 @@ class RepeatExact(Expression):
     def __str__(self) -> str:
         return f"{self.expression}{{{self.number}}}"
 
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, self.__class__)
+            and self.expression == other.expression
+            and self.number == other.number
+            and self.tag == other.tag
+        )
+
+    def __hash__(self) -> int:
+        return hash((self.__class__, self.expression, self.number, self.tag))
+
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
         successes: list[Success] = []
@@ -156,6 +223,14 @@ class RepeatExact(Expression):
 
         if len(successes) == self.number:
             yield from successes
+
+    def children(self) -> list[Expression]:
+        """Return this expression's children."""
+        return [self.expression]
+
+    def with_children(self, expressions: list[Expression]) -> Self:
+        """Return a new instance of this expression with child expressions replaced."""
+        return self.__class__(expressions[0], self.number)
 
 
 class RepeatMin(Expression):
@@ -177,6 +252,17 @@ class RepeatMin(Expression):
     def __str__(self) -> str:
         return f"{self.expression}{{{self.number},}}"
 
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, self.__class__)
+            and self.expression == other.expression
+            and self.number == other.number
+            and self.tag == other.tag
+        )
+
+    def __hash__(self) -> int:
+        return hash((self.__class__, self.expression, self.number, self.tag))
+
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
         successes: list[Success] = []
@@ -195,6 +281,14 @@ class RepeatMin(Expression):
 
         if len(successes) >= self.number:
             yield from successes
+
+    def children(self) -> list[Expression]:
+        """Return this expression's children."""
+        return [self.expression]
+
+    def with_children(self, expressions: list[Expression]) -> Self:
+        """Return a new instance of this expression with child expressions replaced."""
+        return self.__class__(expressions[0], self.number)
 
 
 class RepeatMax(Expression):
@@ -216,6 +310,17 @@ class RepeatMax(Expression):
     def __str__(self) -> str:
         return f"{self.expression}{{,{self.number}}}"
 
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, self.__class__)
+            and self.expression == other.expression
+            and self.number == other.number
+            and self.tag == other.tag
+        )
+
+    def __hash__(self) -> int:
+        return hash((self.__class__, self.expression, self.number, self.tag))
+
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
         successes: list[Success] = []
@@ -234,6 +339,14 @@ class RepeatMax(Expression):
 
         if len(successes) <= self.number:
             yield from successes
+
+    def children(self) -> list[Expression]:
+        """Return this expression's children."""
+        return [self.expression]
+
+    def with_children(self, expressions: list[Expression]) -> Self:
+        """Return a new instance of this expression with child expressions replaced."""
+        return self.__class__(expressions[0], self.number)
 
 
 class RepeatRange(Expression):
@@ -257,6 +370,18 @@ class RepeatRange(Expression):
     def __str__(self) -> str:
         return f"{self.expression}{{{self.min}, {self.max}}}"
 
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, self.__class__)
+            and self.expression == other.expression
+            and self.min == other.min
+            and self.max == other.max
+            and self.tag == other.tag
+        )
+
+    def __hash__(self) -> int:
+        return hash((self.__class__, self.expression, self.min, self.max, self.tag))
+
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
         successes: list[Success] = []
@@ -275,3 +400,11 @@ class RepeatRange(Expression):
 
         if len(successes) >= self.min and len(successes) <= self.max:
             yield from successes
+
+    def children(self) -> list[Expression]:
+        """Return this expression's children."""
+        return [self.expression]
+
+    def with_children(self, expressions: list[Expression]) -> Self:
+        """Return a new instance of this expression with child expressions replaced."""
+        return self.__class__(expressions[0], self.min, self.max)

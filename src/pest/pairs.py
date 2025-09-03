@@ -89,6 +89,23 @@ class Pair:
         """Return the (start, end) span of this node as a named tuple."""
         return Span(self.start, self.end)
 
+    def as_dict(self, input_: str) -> dict[str, object]:
+        """Return a pest-debug-like JSON structure."""
+        d: dict[str, object] = {
+            "rule": self.rule,
+            "span": {
+                "str": input_[self.start : self.end],
+                "start": self.start,
+                "end": self.end,
+            },
+            "inner": [child.as_dict(input_) for child in self.children],
+        }
+
+        if self.tag is not None:
+            d["node_tag"] = self.tag
+
+        return d
+
 
 class Pairs:
     """An iterable over instances of `Pair`."""
@@ -104,3 +121,7 @@ class Pairs:
     def tokens(self) -> Iterator["Token"]:
         for pair in self._pairs:
             yield from pair.tokens()
+
+    def as_list(self) -> list[dict[str, object]]:
+        """Return list of pest-debug-like JSON dicts."""
+        return [pair.as_dict(self._input) for pair in self._pairs]

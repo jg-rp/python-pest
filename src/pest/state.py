@@ -29,6 +29,8 @@ class ParserState:
         self.stack: list[str] = field(default_factory=list)
         self.cache: dict[tuple[int, Expression], list[Success] | None] = {}
 
+    # TODO: add calls to memoized_parse() in all expressions
+
     def memoized_parse(self, expr: Expression, pos: int) -> Iterator[Success]:
         """Parse `expr` or return a cached parse result."""
         key = (pos, expr)

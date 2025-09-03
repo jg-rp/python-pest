@@ -6,15 +6,17 @@ from typing import TYPE_CHECKING
 from typing import Iterator
 
 import regex as re
+from typing_extensions import Self
 
 from pest.grammar.expression import Expression
 from pest.grammar.expression import Success
+from pest.grammar.expression import Terminal
 
 if TYPE_CHECKING:
     from pest.state import ParserState
 
 
-class PushLiteral(Expression):
+class PushLiteral(Terminal):
     """A PUSH terminal with a string literal argument."""
 
     __slots__ = ("value",)
@@ -26,10 +28,23 @@ class PushLiteral(Expression):
     def __str__(self) -> str:
         return f'{self.tag_str()}PUSH("{self.value}")'
 
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, self.__class__)
+            and self.value == other.value
+            and self.tag == other.tag
+        )
+
+    def __hash__(self) -> int:
+        return hash((self.__class__, self.value, self.tag))
+
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
         state.push(self.value)
         yield Success(None, start)
+
+
+# TODO: PUSH(expression) is not terminal
 
 
 class Push(Expression):
@@ -44,6 +59,16 @@ class Push(Expression):
     def __str__(self) -> str:
         return f"{self.tag_str()}PUSH( {self.expression} )"
 
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, self.__class__)
+            and self.expression == other.expression
+            and self.tag == other.tag
+        )
+
+    def __hash__(self) -> int:
+        return hash((self.__class__, self.expression, self.tag))
+
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
         result = list(self.expression.parse(state, start))
@@ -53,8 +78,16 @@ class Push(Expression):
         state.push(state.input[start : result[-1].pos])
         yield from result
 
+    def children(self) -> list[Expression]:
+        """Return this expression's children."""
+        return [self.expression]
 
-class PeekSlice(Expression):
+    def with_children(self, expressions: list[Expression]) -> Self:
+        """Return a new instance of this expression with child expressions replaced."""
+        return self.__class__(expressions[0], self.tag)
+
+
+class PeekSlice(Terminal):
     """A PEEK terminal with a range expression."""
 
     __slots__ = ("start", "stop")
@@ -74,6 +107,17 @@ class PeekSlice(Expression):
         stop = self.stop if self.stop else ""
         return f"{self.tag_str()}PEEK[{start}..{stop}]"
 
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, self.__class__)
+            and self.start == other.start
+            and self.stop == other.stop
+            and self.tag == other.tag
+        )
+
+    def __hash__(self) -> int:
+        return hash((self.__class__, self.start, self.stop, self.tag))
+
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
         position = start
@@ -89,7 +133,7 @@ class PeekSlice(Expression):
         yield Success(None, position)
 
 
-class Identifier(Expression):
+class Identifier(Terminal):
     """A terminal pointing to rule, possibly a built-in rule."""
 
     __slots__ = ("value",)
@@ -101,13 +145,23 @@ class Identifier(Expression):
     def __str__(self) -> str:
         return f"{self.tag_str()}{self.value}"
 
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, self.__class__)
+            and self.value == other.value
+            and self.tag == other.tag
+        )
+
+    def __hash__(self) -> int:
+        return hash((self.__class__, self.value, self.tag))
+
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
         # Assumes the rule exists.
         yield from state.parser.rules[self.value].parse(state, start)
 
 
-class Literal(Expression):
+class Literal(Terminal):
     """A terminal string literal."""
 
     __slots__ = ("value",)
@@ -120,13 +174,23 @@ class Literal(Expression):
     def __str__(self) -> str:
         return f'"{self.value}"'
 
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, self.__class__)
+            and self.value == other.value
+            and self.tag == other.tag
+        )
+
+    def __hash__(self) -> int:
+        return hash((self.__class__, self.value, self.tag))
+
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
         if state.input.startswith(self.value, start):
             yield Success(None, start + len(self.value))
 
 
-class CaseInsensitiveString(Expression):
+class CaseInsensitiveString(Terminal):
     """A terminal string literal that matches case insensitively."""
 
     __slots__ = ("value", "_re")
@@ -140,13 +204,23 @@ class CaseInsensitiveString(Expression):
     def __str__(self) -> str:
         return f'{self.tag_str()}^"{self.value}"'
 
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, self.__class__)
+            and self.value == other.value
+            and self.tag == other.tag
+        )
+
+    def __hash__(self) -> int:
+        return hash((self.__class__, self.value, self.tag))
+
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
         if self._re.match(state.input, start):
             yield Success(None, start + len(self.value))
 
 
-class Range(Expression):
+class Range(Terminal):
     """A terminal range of characters."""
 
     __slots__ = ("start", "stop", "_re")
@@ -160,6 +234,17 @@ class Range(Expression):
 
     def __str__(self) -> str:
         return f"{self.tag_str()}'{self.start}'..'{self.stop}'"
+
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, self.__class__)
+            and self.start == other.start
+            and self.stop == other.stop
+            and self.tag == other.tag
+        )
+
+    def __hash__(self) -> int:
+        return hash((self.__class__, self.start, self.stop, self.tag))
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""

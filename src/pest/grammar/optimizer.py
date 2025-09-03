@@ -1,59 +1,35 @@
+"""A registry of optimization passes for grammar expressions."""
+
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
 from typing import Callable
 
 from .expression import Expression
-from .expressions.choice import Choice
-from .expressions.postfix import Optional
-from .expressions.postfix import Repeat
-from .expressions.sequence import Sequence
 
-Optimizer = Callable[[Expression], Expression]
+OptimizerPass = Callable[[Expression], Expression]
 
 
-class OptimizerRegistry:
+class Optimizer:
     """A registry of optimization passes for grammar expressions."""
 
-    def __init__(self, *, debug: bool = False):
-        self.passes: list[tuple[str, Optimizer]] = []
+    def __init__(self, passes: list[tuple[str, OptimizerPass]], *, debug: bool = False):
+        self.passes = passes
         self.debug = debug
-        self.log: list[str] = []  # records what was applied
-
-    def register(self, name: str) -> Callable[[Optimizer], Optimizer]:
-        """Decorator to register an optimizer by name."""
-
-        def decorator(func: Optimizer) -> Optimizer:
-            self.passes.append((name, func))
-            return func
-
-        return decorator
+        self.log: list[str] = []
 
     def optimize(self, expr: Expression) -> Expression:
-        # Recurse into subexpressions
-        if isinstance(expr, Sequence):
-            expr = Sequence(
-                self.optimize(expr.left),
-                self.optimize(expr.right),
-            )
-        elif isinstance(expr, Choice):
-            expr = Choice(
-                self.optimize(expr.left),
-                self.optimize(expr.right),
-            )
-        elif isinstance(expr, Repeat):
-            expr = Repeat(self.optimize(expr.expression))
-        elif isinstance(expr, Optional):
-            expr = Optional(self.optimize(expr.expression))
+        """Return an optimized version of `expr`."""
+        # Recursively optimize children
+        new_children = [self.optimize(c) for c in expr.children()]
+        if new_children != expr.children():
+            expr = expr.with_children(new_children)
 
-        # TODO: other expression containers
-
-        # Run passes
+        # Apply optimization passes
         for name, opt in self.passes:
-            optimized = opt(expr)
-            if optimized is not expr:  # changed
+            new_expr = opt(expr)
+            if new_expr is not expr:
                 if self.debug:
-                    self.log.append(f"{name}: {expr!s}  →  {optimized!s}")
-                expr = optimized
+                    self.log.append(f"{name}: {expr} → {new_expr}")
+                expr = new_expr
 
         return expr

@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from typing import Iterator
 
 import regex as re
+from typing_extensions import Self
 
 from pest.grammar.expression import Expression
 from pest.grammar.expression import Success
@@ -19,6 +20,16 @@ class BaseASCIIRule(Expression):
 
     RE: re.Pattern[str]
 
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, self.__class__)
+            and self.RE.pattern == other.RE.pattern
+            and self.tag == other.tag
+        )
+
+    def __hash__(self) -> int:
+        return hash((self.__class__, self.RE.pattern, self.tag))
+
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Attempt to match this expression against the input at `start`.
 
@@ -29,6 +40,14 @@ class BaseASCIIRule(Expression):
         """
         if match := self.RE.match(state.input, start):
             yield Success(None, match.end())
+
+    def children(self) -> list[Expression]:
+        """Return this expressions children."""
+        return []
+
+    def with_children(self, _expressions: list[Expression]) -> Self:
+        """Return a new instance of this expression with child expressions replaced."""
+        return self
 
 
 class ASCIIDigit(BaseASCIIRule):
