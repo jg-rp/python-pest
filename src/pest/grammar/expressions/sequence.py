@@ -43,16 +43,17 @@ class Sequence(Expression):
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse left followed by right starting at `start`."""
-        left_results = list(self.left.parse(state, start))
+        left_results = list(state.parse(self.left, start))
         if not left_results:
             return  # left failed
 
         position = left_results[-1].pos
+
         implicit_results = list(state.parse_implicit_rules(position))
         if implicit_results:
             position = implicit_results[-1].pos
 
-        right_results = list(self.right.parse(state, position))
+        right_results = list(state.parse(self.right, position))
         if not right_results:
             return  # right failed
 

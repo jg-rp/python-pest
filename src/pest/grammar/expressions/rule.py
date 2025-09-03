@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Iterable
 from typing import Iterator
 
 from typing_extensions import Self
@@ -25,13 +26,13 @@ class Rule(Expression):
         name: str,
         expression: Expression,
         modifier: str | None = None,
-        doc: list[str] | None = None,
+        doc: Iterable[str] | None = None,
     ):
         super().__init__(tag=None)
         self.name = name
         self.expression = expression
         self.modifier = modifier
-        self.doc = doc
+        self.doc = tuple(doc) if doc else None
 
     def __str__(self) -> str:
         doc = "".join(f"///{line}\n" for line in self.doc) if self.doc else ""
@@ -66,7 +67,7 @@ class Rule(Expression):
         elif self.modifier == "!":
             state.atomic_depth = 0
 
-        results = list(self.expression.parse(state, start))
+        results = list(state.parse(self.expression, start))
         if not results:
             return
 

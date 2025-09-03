@@ -45,12 +45,12 @@ class Choice(Expression):
         """Attempt to match this expression against the input at `start`."""
         success = False
 
-        for left_result in self.left.parse(state, start):
+        for left_result in state.parse(self.left, start):
             success = True
             yield left_result
 
         if not success:
-            for right_result in self.right.parse(state, start):
+            for right_result in state.parse(self.right, start):
                 yield right_result
 
     def children(self) -> list[Expression]:

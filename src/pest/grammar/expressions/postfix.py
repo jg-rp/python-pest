@@ -47,9 +47,9 @@ class Optional(Expression):
                    any memoization or error-tracking structures.
             start: The index in the input string where parsing begins.
         """
-        result = next(self.expression.parse(state, start), None)
-        if result:
-            yield result
+        results = list(state.parse(self.expression, start))
+        if results:
+            yield from results
         else:
             yield Success(None, start)
 
@@ -90,21 +90,23 @@ class Repeat(Expression):
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
         position = start
+        matched = False
+
         while True:
-            result = next(self.expression.parse(state, position), None)
-            if not result:
+            results = list(state.parse(self.expression, position))
+            if not results:
                 break
-            position = result.pos
-            yield result
+            matched = True
+            position = results[-1].pos
+            yield from results
 
             for success in state.parse_implicit_rules(position):
                 position = success.pos
                 yield success
 
         # Always succeed.
-        # TODO: or a flag, in case previous successes don't consume anything.
-        if position != start:
-            yield Success(None, start)
+        if not matched:
+            yield Success(None, position)
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""
@@ -142,7 +144,7 @@ class RepeatOnce(Expression):
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
-        results = list(self.expression.parse(state, start))
+        results = list(state.parse(self.expression, start))
 
         if not results:
             return
@@ -156,7 +158,7 @@ class RepeatOnce(Expression):
             yield success
 
         while True:
-            results = list(self.expression.parse(state, position))
+            results = list(state.parse(self.expression, position))
             if not results:
                 break
             position = results[-1].pos
@@ -211,15 +213,15 @@ class RepeatExact(Expression):
         position = start
 
         while True:
-            result = next(self.expression.parse(state, position), None)
-            if not result:
+            results = list(state.parse(self.expression, position))
+            if not results:
                 break
-            position = result.pos
-            successes.append(result)
+            position = results[-1].pos
+            successes.extend(results)
 
             for success in state.parse_implicit_rules(position):
                 position = success.pos
-                successes.append(result)
+                successes.append(success)
 
         if len(successes) == self.number:
             yield from successes
@@ -269,15 +271,15 @@ class RepeatMin(Expression):
         position = start
 
         while True:
-            result = next(self.expression.parse(state, position), None)
-            if not result:
+            results = list(state.parse(self.expression, position))
+            if not results:
                 break
-            position = result.pos
-            successes.append(result)
+            position = results[-1].pos
+            successes.extend(results)
 
             for success in state.parse_implicit_rules(position):
                 position = success.pos
-                successes.append(result)
+                successes.append(success)
 
         if len(successes) >= self.number:
             yield from successes
@@ -327,15 +329,15 @@ class RepeatMax(Expression):
         position = start
 
         while True:
-            result = next(self.expression.parse(state, position), None)
-            if not result:
+            results = list(state.parse(self.expression, position))
+            if not results:
                 break
-            position = result.pos
-            successes.append(result)
+            position = results[-1].pos
+            successes.extend(results)
 
             for success in state.parse_implicit_rules(position):
                 position = success.pos
-                successes.append(result)
+                successes.append(success)
 
         if len(successes) <= self.number:
             yield from successes
@@ -388,15 +390,15 @@ class RepeatRange(Expression):
         position = start
 
         while True:
-            result = next(self.expression.parse(state, position), None)
-            if not result:
+            results = list(state.parse(self.expression, position))
+            if not results:
                 break
-            position = result.pos
-            successes.append(result)
+            position = results[-1].pos
+            successes.extend(results)
 
             for success in state.parse_implicit_rules(position):
                 position = success.pos
-                successes.append(result)
+                successes.append(success)
 
         if len(successes) >= self.min and len(successes) <= self.max:
             yield from successes

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from dataclasses import field
 from typing import TYPE_CHECKING
 from typing import Iterator
 
@@ -20,18 +19,26 @@ class ParserState:
     grammar operations.
     """
 
-    __slots__ = ("parser", "input", "atomic_depth", "stack", "cache")
+    __slots__ = (
+        "parser",
+        "input",
+        "atomic_depth",
+        "stack",
+        "cache",
+        "failed_pos",
+        "failed_expr",
+    )
 
     def __init__(self, parser: Parser, input_: str) -> None:
         self.parser = parser
         self.input = input_
         self.atomic_depth = 0
-        self.stack: list[str] = field(default_factory=list)
+        self.stack: list[str] = []
         self.cache: dict[tuple[int, Expression], list[Success] | None] = {}
+        self.failed_pos: int = 0
+        self.failed_expr: Expression | None = None
 
-    # TODO: add calls to memoized_parse() in all expressions
-
-    def memoized_parse(self, expr: Expression, pos: int) -> Iterator[Success]:
+    def parse(self, expr: Expression, pos: int) -> Iterator[Success]:
         """Parse `expr` or return a cached parse result."""
         key = (pos, expr)
         if key in self.cache:
@@ -42,7 +49,12 @@ class ParserState:
 
         results = list(expr.parse(self, pos))
         self.cache[key] = results if results else None
-        yield from results
+
+        if results:
+            yield from results
+        elif pos > self.failed_pos:
+            self.failed_pos = pos
+            self.failed_expr = expr
 
     def parse_implicit_rules(self, pos: int) -> Iterator[Success]:
         """Parse any implicit rules (`WHITESPACE` and `COMMENT`) starting at `pos`.
@@ -66,14 +78,14 @@ class ParserState:
             matched = False
 
             if whitespace_rule:
-                for result in whitespace_rule.parse(self, new_pos):
+                for result in self.parse(whitespace_rule, new_pos):
                     matched = True
                     new_pos = result.pos
                     if result.pair:
                         yield result
 
             if comment_rule:
-                for result in comment_rule.parse(self, new_pos):
+                for result in self.parse(comment_rule, new_pos):
                     matched = True
                     new_pos = result.pos
                     if result.pair:

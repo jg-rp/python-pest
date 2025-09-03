@@ -47,7 +47,7 @@ class Group(Expression):
             - None if any part fails.
         """
         # XXX: Do we need a `Group` expression?
-        yield from self.expression.parse(state, start)
+        yield from state.parse(self.expression, start)
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""

@@ -71,7 +71,7 @@ class Push(Expression):
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
-        result = list(self.expression.parse(state, start))
+        result = list(state.parse(self.expression, start))
         if not result:
             return
 
@@ -157,8 +157,8 @@ class Identifier(Terminal):
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
-        # Assumes the rule exists.
-        yield from state.parser.rules[self.value].parse(state, start)
+        # TODO: Assumes the rule exists.
+        yield from state.parse(state.parser.rules[self.value], start)
 
 
 class Literal(Terminal):

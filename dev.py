@@ -5,15 +5,12 @@ from pest import Parser
 with open("tests/grammars/http.pest", encoding="utf-8") as fd:
     grammar = fd.read()
 
-
 parser = Parser.from_grammar(grammar)
 
-pairs = parser.parse("header", "Connection: keep-alive\n")
+with open("tests/examples/example.http", encoding="ascii") as fd:
+    example = fd.read()
 
-for token in pairs.tokens():
-    print(token)
-
-print(json.dumps(pairs.as_list(), indent=2))
+parser.parse("http", example)
 
 
 # [
