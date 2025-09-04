@@ -7,7 +7,7 @@ with open("tests/grammars/json.pest", encoding="utf-8") as fd:
 
 parser = Parser.from_grammar(grammar)
 
-pairs = parser.parse("array", '[0.0e1, false, null, "a", [0]]')
+pairs = parser.parse("string", '"asd\\u0000\\""')
 
 print(json.dumps(pairs.as_list(), indent=2))
 

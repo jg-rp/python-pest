@@ -169,7 +169,6 @@ class Literal(Terminal):
     def __init__(self, value: str):
         super().__init__(None)
         self.value = value
-        # TODO: unescape value
 
     def __str__(self) -> str:
         return f'"{self.value}"'

@@ -64,6 +64,9 @@ class ParserState:
         successful application of an implicit rule. `node` will be None if
         the rule was silent.
         """
+        if self.atomic_depth > 0:
+            return
+
         # TODO: combine and cache whitespace and comment rules in to one?
         whitespace_rule = self.parser.rules.get("WHITESPACE")
         comment_rule = self.parser.rules.get("COMMENT")

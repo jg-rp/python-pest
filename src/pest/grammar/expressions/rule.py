@@ -69,6 +69,7 @@ class Rule(Expression):
 
         results = list(state.parse(self.expression, start))
         if not results:
+            state.atomic_depth = restore_atomic_depth
             return
 
         end = results[-1].pos
