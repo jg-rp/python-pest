@@ -24,7 +24,6 @@ from .expressions import Rule
 from .expressions import Sequence
 from .tokens import Token
 from .tokens import TokenKind
-from .unescape import unescape_string
 
 PRECEDENCE_LOWEST = 1
 PRECEDENCE_CHOICE = 2
@@ -134,9 +133,9 @@ class Parser:
         left: Expression
 
         if left_kind == TokenKind.STRING:
-            left = Literal(unescape_string(self.next().value, token))
+            left = Literal(self.next().value)
         elif left_kind == TokenKind.STRING_CI:
-            left = CaseInsensitiveString(unescape_string(self.next().value, token))
+            left = CaseInsensitiveString(self.next().value)
         elif left_kind == TokenKind.LPAREN:
             self.pos += 1
             left = Group(self.parse_expression(), tag=tag)

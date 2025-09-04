@@ -166,3 +166,127 @@ def test_array_rule(parser: Parser) -> None:
             ],
         }
     ]
+
+
+def test_object_rule(parser: Parser) -> None:
+    pairs = parser.parse("object", '{"a" : 3, "b" : [{}, 3]}')
+    assert pairs.as_list() == [
+        {
+            "rule": "object",
+            "span": {"str": '{"a" : 3, "b" : [{}, 3]}', "start": 0, "end": 24},
+            "inner": [
+                {
+                    "rule": "pair",
+                    "span": {"str": '"a" : 3', "start": 1, "end": 8},
+                    "inner": [
+                        {
+                            "rule": "string",
+                            "span": {"str": '"a"', "start": 1, "end": 4},
+                            "inner": [],
+                        },
+                        {
+                            "rule": "value",
+                            "span": {"str": "3", "start": 7, "end": 8},
+                            "inner": [
+                                {
+                                    "rule": "number",
+                                    "span": {"str": "3", "start": 7, "end": 8},
+                                    "inner": [],
+                                }
+                            ],
+                        },
+                    ],
+                },
+                {
+                    "rule": "pair",
+                    "span": {"str": '"b" : [{}, 3]', "start": 10, "end": 23},
+                    "inner": [
+                        {
+                            "rule": "string",
+                            "span": {"str": '"b"', "start": 10, "end": 13},
+                            "inner": [],
+                        },
+                        {
+                            "rule": "value",
+                            "span": {"str": "[{}, 3]", "start": 16, "end": 23},
+                            "inner": [
+                                {
+                                    "rule": "array",
+                                    "span": {"str": "[{}, 3]", "start": 16, "end": 23},
+                                    "inner": [
+                                        {
+                                            "rule": "value",
+                                            "span": {
+                                                "str": "{}",
+                                                "start": 17,
+                                                "end": 19,
+                                            },
+                                            "inner": [
+                                                {
+                                                    "rule": "object",
+                                                    "span": {
+                                                        "str": "{}",
+                                                        "start": 17,
+                                                        "end": 19,
+                                                    },
+                                                    "inner": [],
+                                                }
+                                            ],
+                                        },
+                                        {
+                                            "rule": "value",
+                                            "span": {
+                                                "str": "3",
+                                                "start": 21,
+                                                "end": 22,
+                                            },
+                                            "inner": [
+                                                {
+                                                    "rule": "number",
+                                                    "span": {
+                                                        "str": "3",
+                                                        "start": 21,
+                                                        "end": 22,
+                                                    },
+                                                    "inner": [],
+                                                }
+                                            ],
+                                        },
+                                    ],
+                                }
+                            ],
+                        },
+                    ],
+                },
+            ],
+        }
+    ]
+
+
+def test_example(parser: Parser) -> None:
+    with open("tests/examples/example.json", encoding="utf-8") as fd:
+        example = fd.read()
+
+    parser.parse("json", example)
+
+
+def test_line_col_span(parser: Parser) -> None:
+    with open("tests/examples/example.json", encoding="utf-8") as fd:
+        example = fd.read()
+
+    with open("tests/examples/example.line-col.txt", encoding="utf-8") as fd:
+        expected = fd.read()
+
+    pairs = parser.parse("json", example)
+    out: list[str] = []
+
+    for pair in pairs.flatten():
+        if not pair.children:
+            span = pair.span()
+            line, col = span.start_pos().line_col()
+            span_str = str(span).replace("\n", "\\n")
+            out.append(f"({line}:{col}) {span_str}\n")
+
+    # XXX: I've removed the "one past the end" token from our copy of
+    # example.line-col.txt.
+    assert "".join(out).strip() == expected.strip()

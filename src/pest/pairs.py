@@ -43,12 +43,74 @@ class End(Token):
 class Span(NamedTuple):
     """A half-open interval [start, end) into the input string."""
 
+    text: str
     start: int
     end: int
 
-    def text(self, source: str) -> str:
+    def __str__(self) -> str:
+        return self.text[self.start : self.end]
+
+    def as_str(self) -> str:
         """Return the slice of the source corresponding to this span."""
-        return source[self.start : self.end]
+        return str(self)
+
+    def end_pos(self) -> Position:
+        """Return this span's end position."""
+        return Position(self.text, self.end)
+
+    def start_pos(self) -> Position:
+        """Return this span's start position."""
+        return Position(self.text, self.start)
+
+    def split(self) -> tuple[Position, Position]:
+        """Return a tuple of start position and end position."""
+        return self.start_pos(), self.end_pos()
+
+    def lines(self) -> list[str]:
+        """Return a list of lines covered by this span.
+
+        Includes lines that are partially covered.
+        """
+        lines = self.text.splitlines(keepends=True)
+        start_line_number, _ = self.start_pos().line_col()
+        end_line_number, _ = self.end_pos().line_col()
+        return lines[start_line_number - 1 : end_line_number]
+
+    # TODO: lines_span()?
+
+
+class Position(NamedTuple):
+    """A position in a string as a Unicode codepoint offset."""
+
+    text: str
+    pos: int
+
+    def line_col(self) -> tuple[int, int]:
+        """Return the line an column number of this position."""
+        lines = self.text.splitlines(keepends=True)
+        cumulative_length = 0
+        target_line_index = -1
+
+        for i, line in enumerate(lines):
+            cumulative_length += len(line)
+            if self.pos < cumulative_length:
+                target_line_index = i
+                break
+
+        if target_line_index == -1:
+            raise ValueError("index is out of bounds for the given string")
+
+        # 1-based
+        line_number = target_line_index + 1
+        column_number = (
+            self.pos - (cumulative_length - len(lines[target_line_index])) + 1
+        )
+        return line_number, column_number
+
+    def line_of(self) -> str:
+        """Return the line of text that contains this position."""
+        line_number, _ = self.line_col()
+        return self.text[line_number - 1]
 
 
 class Pair:
@@ -95,7 +157,7 @@ class Pair:
 
     def span(self) -> Span:
         """Return the (start, end) span of this node as a named tuple."""
-        return Span(self.start, self.end)
+        return Span(self.input, self.start, self.end)
 
     def as_dict(self) -> dict[str, object]:
         """Return a pest-debug-like JSON structure."""
@@ -113,6 +175,10 @@ class Pair:
             d["node_tag"] = self.tag
 
         return d
+
+    def line_col(self) -> tuple[int, int]:
+        """Return the line and column number of this pair's start position."""
+        return self.span().start_pos().line_col()
 
 
 class Pairs(Iterable[Pair]):
@@ -134,3 +200,14 @@ class Pairs(Iterable[Pair]):
     def as_list(self) -> list[dict[str, object]]:
         """Return list of pest-debug-like JSON dicts."""
         return [pair.as_dict() for pair in self._pairs]
+
+    def flatten(self) -> Iterator[Pair]:
+        """Generate a flat stream of pairs."""
+
+        def _flatten(pair: Pair) -> Iterator[Pair]:
+            yield pair
+            for child in pair.children:
+                yield from _flatten(child)
+
+        for pair in self._pairs:
+            yield from _flatten(pair)

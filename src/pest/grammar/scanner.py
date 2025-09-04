@@ -12,6 +12,7 @@ from typing_extensions import Never
 from .exceptions import PestGrammarSyntaxError
 from .tokens import Token
 from .tokens import TokenKind
+from .unescape import unescape_string
 
 StateFn: TypeAlias = Callable[[], Optional["StateFn"]]
 
@@ -377,6 +378,7 @@ class Scanner:
 
         self.pos += 1  # Skip opening quote.
         self.start = self.pos
+        needs_unescaping = False
 
         while True:
             c = self.next()
@@ -385,6 +387,7 @@ class Scanner:
                 peeked = self.peek()
                 if peeked in ESCAPES:
                     self.next()
+                    needs_unescaping = True
                 else:
                     self.error("invalid escape")
 
@@ -392,7 +395,12 @@ class Scanner:
                 self.error(f"unclosed string starting at index {self.start}")
 
             if c == '"':
-                self.emit(TokenKind.STRING, self.grammar[self.start : self.pos - 1])
+                value = self.grammar[self.start : self.pos - 1]
+                if needs_unescaping:
+                    value = unescape_string(
+                        value, Token(TokenKind.STRING, value, self.start, self.grammar)
+                    )
+                self.emit(TokenKind.STRING, value)
                 return True
 
     def accept_ci_string(self) -> bool:
@@ -409,6 +417,7 @@ class Scanner:
         # Skip opening quote.
         self.pos += 1
         self.start = self.pos
+        needs_unescaping = False
 
         while True:
             c = self.next()
@@ -417,6 +426,7 @@ class Scanner:
                 peeked = self.peek()
                 if peeked in ESCAPES:
                     self.next()
+                    needs_unescaping = True
                 else:
                     self.error("invalid escape")
 
@@ -424,5 +434,10 @@ class Scanner:
                 self.error(f"unclosed string starting at index {self.start}")
 
             if c == '"':
-                self.emit(TokenKind.STRING_CI, self.grammar[self.start : self.pos - 1])
-                return True
+                value = self.grammar[self.start : self.pos - 1]
+                if needs_unescaping:
+                    value = unescape_string(
+                        value,
+                        Token(TokenKind.STRING_CI, value, self.start, self.grammar),
+                    )
+                self.emit(TokenKind.STRING_CI, value)
