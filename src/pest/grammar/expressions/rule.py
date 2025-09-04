@@ -76,8 +76,8 @@ class Rule(Expression):
         if self.modifier == "_":
             # Silent rule succeeds, but no node is returned.
             yield Success(None, end)
-        elif self.modifier == "$":
-            # Compound-atomic rule discards children
+        elif self.modifier == "@":
+            # Atomic rule silences children
             yield Success(
                 Pair(
                     input_=state.input,

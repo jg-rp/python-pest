@@ -2,15 +2,19 @@ import json
 
 from pest import Parser
 
-with open("tests/grammars/http.pest", encoding="utf-8") as fd:
+with open("tests/grammars/json.pest", encoding="utf-8") as fd:
     grammar = fd.read()
 
 parser = Parser.from_grammar(grammar)
 
-with open("tests/examples/example.http", encoding="ascii") as fd:
-    example = fd.read()
+pairs = parser.parse("array", '[0.0e1, false, null, "a", [0]]')
 
-parser.parse("http", example)
+print(json.dumps(pairs.as_list(), indent=2))
+
+# with open("tests/examples/example.http", encoding="ascii") as fd:
+#     example = fd.read()
+
+# parser.parse("http", example)
 
 
 # [

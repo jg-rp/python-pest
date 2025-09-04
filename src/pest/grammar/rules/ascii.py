@@ -59,6 +59,42 @@ class ASCIIDigit(BaseASCIIRule):
         return "ASCII_DIGIT"
 
 
+class ASCIINonZeroDigit(BaseASCIIRule):
+    """A built-in rule matching '1'..'9'."""
+
+    RE = re.compile(r"[1-9]")
+
+    def __str__(self) -> str:
+        return "ASCII_NONZERO_DIGIT"
+
+
+class ASCIIBinDigit(BaseASCIIRule):
+    """A built-in rule matching '0'..'1'."""
+
+    RE = re.compile(r"[0-1]")
+
+    def __str__(self) -> str:
+        return "ASCII_BIN_DIGIT"
+
+
+class ASCIIOctDigit(BaseASCIIRule):
+    """A built-in rule matching '0'..'7'."""
+
+    RE = re.compile(r"[0-7]")
+
+    def __str__(self) -> str:
+        return "ASCII_OCT_DIGIT"
+
+
+class ASCIIHexDigit(BaseASCIIRule):
+    """A built-in rule matching '0'..'9' | 'a'..'f' | 'A'..'F'."""
+
+    RE = re.compile(r"[0-9a-fA-F]")
+
+    def __str__(self) -> str:
+        return "ASCII_HEX_DIGIT"
+
+
 class Newline(BaseASCIIRule):
     r"""A built-in rule matching "\n" | "\r\n" | "\r"."""
 
@@ -70,3 +106,6 @@ class Newline(BaseASCIIRule):
 
 # TODO: ASCII_ALPHANUMERIC
 # TODO: ASCII
+# TODO: ASCII_ALPHA_LOWER
+# TODO: ASCII_ALPHA_UPPER
+# TODO: ASCII_ALPHA

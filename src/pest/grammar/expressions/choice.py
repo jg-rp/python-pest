@@ -47,9 +47,11 @@ class Choice(Expression):
 
         for left_result in state.parse(self.left, start):
             success = True
+            print("*MATCHED*", self.left, start)
             yield left_result
 
         if not success:
+            print("!FAIL!", self.left, "TRY", self.right, start)
             for right_result in state.parse(self.right, start):
                 yield right_result
 

@@ -1,4 +1,4 @@
-"""A pest grammar."""
+"""A pest generated parser."""
 
 from __future__ import annotations
 
@@ -7,7 +7,13 @@ from typing import TYPE_CHECKING
 from .exceptions import PestParserError
 from .grammar import parse
 from .grammar.expressions.choice import Choice
+from .grammar.rules.ascii import ASCIIBinDigit
+
+# TODO: Move this to grammar/rules/__init__.py
 from .grammar.rules.ascii import ASCIIDigit
+from .grammar.rules.ascii import ASCIIHexDigit
+from .grammar.rules.ascii import ASCIINonZeroDigit
+from .grammar.rules.ascii import ASCIIOctDigit
 from .grammar.rules.ascii import Newline
 from .grammar.rules.soi import EOI
 from .grammar.rules.soi import SOI
@@ -37,6 +43,10 @@ class Parser:
     BUILTIN = {
         "ANY": Any(),
         "ASCII_DIGIT": ASCIIDigit(),
+        "ASCII_NONZERO_DIGIT": ASCIINonZeroDigit(),
+        "ASCII_BIN_DIGIT": ASCIIBinDigit(),
+        "ASCII_OCT_DIGIT": ASCIIOctDigit(),
+        "ASCII_HEX_DIGIT": ASCIIHexDigit(),
         "NEWLINE": Newline(),
         "SOI": SOI(),
         "EOI": EOI(),

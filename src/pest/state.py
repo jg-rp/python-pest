@@ -5,9 +5,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Iterator
 
+from pest.grammar.expression import Success
+
 if TYPE_CHECKING:
     from pest.grammar.expression import Expression
-    from pest.grammar.expression import Success
 
     from .parser import Parser
 
@@ -63,9 +64,6 @@ class ParserState:
         successful application of an implicit rule. `node` will be None if
         the rule was silent.
         """
-        if self.atomic_depth > 0:
-            return
-
         # TODO: combine and cache whitespace and comment rules in to one?
         whitespace_rule = self.parser.rules.get("WHITESPACE")
         comment_rule = self.parser.rules.get("COMMENT")
@@ -81,17 +79,18 @@ class ParserState:
                 for result in self.parse(whitespace_rule, new_pos):
                     matched = True
                     new_pos = result.pos
-                    if result.pair:
+                    if result.pair and self.atomic_depth == 0:
                         yield result
 
             if comment_rule:
                 for result in self.parse(comment_rule, new_pos):
                     matched = True
                     new_pos = result.pos
-                    if result.pair:
+                    if result.pair and self.atomic_depth == 0:
                         yield result
 
             if not matched:
+                yield Success(None, new_pos)
                 break
 
             pos = new_pos
