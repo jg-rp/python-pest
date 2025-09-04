@@ -2,12 +2,12 @@ import json
 
 from pest import Parser
 
-with open("tests/grammars/json.pest", encoding="utf-8") as fd:
+with open("tests/grammars/sql.pest", encoding="utf-8") as fd:
     grammar = fd.read()
 
 parser = Parser.from_grammar(grammar)
 
-pairs = parser.parse("object", '{"a" : 3, "b" : [{}, 3]}')
+pairs = parser.parse("Command", "select * from table")
 
 print(json.dumps(pairs.as_list(), indent=2))
 

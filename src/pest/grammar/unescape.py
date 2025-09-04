@@ -124,7 +124,7 @@ def _parse_hex_digits(digits: str, token: Token) -> int:
 
 def _string_from_codepoint(codepoint: int, token: Token) -> str:
     if codepoint <= 0x1F:
-        raise PestGrammarSyntaxError("invalid character", token=token)
+        raise PestGrammarSyntaxError(f"invalid character {codepoint!r}", token=token)
     return chr(codepoint)
 
 

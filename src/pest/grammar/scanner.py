@@ -441,3 +441,4 @@ class Scanner:
                         Token(TokenKind.STRING_CI, value, self.start, self.grammar),
                     )
                 self.emit(TokenKind.STRING_CI, value)
+                return True
