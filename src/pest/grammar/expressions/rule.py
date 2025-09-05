@@ -67,16 +67,12 @@ class Rule(Expression):
         elif self.modifier == "!":
             state.atomic_depth = 0
 
-        print("**", self.name)
-
         results = list(state.parse(self.expression, start))
         if not results:
             state.atomic_depth = restore_atomic_depth
             return
 
         end = results[-1].pos
-
-        print(f"!MATCH {self.name}!", start, end)
 
         if self.modifier == "_":
             # Silent rule succeeds, but no node is returned.

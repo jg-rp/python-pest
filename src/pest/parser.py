@@ -21,7 +21,6 @@ from .pairs import Pairs
 from .state import ParserState
 
 if TYPE_CHECKING:
-    from .grammar.expression import Expression
     from .grammar.expressions import Rule
 
 
@@ -38,8 +37,7 @@ class Parser:
     # TODO: built-in rules
     # All built-in rules are silent
     # - PEEK_ALL
-    # TODO: what happens if a grammar redefines a built-in rule?
-    BUILTIN = {
+    BUILTIN: dict[str, Rule] = {
         "ANY": Any(),
         "ASCII_DIGIT": ASCIIDigit(),
         "ASCII_NONZERO_DIGIT": ASCIINonZeroDigit(),
@@ -52,7 +50,8 @@ class Parser:
     }
 
     def __init__(self, rules: dict[str, Rule], doc: list[str] | None = None):
-        self.rules = {**rules, **self.BUILTIN}
+        # Built-in rules overwrite grammar defined rules.
+        self.rules: dict[str, Rule] = {**rules, **self.BUILTIN}
         self.doc = doc
 
     @classmethod

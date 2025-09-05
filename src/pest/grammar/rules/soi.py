@@ -7,13 +7,28 @@ from typing import Iterator
 
 from pest.grammar.expression import Success
 from pest.grammar.expression import Terminal
+from pest.grammar.expressions.rule import Rule
 
 if TYPE_CHECKING:
     from pest.state import ParserState
 
 
-class SOI(Terminal):
+class SOI(Rule):
     """A built-in rule matching the start of input."""
+
+    def __init__(self) -> None:
+        super().__init__("SOI", _SOI(), "_", None)
+
+
+class EOI(Rule):
+    """A built-in rule matching the end of input."""
+
+    def __init__(self) -> None:
+        super().__init__("EOI", _EOI(), "_", None)
+
+
+class _SOI(Terminal):
+    """A built-in terminal matching the start of input."""
 
     def __str__(self) -> str:
         return "SOI"
@@ -30,7 +45,7 @@ class SOI(Terminal):
             yield Success(None, 0)
 
 
-class EOI(Terminal):
+class _EOI(Terminal):
     """A built-in rule matching the end of input."""
 
     def __str__(self) -> str:

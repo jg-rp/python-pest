@@ -171,8 +171,10 @@ class Literal(Terminal):
         self.value = value
 
     def __str__(self) -> str:
-        # TODO: replace line breaks with escape sequences
-        return f'"{self.value}"'
+        value = (
+            self.value.replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n")
+        )
+        return f'"{value}"'
 
     def __eq__(self, other: object) -> bool:
         return (

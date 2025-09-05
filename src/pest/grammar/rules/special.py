@@ -7,13 +7,21 @@ from typing import Iterator
 
 from pest.grammar.expression import Success
 from pest.grammar.expression import Terminal
+from pest.grammar.expressions.rule import Rule
 
 if TYPE_CHECKING:
     from pest.state import ParserState
 
 
-class Any(Terminal):
+class Any(Rule):
     """A built-in rule matching any single "character"."""
+
+    def __init__(self) -> None:
+        super().__init__("ANY", _Any(), "_", None)
+
+
+class _Any(Terminal):
+    """A built-in terminal matching any single "character"."""
 
     def __str__(self) -> str:
         return "ANY"
