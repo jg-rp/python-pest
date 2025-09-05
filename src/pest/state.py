@@ -5,7 +5,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Iterator
 
-from pest.grammar.expression import Success
+from .grammar.expression import Success
+from .grammar.expression import Terminal
+from .grammar.expressions.rule import Rule
 
 if TYPE_CHECKING:
     from pest.grammar.expression import Expression
@@ -26,8 +28,8 @@ class ParserState:
         "atomic_depth",
         "stack",
         "cache",
+        "expr_stack",
         "failed_pos",
-        "failed_expr",
     )
 
     def __init__(self, parser: Parser, input_: str) -> None:
@@ -36,8 +38,8 @@ class ParserState:
         self.atomic_depth = 0
         self.stack: list[str] = []
         self.cache: dict[tuple[int, Expression], list[Success] | None] = {}
+        self.expr_stack: list[tuple[Expression, int]] = []
         self.failed_pos: int = 0
-        self.failed_expr: Expression | None = None
 
     def parse(self, expr: Expression, pos: int) -> Iterator[Success]:
         """Parse `expr` or return a cached parse result."""
@@ -48,14 +50,49 @@ class ParserState:
                 yield from cached
             return
 
+        self.expr_stack.append((expr, pos))
         results = list(expr.parse(self, pos))
-        self.cache[key] = results if results else None
 
         if results:
+            self.cache[key] = results
             yield from results
-        elif pos > self.failed_pos:
-            self.failed_pos = pos
-            self.failed_expr = expr
+            self.expr_stack.pop()
+        else:
+            if pos > self.failed_pos:
+                self.failed_pos = pos
+            self.cache[key] = None
+
+    def failure_message(self) -> str:
+        """Generate a human-readable error message for the furthest failure."""
+        pos = self.failed_pos
+        # TODO: better line break detection
+        line = self.input.count("\n", 0, pos) + 1
+        col = pos - self.input.rfind("\n", 0, pos)
+
+        found = self.input[pos : pos + 10] or "end of input"
+
+        for expr, _ in self.expr_stack:
+            if isinstance(expr, Rule):
+                print("--", expr)
+
+        # Walk stack to find relevant context
+        rule = next(
+            (e for e, _ in reversed(self.expr_stack) if isinstance(e, Rule)), None
+        )
+
+        non_terminal = next(
+            (e for e, _ in reversed(self.expr_stack) if not isinstance(e, Terminal)),
+            None,
+        )
+
+        expected = str(
+            non_terminal
+            or (self.expr_stack[-1][0] if self.expr_stack else "expression")
+        )
+
+        rule_str = f", in rule {rule.name}" if rule else ""
+
+        return f"error at {line}:{col}{rule_str}: expected {expected}, found {found!r}"
 
     def parse_implicit_rules(self, pos: int) -> Iterator[Success]:
         """Parse any implicit rules (`WHITESPACE` and `COMMENT`) starting at `pos`.

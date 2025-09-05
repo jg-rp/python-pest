@@ -120,6 +120,7 @@ ignore = [
   "PT001",
   "A005",
   "PLW1641",
+  "PLR1730",
 ]
 
 fixable = ["I"]

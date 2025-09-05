@@ -14,6 +14,10 @@ from pest.grammar.expression import Success
 if TYPE_CHECKING:
     from pest.state import ParserState
 
+# TODO: Make these rules
+# TODO: with the silent operator
+# TODO: with a special regex expression
+
 
 class BaseASCIIRule(Expression):
     """Base class for built-in rules matching an ASCII character."""
