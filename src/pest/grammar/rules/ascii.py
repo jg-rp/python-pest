@@ -2,156 +2,22 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-from typing import Iterator
+from pest.grammar.expressions.rule import BuiltInRegexRule
 
-from typing_extensions import Self
+ASCII_RULE_MAP: dict[str, str] = {
+    "ASCII_DIGIT": r"[0-9]",
+    "ASCII_NONZERO_DIGIT": r"[1-9]",
+    "ASCII_BIN_DIGIT": r"[0-1]",
+    "ASCII_OCT_DIGIT": r"[07]",
+    "ASCII_HEX_DIGIT": r"[0-9a-fA-F]",
+    "ASCII_ALPHANUMERIC": r"[[0-9a-zA-Z]",
+    "ASCII": "[\u0000-\u0074]",
+    "ASCII_ALPHA_LOWER": r"[a-z]",
+    "ASCII_ALPHA_UPPER": r"[A-Z]",
+    "ASCII_ALPHA": r"[a-zA-Z]",
+    "NEWLINE": r"\r?\n|\r",
+}
 
-from pest.grammar.expressions.lazy_regex import LazyRegexExpression
-from pest.grammar.expressions.rule import Rule
-
-if TYPE_CHECKING:
-    from pest.grammar.expression import Expression
-    from pest.grammar.expression import Success
-    from pest.state import ParserState
-
-
-class BaseASCIIRule(Rule):
-    """Base class for built-in rules matching an ASCII character."""
-
-    PATTERN: str
-
-    def __init__(self) -> None:
-        super().__init__(
-            self.__class__.__name__,
-            LazyRegexExpression([self.PATTERN]),
-            "_",
-            None,
-        )
-
-    def __eq__(self, other: object) -> bool:
-        return (
-            isinstance(other, self.__class__)
-            and self.expression == other.expression
-            and self.tag == other.tag
-        )
-
-    def __hash__(self) -> int:
-        return hash((self.__class__, self.expression, self.tag))
-
-    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
-        """Attempt to match this expression against the input at `start`.
-
-        Args:
-            state: The current parser state, including input text and
-                   any memoization or error-tracking structures.
-            start: The index in the input string where parsing begins.
-        """
-        yield from state.parse(self.expression, start)
-
-    def children(self) -> list[Expression]:
-        """Return this expressions children."""
-        return []
-
-    def with_children(self, _expressions: list[Expression]) -> Self:
-        """Return a new instance of this expression with child expressions replaced."""
-        return self
-
-
-class ASCIIDigit(BaseASCIIRule):
-    """A built-in rule matching '0'..'9'."""
-
-    PATTERN = r"[0-9]"
-
-    def __str__(self) -> str:
-        return "ASCII_DIGIT"
-
-
-class ASCIINonZeroDigit(BaseASCIIRule):
-    """A built-in rule matching '1'..'9'."""
-
-    PATTERN = r"[1-9]"
-
-    def __str__(self) -> str:
-        return "ASCII_NONZERO_DIGIT"
-
-
-class ASCIIBinDigit(BaseASCIIRule):
-    """A built-in rule matching '0'..'1'."""
-
-    PATTERN = r"[0-1]"
-
-    def __str__(self) -> str:
-        return "ASCII_BIN_DIGIT"
-
-
-class ASCIIOctDigit(BaseASCIIRule):
-    """A built-in rule matching '0'..'7'."""
-
-    PATTERN = r"[0-7]"
-
-    def __str__(self) -> str:
-        return "ASCII_OCT_DIGIT"
-
-
-class ASCIIHexDigit(BaseASCIIRule):
-    """A built-in rule matching '0'..'9' | 'a'..'f' | 'A'..'F'."""
-
-    PATTERN = r"[0-9a-fA-F]"
-
-    def __str__(self) -> str:
-        return "ASCII_HEX_DIGIT"
-
-
-class ASCIIAlphaNumeric(BaseASCIIRule):
-    """A built-in rule matching ASCII_DIGIT | ASCII_ALPHA."""
-
-    PATTERN = r"[0-9a-zA-Z]"
-
-    def __str__(self) -> str:
-        return "ASCII_ALPHANUMERIC"
-
-
-class ASCII(BaseASCIIRule):
-    r"""A built-in rule matching '\u{00}'..'\u{7F}'."""
-
-    PATTERN = "[\u0000-\u0074]"
-
-    def __str__(self) -> str:
-        return "ASCII"
-
-
-class ASCIIAlphaLower(BaseASCIIRule):
-    r"""A built-in rule matching 'a'..'z'."""
-
-    PATTERN = "[a-z]"
-
-    def __str__(self) -> str:
-        return "ASCII_ALPHA_LOWER"
-
-
-class ASCIIAlphaUpper(BaseASCIIRule):
-    r"""A built-in rule matching 'A'..'Z'."""
-
-    PATTERN = "[A-Z]"
-
-    def __str__(self) -> str:
-        return "ASCII_ALPHA_UPPER"
-
-
-class ASCIIAlpha(BaseASCIIRule):
-    r"""A built-in rule matching 'A'..'Z' | 'a'..'z'."""
-
-    PATTERN = "[a-zA-Z]"
-
-    def __str__(self) -> str:
-        return "ASCII_ALPHA"
-
-
-class Newline(BaseASCIIRule):
-    r"""A built-in rule matching "\n" | "\r\n" | "\r"."""
-
-    PATTERN = r"\r?\n|\r"
-
-    def __str__(self) -> str:
-        return "NEWLINE"
+ASCII_RULES = {
+    name: BuiltInRegexRule(name, pattern) for name, pattern in ASCII_RULE_MAP.items()
+}

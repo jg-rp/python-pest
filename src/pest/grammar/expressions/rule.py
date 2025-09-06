@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from typing import Iterable
 from typing import Iterator
 
+import regex as re
 from typing_extensions import Self
 
 from pest.grammar import Expression
@@ -17,9 +18,37 @@ if TYPE_CHECKING:
 
 
 class Rule(Expression):
+    """Base class for all rules."""
+
+    __slots__ = ("name", "modifier", "doc")
+
+    def __init__(
+        self,
+        name: str,
+        modifier: str | None = None,
+        doc: Iterable[str] | None = None,
+    ):
+        super().__init__(tag=None)
+        self.name = name
+        self.modifier = modifier
+        self.doc = tuple(doc) if doc else None
+
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, self.__class__)
+            and self.modifier == other.modifier
+            and self.doc == other.doc
+            and self.tag == other.tag
+        )
+
+    def __hash__(self) -> int:
+        return hash((self.__class__, self.modifier, self.doc, self.tag))
+
+
+class GrammarRule(Rule):
     """A named grammar rule."""
 
-    __slots__ = ("name", "modifier", "expression", "doc")
+    __slots__ = ("expression",)
 
     def __init__(
         self,
@@ -28,11 +57,8 @@ class Rule(Expression):
         modifier: str | None = None,
         doc: Iterable[str] | None = None,
     ):
-        super().__init__(tag=None)
-        self.name = name
+        super().__init__(name, modifier, doc)
         self.expression = expression
-        self.modifier = modifier
-        self.doc = tuple(doc) if doc else None
 
     def __str__(self) -> str:
         doc = "".join(f"///{line}\n" for line in self.doc) if self.doc else ""
@@ -112,3 +138,50 @@ class Rule(Expression):
     def with_children(self, expressions: list[Expression]) -> Self:
         """Return a new instance of this expression with child expressions replaced."""
         return self.__class__(self.name, expressions[0], self.modifier, self.doc)
+
+
+class BuiltInRule(Rule):
+    """The base class for all built-in rules."""
+
+    def children(self) -> list[Expression]:
+        """Return this expressions children."""
+        return []
+
+    def with_children(self, _expressions: list[Expression]) -> Self:
+        """Return a new instance of this expression with child expressions replaced."""
+        return self
+
+
+class BuiltInRegexRule(BuiltInRule):
+    """A built-in rule based on a regular expression."""
+
+    __slots__ = ("_re", "_pattern")
+
+    def __init__(self, name: str, pattern: str):
+        super().__init__(name, "_", None)
+        self._pattern = pattern
+        self._re = re.compile(pattern)
+
+    def __str__(self) -> str:
+        return self.name
+
+    def __hash__(self) -> int:
+        return hash((self.__class__, self.name, self._re.pattern))
+
+    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
+        """Attempt to match this expression against the input at `start`."""
+        if match := self._re.match(state.input, start):
+            yield Success(None, match.end())
+
+    def negated(self) -> BuiltInRule:
+        """Return this rule with a negative predicate."""
+        return NegatedBuiltInRule(self.name, self._pattern)
+
+
+class NegatedBuiltInRule(BuiltInRegexRule):
+    """A built-in rule that has been squashed with a negative predicate."""
+
+    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
+        """Attempt to match this expression against the input at `start`."""
+        if not self._re.match(state.input, start):
+            yield Success(None, start)

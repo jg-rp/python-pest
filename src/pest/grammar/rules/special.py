@@ -6,35 +6,28 @@ from typing import TYPE_CHECKING
 from typing import Iterator
 
 from pest.grammar.expression import Success
-from pest.grammar.expression import Terminal
-from pest.grammar.expressions.rule import Rule
+from pest.grammar.expressions.rule import BuiltInRule
 
 if TYPE_CHECKING:
     from pest.state import ParserState
 
-# TODO: Make `Any` a LazyRegexRule?
 
-
-class Any(Rule):
+class Any(BuiltInRule):
     """A built-in rule matching any single "character"."""
 
     def __init__(self) -> None:
-        super().__init__("ANY", _Any(), "_", None)
-
-
-class _Any(Terminal):
-    """A built-in terminal matching any single "character"."""
+        super().__init__("ANY", "_", None)
 
     def __str__(self) -> str:
         return "ANY"
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
-        """Attempt to match this expression against the input at `start`.
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, Any)
 
-        Args:
-            state: The current parser state, including input text and
-                   any memoization or error-tracking structures.
-            start: The index in the input string where parsing begins.
-        """
+    def __hash__(self) -> int:
+        return hash(self.__class__)
+
+    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
+        """Attempt to match this expression against the input at `start`."""
         if start < len(state.input):
             yield Success(None, start + 1)

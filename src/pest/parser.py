@@ -3,21 +3,15 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from typing import Mapping
 
 from .exceptions import PestParserError
 from .grammar import parse
+from .grammar.optimizer import Optimizer
+from .grammar.optimizers.negated_builtin import collapse_negated_builtin
 
 # TODO: Move this to grammar/rules/__init__.py
-from .grammar.rules.ascii import ASCII
-from .grammar.rules.ascii import ASCIIAlphaLower
-from .grammar.rules.ascii import ASCIIAlphaNumeric
-from .grammar.rules.ascii import ASCIIAlphaUpper
-from .grammar.rules.ascii import ASCIIBinDigit
-from .grammar.rules.ascii import ASCIIDigit
-from .grammar.rules.ascii import ASCIIHexDigit
-from .grammar.rules.ascii import ASCIINonZeroDigit
-from .grammar.rules.ascii import ASCIIOctDigit
-from .grammar.rules.ascii import Newline
+from .grammar.rules.ascii import ASCII_RULES
 from .grammar.rules.soi import EOI
 from .grammar.rules.soi import SOI
 from .grammar.rules.special import Any
@@ -43,21 +37,12 @@ class Parser:
     # - PEEK_ALL
     BUILTIN: dict[str, Rule] = {
         "ANY": Any(),
-        "ASCII": ASCII(),
-        "ASCII_ALPHA_LOWER": ASCIIAlphaLower(),
-        "ASCII_ALPHA_UPPER": ASCIIAlphaUpper(),
-        "ASCII_ALPHANUMERIC": ASCIIAlphaNumeric(),
-        "ASCII_DIGIT": ASCIIDigit(),
-        "ASCII_NONZERO_DIGIT": ASCIINonZeroDigit(),
-        "ASCII_BIN_DIGIT": ASCIIBinDigit(),
-        "ASCII_OCT_DIGIT": ASCIIOctDigit(),
-        "ASCII_HEX_DIGIT": ASCIIHexDigit(),
-        "NEWLINE": Newline(),
+        **ASCII_RULES,
         "SOI": SOI(),
         "EOI": EOI(),
     }
 
-    def __init__(self, rules: dict[str, Rule], doc: list[str] | None = None):
+    def __init__(self, rules: Mapping[str, Rule], doc: list[str] | None = None):
         # Built-in rules overwrite grammar defined rules.
         self.rules: dict[str, Rule] = {**rules, **self.BUILTIN}
         self.doc = doc
@@ -65,7 +50,26 @@ class Parser:
     @classmethod
     def from_grammar(cls, grammar: str) -> Parser:
         """Parse `grammar` and return a new Parser for it."""
-        return cls(*parse(grammar))
+        rules, doc = parse(grammar)
+
+        # XXX: optimize
+        optimizer = Optimizer(
+            [
+                ("negated_builtin", collapse_negated_builtin),
+            ],
+            debug=True,
+        )
+
+        for name, rule in rules.items():
+            rules[name].expression = optimizer.optimize(rule.expression)
+
+        for line in optimizer.log:
+            print(line)
+
+        return cls(rules, doc)
+
+    # for name, rule in grammar.rules.items():
+    #     grammar.rules[name].expression = registry.optimize(rule.expression)
 
     def __str__(self) -> str:
         doc = "".join(f"//!{line}\n" for line in self.doc) + "\n" if self.doc else ""

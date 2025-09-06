@@ -1,4 +1,5 @@
 from .expression import Expression
+from .expressions.rule import GrammarRule
 from .expressions.rule import Rule
 from .parser import Parser
 from .scanner import Scanner
@@ -9,6 +10,7 @@ from .tokens import TokenKind
 __all__ = (
     "Expression",
     "Parser",
+    "GrammarRule",
     "Rule",
     "Scanner",
     "Token",
@@ -18,7 +20,7 @@ __all__ = (
 )
 
 
-def parse(grammar: str) -> tuple[dict[str, Rule], list[str]]:
+def parse(grammar: str) -> tuple[dict[str, GrammarRule], list[str]]:
     """Parse a pest grammar.
 
     Returns:

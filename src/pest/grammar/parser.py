@@ -4,6 +4,7 @@ from .exceptions import PestGrammarSyntaxError
 from .expression import Expression
 from .expressions import CaseInsensitiveString
 from .expressions import Choice
+from .expressions import GrammarRule
 from .expressions import Group
 from .expressions import Identifier
 from .expressions import Literal
@@ -20,7 +21,6 @@ from .expressions import RepeatMax
 from .expressions import RepeatMin
 from .expressions import RepeatOnce
 from .expressions import RepeatRange
-from .expressions import Rule
 from .expressions import Sequence
 from .tokens import Token
 from .tokens import TokenKind
@@ -80,7 +80,7 @@ class Parser:
             )
         return token
 
-    def parse(self) -> tuple[dict[str, Rule], list[str]]:
+    def parse(self) -> tuple[dict[str, GrammarRule], list[str]]:
         grammar_doc: list[str] = []
         while self.current().kind == TokenKind.GRAMMAR_DOC:
             self.pos += 1
@@ -88,8 +88,8 @@ class Parser:
 
         return self.parse_rules(), grammar_doc
 
-    def parse_rules(self) -> dict[str, Rule]:
-        rules: dict[str, Rule] = {}
+    def parse_rules(self) -> dict[str, GrammarRule]:
+        rules: dict[str, GrammarRule] = {}
 
         while True:
             if self.current().kind == TokenKind.EOI:
@@ -106,7 +106,7 @@ class Parser:
             self.eat(TokenKind.LBRACE)
             expression = self.parse_expression()
             self.eat(TokenKind.RBRACE)
-            rules[identifier.value] = Rule(
+            rules[identifier.value] = GrammarRule(
                 identifier.value, expression, modifier, rule_doc
             )
 
@@ -138,7 +138,8 @@ class Parser:
             left = CaseInsensitiveString(self.next().value)
         elif left_kind == TokenKind.LPAREN:
             self.pos += 1
-            left = Group(self.parse_expression(), tag=tag)
+            # XXX: left = Group(self.parse_expression(), tag=tag)
+            left = self.parse_expression()
             self.eat(TokenKind.RPAREN)
         elif left_kind == TokenKind.IDENTIFIER:
             left = Identifier(self.next().value, tag=tag)
