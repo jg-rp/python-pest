@@ -140,6 +140,7 @@ convention = "google"
 "src/pest/grammar/__init__.py" = ["D104"]
 "src/pest/grammar/expressions/__init__.py" = ["D104"]
 "src/pest/grammar/parser.py" = ["D102"]
+"src/pest/grammar/rules/unicode.py" = ["D101"]
 "src/pest/grammar/scanner.py" = ["D102"]
 "src/pest/grammar/unescape.py" = ["PLR2004"]
 "tests/*" = ["D100", "D101", "D104", "D103"]

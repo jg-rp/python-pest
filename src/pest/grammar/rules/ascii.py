@@ -103,11 +103,49 @@ class ASCIIHexDigit(BaseASCIIRule):
         return "ASCII_HEX_DIGIT"
 
 
-# TODO: ASCII_ALPHANUMERIC
-# TODO: ASCII
-# TODO: ASCII_ALPHA_LOWER
-# TODO: ASCII_ALPHA_UPPER
-# TODO: ASCII_ALPHA
+class ASCIIAlphaNumeric(BaseASCIIRule):
+    """A built-in rule matching ASCII_DIGIT | ASCII_ALPHA."""
+
+    PATTERN = r"[0-9a-zA-Z]"
+
+    def __str__(self) -> str:
+        return "ASCII_ALPHANUMERIC"
+
+
+class ASCII(BaseASCIIRule):
+    r"""A built-in rule matching '\u{00}'..'\u{7F}'."""
+
+    PATTERN = "[\u0000-\u0074]"
+
+    def __str__(self) -> str:
+        return "ASCII"
+
+
+class ASCIIAlphaLower(BaseASCIIRule):
+    r"""A built-in rule matching 'a'..'z'."""
+
+    PATTERN = "[a-z]"
+
+    def __str__(self) -> str:
+        return "ASCII_ALPHA_LOWER"
+
+
+class ASCIIAlphaUpper(BaseASCIIRule):
+    r"""A built-in rule matching 'A'..'Z'."""
+
+    PATTERN = "[A-Z]"
+
+    def __str__(self) -> str:
+        return "ASCII_ALPHA_UPPER"
+
+
+class ASCIIAlpha(BaseASCIIRule):
+    r"""A built-in rule matching 'A'..'Z' | 'a'..'z'."""
+
+    PATTERN = "[a-zA-Z]"
+
+    def __str__(self) -> str:
+        return "ASCII_ALPHA"
 
 
 class Newline(BaseASCIIRule):
