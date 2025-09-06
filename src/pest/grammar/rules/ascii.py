@@ -103,6 +103,13 @@ class ASCIIHexDigit(BaseASCIIRule):
         return "ASCII_HEX_DIGIT"
 
 
+# TODO: ASCII_ALPHANUMERIC
+# TODO: ASCII
+# TODO: ASCII_ALPHA_LOWER
+# TODO: ASCII_ALPHA_UPPER
+# TODO: ASCII_ALPHA
+
+
 class Newline(BaseASCIIRule):
     r"""A built-in rule matching "\n" | "\r\n" | "\r"."""
 
@@ -110,10 +117,3 @@ class Newline(BaseASCIIRule):
 
     def __str__(self) -> str:
         return "NEWLINE"
-
-
-# TODO: ASCII_ALPHANUMERIC
-# TODO: ASCII
-# TODO: ASCII_ALPHA_LOWER
-# TODO: ASCII_ALPHA_UPPER
-# TODO: ASCII_ALPHA

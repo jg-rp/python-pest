@@ -1,4 +1,4 @@
-r"""Replace `\uXXXX` escape sequences with Unicode code points."""
+r"""Replace `\u{XX}` or `\u{XXXX}` escape sequences with Unicode code points."""
 
 from typing import List
 from typing import Tuple
@@ -19,7 +19,6 @@ def unescape_string(value: str, token: Token, quote: str = '"') -> str:
             _ch, index = _decode_escape_sequence(value, index, token, quote)
             unescaped.append(_ch)
         else:
-            _string_from_codepoint(ord(ch), token)
             unescaped.append(ch)
         index += 1
     return "".join(unescaped)
@@ -53,7 +52,7 @@ def _decode_escape_sequence(  # noqa: PLR0911
         return "\t", index
     if ch == "u":
         codepoint, index = _decode_hex_char(value, index, token)
-        return _string_from_codepoint(codepoint, token), index
+        return chr(codepoint), index
 
     raise PestGrammarSyntaxError(
         f"unknown escape sequence at index {token.start + index - 1}",
@@ -62,46 +61,29 @@ def _decode_escape_sequence(  # noqa: PLR0911
 
 
 def _decode_hex_char(value: str, index: int, token: Token) -> Tuple[int, int]:
-    length = len(value)
-
-    if index + 4 >= length:
-        raise PestGrammarSyntaxError(
-            f"incomplete escape sequence at index {token.start + index - 1}",
-            token=token,
-        )
-
+    # TODO: use a regular expression?
     index += 1  # move past 'u'
-    codepoint = _parse_hex_digits(value[index : index + 4], token)
 
-    if _is_low_surrogate(codepoint):
+    if value[index] != "{":
         raise PestGrammarSyntaxError(
-            f"unexpected low surrogate at index {token.start + index - 1}",
+            f"expected an opening brace, found {value[index]}",
             token=token,
         )
 
-    if _is_high_surrogate(codepoint):
-        # expect a surrogate pair
-        if not (
-            index + 9 < length and value[index + 4] == "\\" and value[index + 5] == "u"
-        ):
-            raise PestGrammarSyntaxError(
-                f"incomplete escape sequence at index {token.start + index - 2}",
-                token=token,
-            )
+    index += 1  # move past '{'
+    closing_brace_index = value.find("}", index)
 
-        low_surrogate = _parse_hex_digits(value[index + 6 : index + 10], token)
+    if closing_brace_index == -1:
+        raise PestGrammarSyntaxError("unclosed Unicode escape sequence", token=token)
 
-        if not _is_low_surrogate(low_surrogate):
-            raise PestGrammarSyntaxError(
-                f"unexpected codepoint at index {token.start + index + 4}",
-                token=token,
-            )
+    hex_digit_length = closing_brace_index - index
+    if hex_digit_length not in (2, 4):
+        raise PestGrammarSyntaxError("expected \\u{00} or \\u{0000}", token=token)
 
-        codepoint = 0x10000 + (((codepoint & 0x03FF) << 10) | (low_surrogate & 0x03FF))
-
-        return (codepoint, index + 9)
-
-    return (codepoint, index + 3)
+    codepoint = _parse_hex_digits(value[index : index + hex_digit_length], token)
+    index += hex_digit_length
+    index += 1  # move past '}'
+    return codepoint, index
 
 
 def _parse_hex_digits(digits: str, token: Token) -> int:
@@ -116,21 +98,7 @@ def _parse_hex_digits(digits: str, token: Token) -> int:
             codepoint |= digit - 97 + 10
         else:
             raise PestGrammarSyntaxError(
-                "invalid \\uXXXX escape sequence",
+                "invalid \\u{XXXX} escape sequence",
                 token=token,
             )
     return codepoint
-
-
-def _string_from_codepoint(codepoint: int, token: Token) -> str:
-    if codepoint <= 0x1F:
-        raise PestGrammarSyntaxError(f"invalid character {codepoint!r}", token=token)
-    return chr(codepoint)
-
-
-def _is_high_surrogate(codepoint: int) -> bool:
-    return codepoint >= 0xD800 and codepoint <= 0xDBFF
-
-
-def _is_low_surrogate(codepoint: int) -> bool:
-    return codepoint >= 0xDC00 and codepoint <= 0xDFFF

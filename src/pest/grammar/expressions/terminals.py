@@ -171,6 +171,7 @@ class Literal(Terminal):
         self.value = value
 
     def __str__(self) -> str:
+        # TODO: replace non-printing characters with \u{XXXX} escape sequence
         value = (
             self.value.replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n")
         )
