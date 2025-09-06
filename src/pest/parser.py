@@ -6,9 +6,13 @@ from typing import TYPE_CHECKING
 
 from .exceptions import PestParserError
 from .grammar import parse
-from .grammar.rules.ascii import ASCIIBinDigit
 
 # TODO: Move this to grammar/rules/__init__.py
+from .grammar.rules.ascii import ASCII
+from .grammar.rules.ascii import ASCIIAlphaLower
+from .grammar.rules.ascii import ASCIIAlphaNumeric
+from .grammar.rules.ascii import ASCIIAlphaUpper
+from .grammar.rules.ascii import ASCIIBinDigit
 from .grammar.rules.ascii import ASCIIDigit
 from .grammar.rules.ascii import ASCIIHexDigit
 from .grammar.rules.ascii import ASCIINonZeroDigit
@@ -39,6 +43,10 @@ class Parser:
     # - PEEK_ALL
     BUILTIN: dict[str, Rule] = {
         "ANY": Any(),
+        "ASCII": ASCII(),
+        "ASCII_ALPHA_LOWER": ASCIIAlphaLower(),
+        "ASCII_ALPHA_UPPER": ASCIIAlphaUpper(),
+        "ASCII_ALPHANUMERIC": ASCIIAlphaNumeric(),
         "ASCII_DIGIT": ASCIIDigit(),
         "ASCII_NONZERO_DIGIT": ASCIINonZeroDigit(),
         "ASCII_BIN_DIGIT": ASCIIBinDigit(),

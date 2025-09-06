@@ -314,4 +314,110 @@ def test_array_rule(parser: Parser) -> None:
 
 def test_inline_table_rule(parser: Parser) -> None:
     pairs = parser.parse("inline_table", "{ a = 'b' }")
-    assert pairs.as_list() == []
+    assert pairs.as_list() == [
+        {
+            "rule": "inline_table",
+            "span": {"str": "{ a = 'b' }", "start": 0, "end": 11},
+            "inner": [
+                {
+                    "rule": "pair",
+                    "span": {"str": "a = 'b'", "start": 2, "end": 9},
+                    "inner": [
+                        {
+                            "rule": "key",
+                            "span": {"str": "a", "start": 2, "end": 3},
+                            "inner": [],
+                        },
+                        {
+                            "rule": "literal",
+                            "span": {"str": "'b'", "start": 6, "end": 9},
+                            "inner": [],
+                        },
+                    ],
+                }
+            ],
+        }
+    ]
+
+
+def test_table_rule(parser: Parser) -> None:
+    pairs = parser.parse("table", "[a.b]\nc = 'd'")
+    assert pairs.as_list() == [
+        {
+            "rule": "table",
+            "span": {"str": "[a.b]\nc = 'd'", "start": 0, "end": 13},
+            "inner": [
+                {
+                    "rule": "key",
+                    "span": {"str": "a", "start": 1, "end": 2},
+                    "inner": [],
+                },
+                {
+                    "rule": "key",
+                    "span": {"str": "b", "start": 3, "end": 4},
+                    "inner": [],
+                },
+                {
+                    "rule": "pair",
+                    "span": {"str": "c = 'd'", "start": 6, "end": 13},
+                    "inner": [
+                        {
+                            "rule": "key",
+                            "span": {"str": "c", "start": 6, "end": 7},
+                            "inner": [],
+                        },
+                        {
+                            "rule": "literal",
+                            "span": {"str": "'d'", "start": 10, "end": 13},
+                            "inner": [],
+                        },
+                    ],
+                },
+            ],
+        }
+    ]
+
+
+def test_array_table_rule(parser: Parser) -> None:
+    pairs = parser.parse("array_table", "[[a.b]]\nc = 'd'")
+    assert pairs.as_list() == [
+        {
+            "rule": "array_table",
+            "span": {"str": "[[a.b]]\nc = 'd'", "start": 0, "end": 15},
+            "inner": [
+                {
+                    "rule": "key",
+                    "span": {"str": "a", "start": 2, "end": 3},
+                    "inner": [],
+                },
+                {
+                    "rule": "key",
+                    "span": {"str": "b", "start": 4, "end": 5},
+                    "inner": [],
+                },
+                {
+                    "rule": "pair",
+                    "span": {"str": "c = 'd'", "start": 8, "end": 15},
+                    "inner": [
+                        {
+                            "rule": "key",
+                            "span": {"str": "c", "start": 8, "end": 9},
+                            "inner": [],
+                        },
+                        {
+                            "rule": "literal",
+                            "span": {"str": "'d'", "start": 12, "end": 15},
+                            "inner": [],
+                        },
+                    ],
+                },
+            ],
+        }
+    ]
+
+
+def test_example(parser: Parser) -> None:
+    with open("tests/examples/example.toml", encoding="utf-8") as fd:
+        example = fd.read()
+
+    parser.parse("toml", example)

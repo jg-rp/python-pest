@@ -32,6 +32,9 @@ class LazyRegexExpression(Terminal):
         self._negatives = negatives or []
         self._compiled: re.Pattern[str] | None = None
 
+    def __str__(self) -> str:
+        return f"/{self.pattern.pattern}/"
+
     def __eq__(self, other: object) -> bool:
         return (
             isinstance(other, self.__class__)

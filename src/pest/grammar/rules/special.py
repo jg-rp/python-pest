@@ -12,6 +12,8 @@ from pest.grammar.expressions.rule import Rule
 if TYPE_CHECKING:
     from pest.state import ParserState
 
+# TODO: Make `Any` a LazyRegexRule?
+
 
 class Any(Rule):
     """A built-in rule matching any single "character"."""
