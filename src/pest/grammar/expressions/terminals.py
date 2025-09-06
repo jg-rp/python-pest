@@ -250,5 +250,5 @@ class Range(Terminal):
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
-        if self._re.match(state.input, start):
-            yield Success(None, start + 1)
+        if match := self._re.match(state.input, start):
+            yield Success(None, match.end())

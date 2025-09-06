@@ -68,6 +68,7 @@ class Rule(Expression):
             state.atomic_depth = 0
 
         results = list(state.parse(self.expression, start))
+
         if not results:
             state.atomic_depth = restore_atomic_depth
             return
@@ -75,8 +76,8 @@ class Rule(Expression):
         end = results[-1].pos
 
         if self.modifier == "_":
-            # Silent rule succeeds, but no node is returned.
-            yield Success(None, end)
+            # Yield children without an enclosing Pair
+            yield from results
         elif self.modifier == "@":
             # Atomic rule silences children
             yield Success(

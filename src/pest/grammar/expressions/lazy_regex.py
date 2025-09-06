@@ -8,14 +8,15 @@ from typing import Iterator
 import regex as re
 from typing_extensions import Self
 
-from pest.grammar import Expression
+from pest.grammar.expression import Expression
 from pest.grammar.expression import Success
+from pest.grammar.expression import Terminal
 
 if TYPE_CHECKING:
     from pest.state import ParserState
 
 
-class LazyRegexExpression(Expression):
+class LazyRegexExpression(Terminal):
     """Regex-backed expression with lazily compiled pattern."""
 
     __slots__ = ("_positives", "_negatives", "_compiled", "tag")
@@ -30,6 +31,24 @@ class LazyRegexExpression(Expression):
         self._positives = positives or []
         self._negatives = negatives or []
         self._compiled: re.Pattern[str] | None = None
+
+    def __eq__(self, other: object) -> bool:
+        return (
+            isinstance(other, self.__class__)
+            and self._positives == other._positives
+            and self._negatives == other._negatives
+            and self.tag == other.tag
+        )
+
+    def __hash__(self) -> int:
+        return hash(
+            (
+                self.__class__,
+                tuple(self._positives),
+                tuple(self._negatives),
+                self.tag,
+            )
+        )
 
     def with_positive(self, regex: str) -> Self:
         """Return a RegexExpression with an extra positive alternative."""

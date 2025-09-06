@@ -156,9 +156,9 @@ class Parser:
             self.pos += 1
             left = self.parse_peek_expression(tag)
         elif left_kind == TokenKind.CHAR:
-            start = self.eat(TokenKind.CHAR).value
+            start = self.eat(TokenKind.CHAR).value[1:-1]
             self.eat(TokenKind.RANGE_OP)
-            left = Range(start, self.eat(TokenKind.CHAR).value, tag=tag)
+            left = Range(start, self.eat(TokenKind.CHAR).value[1:-1], tag=tag)
         elif left_kind == TokenKind.POSITIVE_PREDICATE:
             self.pos += 1
             left = PositivePredicate(self.parse_expression(PRECEDENCE_PREFIX), tag=tag)
