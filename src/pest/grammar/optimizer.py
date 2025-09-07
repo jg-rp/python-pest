@@ -3,16 +3,26 @@
 from __future__ import annotations
 
 from typing import Callable
+from typing import Mapping
+
+from pest.grammar.expressions import Rule
 
 from .expression import Expression
 
-OptimizerPass = Callable[[Expression], Expression]
+OptimizerPass = Callable[[Expression, Mapping[str, Rule]], Expression]
 
 
 class Optimizer:
     """A registry of optimization passes for grammar expressions."""
 
-    def __init__(self, passes: list[tuple[str, OptimizerPass]], *, debug: bool = False):
+    def __init__(
+        self,
+        rules: Mapping[str, Rule],
+        passes: list[tuple[str, OptimizerPass]],
+        *,
+        debug: bool = False,
+    ):
+        self.rules = rules
         self.passes = passes
         self.debug = debug
         self.log: list[str] = []
@@ -26,7 +36,7 @@ class Optimizer:
 
         # Apply optimization passes
         for name, opt in self.passes:
-            new_expr = opt(expr)
+            new_expr = opt(expr, self.rules)
             if new_expr is not expr:
                 if self.debug:
                     self.log.append(f"{name}: {expr} → {new_expr}")

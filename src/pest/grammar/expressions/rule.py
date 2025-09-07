@@ -172,16 +172,3 @@ class BuiltInRegexRule(BuiltInRule):
         """Attempt to match this expression against the input at `start`."""
         if match := self._re.match(state.input, start):
             yield Success(None, match.end())
-
-    def negated(self) -> BuiltInRule:
-        """Return this rule with a negative predicate."""
-        return NegatedBuiltInRule(self.name, self._pattern)
-
-
-class NegatedBuiltInRule(BuiltInRegexRule):
-    """A built-in rule that has been squashed with a negative predicate."""
-
-    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
-        """Attempt to match this expression against the input at `start`."""
-        if not self._re.match(state.input, start):
-            yield Success(None, start)

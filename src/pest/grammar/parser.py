@@ -1,7 +1,11 @@
 """pest grammar parser."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+from typing import Mapping
+
 from .exceptions import PestGrammarSyntaxError
-from .expression import Expression
 from .expressions import CaseInsensitiveString
 from .expressions import Choice
 from .expressions import GrammarRule
@@ -21,9 +25,14 @@ from .expressions import RepeatMax
 from .expressions import RepeatMin
 from .expressions import RepeatOnce
 from .expressions import RepeatRange
+from .expressions import Rule
 from .expressions import Sequence
 from .tokens import Token
 from .tokens import TokenKind
+
+if TYPE_CHECKING:
+    from .expression import Expression
+
 
 PRECEDENCE_LOWEST = 1
 PRECEDENCE_CHOICE = 2
@@ -46,8 +55,9 @@ INFIX_OPERATORS = frozenset(
 class Parser:
     """pest grammar parser."""
 
-    def __init__(self, tokens: list[Token]):
+    def __init__(self, tokens: list[Token], builtins: Mapping[str, Rule]):
         self.tokens = tokens
+        self.builtins = builtins
         self.pos = 0
         assert tokens
         self.eof = Token(TokenKind.EOI, "", -1, tokens[-1].grammar)
@@ -142,7 +152,11 @@ class Parser:
             left = self.parse_expression()
             self.eat(TokenKind.RPAREN)
         elif left_kind == TokenKind.IDENTIFIER:
-            left = Identifier(self.next().value, tag=tag)
+            name = self.next().value
+            if rule := self.builtins.get(name):
+                left = rule
+            else:
+                left = Identifier(name, tag=tag)
         elif left_kind == TokenKind.PUSH_LITERAL:
             self.pos += 1
             self.eat(TokenKind.LPAREN)

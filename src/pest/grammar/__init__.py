@@ -1,3 +1,5 @@
+from typing import Mapping
+
 from .expression import Expression
 from .expressions.rule import GrammarRule
 from .expressions.rule import Rule
@@ -20,10 +22,12 @@ __all__ = (
 )
 
 
-def parse(grammar: str) -> tuple[dict[str, GrammarRule], list[str]]:
+def parse(
+    grammar: str, builtins: Mapping[str, Rule]
+) -> tuple[dict[str, GrammarRule], list[str]]:
     """Parse a pest grammar.
 
     Returns:
         A (rules, grammar doc) tuple.
     """
-    return Parser(tokenize(grammar)).parse()
+    return Parser(tokenize(grammar), builtins).parse()

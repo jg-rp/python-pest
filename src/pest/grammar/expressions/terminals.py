@@ -205,7 +205,11 @@ class CaseInsensitiveString(Terminal):
         self._re = re.compile(re.escape(value), re.I)
 
     def __str__(self) -> str:
-        return f'{self.tag_str()}^"{self.value}"'
+        # TODO: replace non-printing characters with \u{XXXX} escape sequence
+        value = (
+            self.value.replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n")
+        )
+        return f'{self.tag_str()}^"{value}"'
 
     def __eq__(self, other: object) -> bool:
         return (

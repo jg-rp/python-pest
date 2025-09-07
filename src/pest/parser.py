@@ -8,7 +8,8 @@ from typing import Mapping
 from .exceptions import PestParserError
 from .grammar import parse
 from .grammar.optimizer import Optimizer
-from .grammar.optimizers.negated_builtin import collapse_negated_builtin
+from .grammar.optimizers.squash_negated import collapse_negated_builtin
+from .grammar.optimizers.squash_negated import collapse_negated_literal
 
 # TODO: Move this to grammar/rules/__init__.py
 from .grammar.rules.ascii import ASCII_RULES
@@ -50,12 +51,14 @@ class Parser:
     @classmethod
     def from_grammar(cls, grammar: str) -> Parser:
         """Parse `grammar` and return a new Parser for it."""
-        rules, doc = parse(grammar)
+        rules, doc = parse(grammar, cls.BUILTIN)
 
         # XXX: optimize
         optimizer = Optimizer(
+            {**rules, **cls.BUILTIN},  # XXX: do this once
             [
                 ("negated_builtin", collapse_negated_builtin),
+                ("negated_literal", collapse_negated_literal),
             ],
             debug=True,
         )
