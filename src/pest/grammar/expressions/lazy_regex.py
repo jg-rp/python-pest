@@ -15,24 +15,25 @@ from pest.grammar.expression import Terminal
 if TYPE_CHECKING:
     from pest.state import ParserState
 
-# TODO: update me
-
 
 class LazyRegexExpression(Terminal):
     """Regex-backed expression with lazily compiled pattern."""
 
-    __slots__ = ("_positives", "_negatives", "_compiled", "tag")
+    __slots__ = (
+        "positives",
+        "negatives",
+        "positive_ranges",
+        "negative_ranges",
+        "compiled",
+    )
 
-    def __init__(
-        self,
-        positives: list[str] | None = None,
-        negatives: list[str] | None = None,
-        tag: str | None = None,
-    ):
-        super().__init__(tag)
-        self._positives = positives or []
-        self._negatives = negatives or []
-        self._compiled: re.Pattern[str] | None = None
+    def __init__(self) -> None:
+        super().__init__(None)
+        self.positives: list[str] = []
+        self.negatives: list[str] = []
+        self.positive_ranges: list[tuple[str, str]] = []
+        self.negative_ranges: list[tuple[str, str]] = []
+        self.compiled: re.Pattern[str] | None = None
 
     def __str__(self) -> str:
         return f"/{self.pattern.pattern}/"
@@ -40,55 +41,153 @@ class LazyRegexExpression(Terminal):
     def __eq__(self, other: object) -> bool:
         return (
             isinstance(other, self.__class__)
-            and self._positives == other._positives
-            and self._negatives == other._negatives
-            and self.tag == other.tag
+            and self.positives == other.positives
+            and self.negatives == other.negatives
+            and self.positive_ranges == other.positive_ranges
+            and self.negative_ranges == other.negative_ranges
         )
 
     def __hash__(self) -> int:
         return hash(
             (
                 self.__class__,
-                tuple(self._positives),
-                tuple(self._negatives),
-                self.tag,
+                tuple(self.positives),
+                tuple(self.negatives),
+                tuple(self.positive_ranges),
+                tuple(self.negative_ranges),
             )
         )
 
-    def with_positive(self, regex: str) -> Self:
-        """Return a RegexExpression with an extra positive alternative."""
-        if self._compiled is None:
-            self._positives.append(regex)
-            return self
-        return self.__class__(self._positives + [regex], self._negatives, self.tag)
+    def with_positive(self, s: str) -> Self:
+        """Return this regex expression with an additional positive pattern."""
+        if self.compiled:
+            expr = self._copy()
+            return expr.with_positive(s)
 
-    def with_negative(self, regex: str) -> Self:
-        """Return a RegexExpression with an extra negative lookahead."""
-        if self._compiled is None:
-            self._negatives.append(regex)
-            return self
-        return self.__class__(self._positives, self._negatives + [regex], self.tag)
+        if len(s) == 1:
+            self.positive_ranges.append((s, s))
+        else:
+            self.positives.append(s)
+        return self
+
+    def with_negative(self, s: str) -> Self:
+        """Return this regex expression with an additional negative pattern."""
+        if self.compiled:
+            expr = self._copy()
+            return expr.with_positive(s)
+
+        if len(s) == 1:
+            self.negative_ranges.append((s, s))
+        else:
+            self.negatives.append(s)
+        return self
+
+    def with_range(self, start: str, end: str) -> Self:
+        """Return this regex expression with an additional positive character range."""
+        if self.compiled:
+            expr = self._copy()
+            return expr.with_range(start, end)
+
+        self.positive_ranges.append((start, end))
+        return self
+
+    def with_negative_range(self, start: str, end: str) -> Self:
+        """Return this regex expression with an additional negative character range."""
+        if self.compiled:
+            expr = self._copy()
+            return expr.with_negative_range(start, end)
+
+        self.negative_ranges.append((start, end))
+        return self
 
     @property
     def pattern(self) -> re.Pattern[str]:
         """The compiled regular expression pattern."""
-        if self._compiled is None:
-            pat = self._build_pattern()
-            self._compiled = re.compile(pat)
-        return self._compiled
+        if self.compiled is None:
+            self.compiled = re.compile(self._build_pattern(), re.VERSION1)
+        return self.compiled
 
     def _build_pattern(self) -> str:
-        if self._positives:
-            pos_pat = "|".join(self._positives)
-        else:
-            pos_pat = "."
+        """Return an optimized regex pattern with simplified ranges.
 
-        if self._negatives:
-            neg_pat = "".join(f"(?!{n})" for n in self._negatives)
-        else:
-            neg_pat = ""
+        - Single-character entries are merged into ranges.
+        - Multi-character positives become explicit alternations.
+        - Multi-character negatives are expressed as negative lookaheads.
+        """
 
-        return f"{neg_pat}(?:{pos_pat})"
+        def merge_ranges(
+            ranges: list[tuple[str, str]], chars: list[str]
+        ) -> list[tuple[int, int]]:
+            points = [(ord(c), ord(c)) for c in chars if len(c) == 1]
+            points += [(ord(a), ord(b)) for a, b in ranges]
+            if not points:
+                return []
+            points.sort()
+            merged = []
+            cur_start, cur_end = points[0]
+            for start, end in points[1:]:
+                if start <= cur_end + 1:
+                    cur_end = max(cur_end, end)
+                else:
+                    merged.append((cur_start, cur_end))
+                    cur_start, cur_end = start, end
+            merged.append((cur_start, cur_end))
+            return merged
+
+        def build_class_and_literals(
+            chars: list[str], ranges: list[tuple[str, str]]
+        ) -> tuple[str, list[str]]:
+            merged = merge_ranges(ranges, chars)
+            parts = []
+            for s, e in merged:
+                if s == e:
+                    parts.append(chr(s))
+                else:
+                    parts.append(f"{chr(s)}-{chr(e)}")
+            char_class = "[" + "".join(parts) + "]" if parts else ""
+            literals = [c for c in chars if len(c) > 1]
+            return char_class, literals
+
+        # Build positives and negatives
+        pos_class, pos_literals = build_class_and_literals(
+            self.positives, self.positive_ranges
+        )
+
+        neg_class, neg_literals = build_class_and_literals(
+            self.negatives, self.negative_ranges
+        )
+
+        lookaheads = []
+        if neg_literals:
+            escaped = [re.escape(lit) for lit in neg_literals]
+            lookaheads.append(f"(?!{'|'.join(escaped)})")
+
+        if not pos_class and not pos_literals and not neg_class and not lookaheads:
+            return "."
+
+        # Only positives
+        if pos_class and not neg_class:
+            body = pos_class
+            if pos_literals:
+                body = f"(?:{'|'.join(sorted(pos_literals + [pos_class]))})"
+            return "".join(lookaheads) + body
+
+        if not pos_class and not neg_class and pos_literals:
+            body = f"(?:{'|'.join(sorted(pos_literals))})"
+            return "".join(lookaheads) + body
+
+        # Only negatives
+        if not pos_class and neg_class:
+            body = neg_class.replace("[", "[^", 1)
+            return "".join(lookaheads) + body
+
+        # Both positives and negatives
+        if pos_literals:
+            class_part = f"[{pos_class}--{neg_class}]" if pos_class else neg_class
+            body = f"(?:{'|'.join(sorted(pos_literals + [class_part]))})"
+        else:
+            body = f"[{pos_class}--{neg_class}]" if pos_class and neg_class else "."
+        return "".join(lookaheads) + body
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Attempt to match this expression against the input at `start`.
@@ -108,3 +207,11 @@ class LazyRegexExpression(Terminal):
     def with_children(self, _expressions: list[Expression]) -> Self:
         """Return a new instance of this expression with child expressions replaced."""
         return self
+
+    def _copy(self) -> Self:
+        expr = self.__class__()
+        expr.positive_ranges = self.positive_ranges[:]
+        expr.positives = self.positives[:]
+        expr.negative_ranges = self.negative_ranges[:]
+        expr.negatives = self.negatives[:]
+        return expr

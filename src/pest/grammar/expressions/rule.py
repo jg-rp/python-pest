@@ -155,18 +155,49 @@ class BuiltInRule(Rule):
 class BuiltInRegexRule(BuiltInRule):
     """A built-in rule based on a regular expression."""
 
-    __slots__ = ("_re", "_pattern")
+    __slots__ = ("_re", "patterns")
 
-    def __init__(self, name: str, pattern: str):
+    def __init__(self, name: str, *patterns: str):
         super().__init__(name, "_", None)
-        self._pattern = pattern
-        self._re = re.compile(pattern)
+        self.patterns = patterns
+        self._re = re.compile("|".join(patterns))
 
     def __str__(self) -> str:
         return self.name
 
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, BuiltInRegexRule) and self.patterns == other.patterns
+
     def __hash__(self) -> int:
         return hash((self.__class__, self.name, self._re.pattern))
+
+    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
+        """Attempt to match this expression against the input at `start`."""
+        if match := self._re.match(state.input, start):
+            yield Success(None, match.end())
+
+
+class BuiltInRegexRangeRule(BuiltInRule):
+    """A built-in rule based on a range of characters."""
+
+    __slots__ = ("_re", "ranges")
+
+    def __init__(self, name: str, *ranges: tuple[str, str]):
+        super().__init__(name, "_", None)
+        self.ranges = ranges
+        _ranges = "".join(
+            f"{re.escape(start)}-{re.escape(end)}" for start, end in ranges
+        )
+        self._re = re.compile(f"[{_ranges}]")
+
+    def __str__(self) -> str:
+        return self.name
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, BuiltInRegexRangeRule) and self.ranges == other.ranges
+
+    def __hash__(self) -> int:
+        return hash((self.__class__, self.name, self.ranges))
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Attempt to match this expression against the input at `start`."""

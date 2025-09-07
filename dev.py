@@ -2,12 +2,14 @@ import json
 
 from pest import Parser
 
-with open("tests/grammars/http.pest", encoding="utf-8") as fd:
+with open("tests/grammars/toml.pest", encoding="utf-8") as fd:
     grammar = fd.read()
 
 parser = Parser.from_grammar(grammar)
 
-print(parser)
+pairs = parser.parse("literal", "'\"'")
+
+# print(parser)
 
 # with open("tests/examples/example.toml", encoding="utf-8") as fd:
 #     example = fd.read()
