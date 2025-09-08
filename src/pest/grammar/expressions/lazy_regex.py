@@ -25,18 +25,31 @@ class LazyRegexExpression(Terminal):
         "positive_ranges",
         "negative_ranges",
         "compiled",
+        "consuming",
     )
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        positives: list[str] | None = None,
+        negatives: list[str] | None = None,
+        positive_ranges: list[tuple[str, str]] | None = None,
+        negative_ranges: list[tuple[str, str]] | None = None,
+        consuming: bool = True,
+    ) -> None:
         super().__init__(None)
-        self.positives: list[str] = []
-        self.negatives: list[str] = []
-        self.positive_ranges: list[tuple[str, str]] = []
-        self.negative_ranges: list[tuple[str, str]] = []
+        self.positives = positives or []
+        self.negatives = negatives or []
+        self.positive_ranges = positive_ranges or []
+        self.negative_ranges = negative_ranges or []
         self.compiled: re.Pattern[str] | None = None
+        self.consuming = consuming
 
     def __str__(self) -> str:
         return f"/{self.pattern.pattern}/"
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self})"
 
     def with_positive(self, s: str) -> Self:
         """Return this regex expression with an additional positive pattern."""
@@ -178,7 +191,7 @@ class LazyRegexExpression(Terminal):
             start: The index in the input string where parsing begins.
         """
         if match := self.pattern.match(state.input, start):
-            yield Success(None, match.end())
+            yield Success(None, match.end() if self.consuming else start)
 
     def children(self) -> list[Expression]:
         """Return this expressions children."""
@@ -194,4 +207,11 @@ class LazyRegexExpression(Terminal):
         expr.positives = self.positives[:]
         expr.negative_ranges = self.negative_ranges[:]
         expr.negatives = self.negatives[:]
+        return expr
+
+    def repeat(self) -> LazyRegexExpression:
+        """Return a new instance that matches this expression zero or more times."""
+        expr = self._copy()
+        expr.consuming = True
+        expr.compiled = re.compile(f"(?:{self._build_pattern()})*", re.VERSION1)
         return expr
