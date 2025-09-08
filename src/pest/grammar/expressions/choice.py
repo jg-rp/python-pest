@@ -20,42 +20,36 @@ class Choice(Expression):
     This corresponds to the `|` operator in pest.
     """
 
-    __slots__ = ("left", "right")
+    __slots__ = ("expressions",)
 
-    def __init__(self, left: Expression, right: Expression):
+    def __init__(self, *expressions: Expression):
         super().__init__(None)
-        self.left = left
-        self.right = right
+        self.expressions = list(expressions)
 
     def __str__(self) -> str:
-        return f"{self.tag_str()}{self.left} | {self.right}"
+        choice = " | ".join(str(expr) for expr in self.expressions)
+        return f"{self.tag_str()}{choice}"
 
     def __eq__(self, other: object) -> bool:
         return (
             isinstance(other, self.__class__)
-            and self.left == other.left
-            and self.right == other.right
+            and self.expressions == other.expressions
             and self.tag == other.tag
         )
 
     def __hash__(self) -> int:
-        return hash((self.__class__, self.left, self.right, self.tag))
+        return hash((self.__class__, tuple(self.expressions), self.tag))
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Attempt to match this expression against the input at `start`."""
-        success = False
-
-        for left_result in state.parse(self.left, start):
-            success = True
-            yield left_result
-
-        if not success:
-            for right_result in state.parse(self.right, start):
-                yield right_result
+        for expr in self.expressions:
+            if result := list(state.parse(expr, start)):
+                yield from result
+                break
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""
-        return [self.left, self.right]
+        return self.expressions
 
     def with_children(self, expressions: list[Expression]) -> Self:
         """Return a new instance of this expression with child expressions replaced."""

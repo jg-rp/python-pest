@@ -148,8 +148,7 @@ class Parser:
             left = CaseInsensitiveString(self.next().value)
         elif left_kind == TokenKind.LPAREN:
             self.pos += 1
-            # XXX: left = Group(self.parse_expression(), tag=tag)
-            left = self.parse_expression()
+            left = Group(self.parse_expression(), tag=tag)
             self.eat(TokenKind.RPAREN)
         elif left_kind == TokenKind.IDENTIFIER:
             name = self.next().value
@@ -206,9 +205,13 @@ class Parser:
         right = self.parse_expression(precedence)
 
         if kind == TokenKind.CHOICE_OP:
+            if isinstance(right, Choice):
+                return Choice(left, *right.expressions)
             return Choice(left, right)
 
         if kind == TokenKind.SEQUENCE_OP:
+            if isinstance(right, Sequence):
+                return Sequence(left, *right.expressions)
             return Sequence(left, right)
 
         raise PestGrammarSyntaxError(f"unexpected operator {kind}", token=token)

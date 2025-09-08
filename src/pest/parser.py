@@ -53,21 +53,21 @@ class Parser:
         """Parse `grammar` and return a new Parser for it."""
         rules, doc = parse(grammar, cls.BUILTIN)
 
-        # XXX: optimize
-        optimizer = Optimizer(
-            {**rules, **cls.BUILTIN},  # XXX: do this once
-            [
-                ("negated_builtin", collapse_negated_builtin),
-                ("negated_literal", collapse_negated_literal),
-            ],
-            debug=True,
-        )
+        # # XXX: optimize
+        # optimizer = Optimizer(
+        #     {**rules, **cls.BUILTIN},  # XXX: do this once
+        #     [
+        #         ("negated_builtin", collapse_negated_builtin),
+        #         ("negated_literal", collapse_negated_literal),
+        #     ],
+        #     debug=True,
+        # )
 
-        for name, rule in rules.items():
-            rules[name].expression = optimizer.optimize(rule.expression)
+        # for name, rule in rules.items():
+        #     rules[name].expression = optimizer.optimize(rule.expression)
 
-        for line in optimizer.log:
-            print(line)
+        # for line in optimizer.log:
+        #     print(line)
 
         return cls(rules, doc)
 

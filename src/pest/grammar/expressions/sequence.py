@@ -20,51 +20,48 @@ class Sequence(Expression):
     This corresponds to the `~` operator in pest.
     """
 
-    __slots__ = ("left", "right")
+    __slots__ = ("expressions",)
 
-    def __init__(self, left: Expression, right: Expression):
+    def __init__(self, *expressions: Expression):
         super().__init__(None)
-        self.left = left
-        self.right = right
+        self.expressions = list(expressions)
 
     def __str__(self) -> str:
-        return f"{self.tag_str()}{self.left} ~ {self.right}"
+        sequence = " ~ ".join(str(expr) for expr in self.expressions)
+        return f"{self.tag_str()}{sequence}"
 
     def __eq__(self, other: object) -> bool:
         return (
             isinstance(other, self.__class__)
-            and self.left == other.left
-            and self.right == other.right
+            and self.expressions == other.expressions
             and self.tag == other.tag
         )
 
     def __hash__(self) -> int:
-        return hash((self.__class__, self.left, self.right, self.tag))
+        return hash((self.__class__, tuple(self.expressions), self.tag))
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse left followed by right starting at `start`."""
-        left_results = list(state.parse(self.left, start))
-        if not left_results:
-            return  # left failed
+        position = start
+        results: list[Success] = []
+        for i, expr in enumerate(self.expressions):
+            result = list(state.parse(expr, position))
+            if not result:
+                return
+            position = result[-1].pos
+            results.extend(result)
 
-        position = left_results[-1].pos
+            if i < (len(self.expressions) - 1):
+                implicit_result = list(state.parse_implicit_rules(position))
+                if implicit_result:
+                    position = implicit_result[-1].pos
+                    results.extend(implicit_result)
 
-        implicit_results = list(state.parse_implicit_rules(position))
-        if implicit_results:
-            position = implicit_results[-1].pos
-
-        right_results = list(state.parse(self.right, position))
-        if not right_results:
-            return  # right failed
-
-        # If both sides matched, yield everything in sequence.
-        yield from left_results
-        yield from implicit_results
-        yield from right_results
+        yield from results
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""
-        return [self.left, self.right]
+        return self.expressions
 
     def with_children(self, expressions: list[Expression]) -> Self:
         """Return a new instance of this expression with child expressions replaced."""
