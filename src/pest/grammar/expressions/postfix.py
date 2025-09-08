@@ -29,16 +29,6 @@ class Optional(Expression):
     def __str__(self) -> str:
         return f"{self.expression}?"
 
-    def __eq__(self, other: object) -> bool:
-        return (
-            isinstance(other, self.__class__)
-            and self.expression == other.expression
-            and self.tag == other.tag
-        )
-
-    def __hash__(self) -> int:
-        return hash((self.__class__, self.expression, self.tag))
-
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Attempt to match this expression against the input at `start`.
 
@@ -76,16 +66,6 @@ class Repeat(Expression):
 
     def __str__(self) -> str:
         return f"{self.expression}*"
-
-    def __eq__(self, other: object) -> bool:
-        return (
-            isinstance(other, self.__class__)
-            and self.expression == other.expression
-            and self.tag == other.tag
-        )
-
-    def __hash__(self) -> int:
-        return hash((self.__class__, self.expression, self.tag))
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
@@ -131,16 +111,6 @@ class RepeatOnce(Expression):
 
     def __str__(self) -> str:
         return f"{self.tag_str()}{self.expression}+"
-
-    def __eq__(self, other: object) -> bool:
-        return (
-            isinstance(other, self.__class__)
-            and self.expression == other.expression
-            and self.tag == other.tag
-        )
-
-    def __hash__(self) -> int:
-        return hash((self.__class__, self.expression, self.tag))
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
@@ -196,17 +166,6 @@ class RepeatExact(Expression):
     def __str__(self) -> str:
         return f"{self.expression}{{{self.number}}}"
 
-    def __eq__(self, other: object) -> bool:
-        return (
-            isinstance(other, self.__class__)
-            and self.expression == other.expression
-            and self.number == other.number
-            and self.tag == other.tag
-        )
-
-    def __hash__(self) -> int:
-        return hash((self.__class__, self.expression, self.number, self.tag))
-
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
         successes: list[Success] = []
@@ -254,17 +213,6 @@ class RepeatMin(Expression):
     def __str__(self) -> str:
         return f"{self.expression}{{{self.number},}}"
 
-    def __eq__(self, other: object) -> bool:
-        return (
-            isinstance(other, self.__class__)
-            and self.expression == other.expression
-            and self.number == other.number
-            and self.tag == other.tag
-        )
-
-    def __hash__(self) -> int:
-        return hash((self.__class__, self.expression, self.number, self.tag))
-
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
         successes: list[Success] = []
@@ -311,17 +259,6 @@ class RepeatMax(Expression):
 
     def __str__(self) -> str:
         return f"{self.expression}{{,{self.number}}}"
-
-    def __eq__(self, other: object) -> bool:
-        return (
-            isinstance(other, self.__class__)
-            and self.expression == other.expression
-            and self.number == other.number
-            and self.tag == other.tag
-        )
-
-    def __hash__(self) -> int:
-        return hash((self.__class__, self.expression, self.number, self.tag))
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
@@ -371,18 +308,6 @@ class RepeatRange(Expression):
 
     def __str__(self) -> str:
         return f"{self.expression}{{{self.min}, {self.max}}}"
-
-    def __eq__(self, other: object) -> bool:
-        return (
-            isinstance(other, self.__class__)
-            and self.expression == other.expression
-            and self.min == other.min
-            and self.max == other.max
-            and self.tag == other.tag
-        )
-
-    def __hash__(self) -> int:
-        return hash((self.__class__, self.expression, self.min, self.max, self.tag))
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""

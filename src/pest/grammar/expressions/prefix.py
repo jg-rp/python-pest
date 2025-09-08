@@ -29,16 +29,6 @@ class PositivePredicate(Expression):
     def __str__(self) -> str:
         return f"{self.tag_str()}&{self.expression}"
 
-    def __eq__(self, other: object) -> bool:
-        return (
-            isinstance(other, self.__class__)
-            and self.expression == other.expression
-            and self.tag == other.tag
-        )
-
-    def __hash__(self) -> int:
-        return hash((self.__class__, self.expression, self.tag))
-
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
         pairs = list(state.parse(self.expression, start))
@@ -68,16 +58,6 @@ class NegativePredicate(Expression):
 
     def __str__(self) -> str:
         return f"{self.tag_str()}!{self.expression}"
-
-    def __eq__(self, other: object) -> bool:
-        return (
-            isinstance(other, self.__class__)
-            and self.expression == other.expression
-            and self.tag == other.tag
-        )
-
-    def __hash__(self) -> int:
-        return hash((self.__class__, self.expression, self.tag))
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""

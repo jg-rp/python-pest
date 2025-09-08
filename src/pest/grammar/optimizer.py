@@ -39,7 +39,7 @@ class Optimizer:
             new_expr = opt(expr, self.rules)
             if new_expr is not expr:
                 if self.debug:
-                    self.log.append(f"{name}: {expr} → {new_expr}")
+                    self.log.append(f"{name}: {expr} → {new_expr!r}")
                 expr = new_expr
 
         return expr

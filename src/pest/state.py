@@ -37,13 +37,13 @@ class ParserState:
         self.input = input_
         self.atomic_depth = 0
         self.stack: list[str] = []
-        self.cache: dict[tuple[int, Expression], list[Success] | None] = {}
+        self.cache: dict[tuple[int, int], list[Success] | None] = {}
         self.expr_stack: list[tuple[Expression, int]] = []
         self.failed_pos: int = 0
 
     def parse(self, expr: Expression, pos: int) -> Iterator[Success]:
         """Parse `expr` or return a cached parse result."""
-        key = (pos, expr)
+        key = (pos, id(expr))
         if key in self.cache:
             cached = self.cache[key]
             if cached is not None:

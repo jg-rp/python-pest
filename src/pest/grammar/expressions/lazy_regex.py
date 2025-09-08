@@ -38,26 +38,6 @@ class LazyRegexExpression(Terminal):
     def __str__(self) -> str:
         return f"/{self.pattern.pattern}/"
 
-    def __eq__(self, other: object) -> bool:
-        return (
-            isinstance(other, self.__class__)
-            and self.positives == other.positives
-            and self.negatives == other.negatives
-            and self.positive_ranges == other.positive_ranges
-            and self.negative_ranges == other.negative_ranges
-        )
-
-    def __hash__(self) -> int:
-        return hash(
-            (
-                self.__class__,
-                tuple(self.positives),
-                tuple(self.negatives),
-                tuple(self.positive_ranges),
-                tuple(self.negative_ranges),
-            )
-        )
-
     def with_positive(self, s: str) -> Self:
         """Return this regex expression with an additional positive pattern."""
         if self.compiled:

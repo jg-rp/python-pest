@@ -30,16 +30,6 @@ class Choice(Expression):
         choice = " | ".join(str(expr) for expr in self.expressions)
         return f"{self.tag_str()}{choice}"
 
-    def __eq__(self, other: object) -> bool:
-        return (
-            isinstance(other, self.__class__)
-            and self.expressions == other.expressions
-            and self.tag == other.tag
-        )
-
-    def __hash__(self) -> int:
-        return hash((self.__class__, tuple(self.expressions), self.tag))
-
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Attempt to match this expression against the input at `start`."""
         for expr in self.expressions:

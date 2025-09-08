@@ -33,17 +33,6 @@ class Rule(Expression):
         self.modifier = modifier
         self.doc = tuple(doc) if doc else None
 
-    def __eq__(self, other: object) -> bool:
-        return (
-            isinstance(other, self.__class__)
-            and self.modifier == other.modifier
-            and self.doc == other.doc
-            and self.tag == other.tag
-        )
-
-    def __hash__(self) -> int:
-        return hash((self.__class__, self.modifier, self.doc, self.tag))
-
 
 class GrammarRule(Rule):
     """A named grammar rule."""
@@ -64,20 +53,6 @@ class GrammarRule(Rule):
         doc = "".join(f"///{line}\n" for line in self.doc) if self.doc else ""
         modifier = self.modifier if self.modifier else ""
         return f"{doc}{self.name} = {modifier}{{ {self.expression} }}"
-
-    def __eq__(self, other: object) -> bool:
-        return (
-            isinstance(other, self.__class__)
-            and self.expression == other.expression
-            and self.modifier == other.modifier
-            and self.doc == other.doc
-            and self.tag == other.tag
-        )
-
-    def __hash__(self) -> int:
-        return hash(
-            (self.__class__, self.expression, self.modifier, self.doc, self.tag)
-        )
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Attempt to match this expression against the input at `start`.
@@ -165,12 +140,6 @@ class BuiltInRegexRule(BuiltInRule):
     def __str__(self) -> str:
         return self.name
 
-    def __eq__(self, other: object) -> bool:
-        return isinstance(other, BuiltInRegexRule) and self.patterns == other.patterns
-
-    def __hash__(self) -> int:
-        return hash((self.__class__, self.name, self._re.pattern))
-
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Attempt to match this expression against the input at `start`."""
         if match := self._re.match(state.input, start):
@@ -192,12 +161,6 @@ class BuiltInRegexRangeRule(BuiltInRule):
 
     def __str__(self) -> str:
         return self.name
-
-    def __eq__(self, other: object) -> bool:
-        return isinstance(other, BuiltInRegexRangeRule) and self.ranges == other.ranges
-
-    def __hash__(self) -> int:
-        return hash((self.__class__, self.name, self.ranges))
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Attempt to match this expression against the input at `start`."""

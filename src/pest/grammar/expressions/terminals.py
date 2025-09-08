@@ -28,16 +28,6 @@ class PushLiteral(Terminal):
     def __str__(self) -> str:
         return f'{self.tag_str()}PUSH("{self.value}")'
 
-    def __eq__(self, other: object) -> bool:
-        return (
-            isinstance(other, self.__class__)
-            and self.value == other.value
-            and self.tag == other.tag
-        )
-
-    def __hash__(self) -> int:
-        return hash((self.__class__, self.value, self.tag))
-
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
         state.push(self.value)
@@ -58,16 +48,6 @@ class Push(Expression):
 
     def __str__(self) -> str:
         return f"{self.tag_str()}PUSH( {self.expression} )"
-
-    def __eq__(self, other: object) -> bool:
-        return (
-            isinstance(other, self.__class__)
-            and self.expression == other.expression
-            and self.tag == other.tag
-        )
-
-    def __hash__(self) -> int:
-        return hash((self.__class__, self.expression, self.tag))
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
@@ -107,17 +87,6 @@ class PeekSlice(Terminal):
         stop = self.stop if self.stop else ""
         return f"{self.tag_str()}PEEK[{start}..{stop}]"
 
-    def __eq__(self, other: object) -> bool:
-        return (
-            isinstance(other, self.__class__)
-            and self.start == other.start
-            and self.stop == other.stop
-            and self.tag == other.tag
-        )
-
-    def __hash__(self) -> int:
-        return hash((self.__class__, self.start, self.stop, self.tag))
-
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
         position = start
@@ -145,16 +114,6 @@ class Identifier(Terminal):
     def __str__(self) -> str:
         return f"{self.tag_str()}{self.value}"
 
-    def __eq__(self, other: object) -> bool:
-        return (
-            isinstance(other, self.__class__)
-            and self.value == other.value
-            and self.tag == other.tag
-        )
-
-    def __hash__(self) -> int:
-        return hash((self.__class__, self.value, self.tag))
-
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
         # TODO: Assumes the rule exists.
@@ -176,16 +135,6 @@ class Literal(Terminal):
             self.value.replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n")
         )
         return f'"{value}"'
-
-    def __eq__(self, other: object) -> bool:
-        return (
-            isinstance(other, self.__class__)
-            and self.value == other.value
-            and self.tag == other.tag
-        )
-
-    def __hash__(self) -> int:
-        return hash((self.__class__, self.value, self.tag))
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
@@ -211,16 +160,6 @@ class CaseInsensitiveString(Terminal):
         )
         return f'{self.tag_str()}^"{value}"'
 
-    def __eq__(self, other: object) -> bool:
-        return (
-            isinstance(other, self.__class__)
-            and self.value == other.value
-            and self.tag == other.tag
-        )
-
-    def __hash__(self) -> int:
-        return hash((self.__class__, self.value, self.tag))
-
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
         if self._re.match(state.input, start):
@@ -241,17 +180,6 @@ class Range(Terminal):
 
     def __str__(self) -> str:
         return f"{self.tag_str()}'{self.start}'..'{self.stop}'"
-
-    def __eq__(self, other: object) -> bool:
-        return (
-            isinstance(other, self.__class__)
-            and self.start == other.start
-            and self.stop == other.stop
-            and self.tag == other.tag
-        )
-
-    def __hash__(self) -> int:
-        return hash((self.__class__, self.start, self.stop, self.tag))
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""

@@ -69,12 +69,6 @@ class Expression(ABC):
 class Terminal(Expression):
     """Base class for terminal expressions."""
 
-    def __eq__(self, other: object) -> bool:
-        return isinstance(other, self.__class__) and self.tag == other.tag
-
-    def __hash__(self) -> int:
-        return hash((self.__class__, self.tag))
-
     def children(self) -> list[Expression]:
         """Return this expression's children."""
         return []
