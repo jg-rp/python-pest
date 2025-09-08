@@ -97,7 +97,12 @@ class LazyRegexExpression(Terminal):
     def pattern(self) -> re.Pattern[str]:
         """The compiled regular expression pattern."""
         if self.compiled is None:
-            self.compiled = re.compile(self._build_pattern(), re.VERSION1)
+            try:
+                self.compiled = re.compile(self._build_pattern(), re.VERSION1)
+            except re.error:
+                print("--", self._build_pattern())
+                print("**", self.positives, self.positive_ranges)
+                raise
         return self.compiled
 
     def _build_pattern(self) -> str:
