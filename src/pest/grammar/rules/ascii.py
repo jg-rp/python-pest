@@ -2,10 +2,18 @@
 
 from __future__ import annotations
 
-from pest.grammar.expressions.rule import BuiltInRegexRangeRule
-from pest.grammar.expressions.rule import BuiltInRegexRule
+from typing import TYPE_CHECKING
 
-ASCII_RULE_MAP: dict[str, str | list[str] | tuple[str, str] | list[tuple[str, str]]] = {
+from pest.grammar.expressions.choice import Choice
+from pest.grammar.expressions.rule import BuiltInRule
+from pest.grammar.expressions.terminals import Literal
+from pest.grammar.expressions.terminals import Range
+
+if TYPE_CHECKING:
+    from pest.grammar.expression import Expression
+
+
+ASCII_RULE_MAP: dict[str, tuple[str, str] | list[tuple[str, str]]] = {
     "ASCII_DIGIT": ("0", "9"),
     "ASCII_NONZERO_DIGIT": ("1", "9"),
     "ASCII_BIN_DIGIT": ("0", "1"),
@@ -16,17 +24,34 @@ ASCII_RULE_MAP: dict[str, str | list[str] | tuple[str, str] | list[tuple[str, st
     "ASCII_ALPHA_LOWER": ("a", "z"),
     "ASCII_ALPHA_UPPER": ("A", "Z"),
     "ASCII_ALPHA": [("a", "z"), ("A", "Z")],
-    "NEWLINE": [r"\r?\n", r"\r"],
 }
 
-ASCII_RULES: dict[str, BuiltInRegexRule | BuiltInRegexRangeRule] = {}
 
-for name, pattern in ASCII_RULE_MAP.items():
-    if isinstance(pattern, str):
-        ASCII_RULES[name] = BuiltInRegexRule(name, pattern)
-    elif isinstance(pattern, list) and isinstance(pattern[0], str):
-        ASCII_RULES[name] = BuiltInRegexRule(name, *pattern)
-    elif isinstance(pattern, tuple):
-        ASCII_RULES[name] = BuiltInRegexRangeRule(name, pattern)
-    elif isinstance(pattern, list) and isinstance(pattern[0], tuple):
-        ASCII_RULES[name] = BuiltInRegexRangeRule(name, *pattern)
+class ASCIIRule(BuiltInRule):
+    """An ASCII character range rule."""
+
+    def __init__(
+        self, name: str, char_ranges: tuple[str, str] | list[tuple[str, str]]
+    ) -> None:
+        if isinstance(char_ranges, tuple):
+            expr: Expression = Range(*char_ranges)
+        else:
+            expr = Choice(*[Range(*chars) for chars in char_ranges])
+        super().__init__(name, expr, "_")
+
+
+class ASCIINewline(BuiltInRule):
+    """The built-in NEWLINE rule."""
+
+    def __init__(self) -> None:
+        super().__init__(
+            "NEWLINE", Choice(Literal("\n"), Literal("\r\n"), Literal("\r")), "_"
+        )
+
+
+ASCII_RULES = {
+    **{
+        name: ASCIIRule(name, char_range) for name, char_range in ASCII_RULE_MAP.items()
+    },
+    "NEWLINE": ASCIINewline(),
+}

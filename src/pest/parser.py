@@ -9,9 +9,10 @@ from .exceptions import PestParserError
 from .grammar import parse
 
 # TODO: Move this to grammar/rules/__init__.py
+# TODO: unicode rules
 from .grammar.rules.ascii import ASCII_RULES
-from .grammar.rules.soi import EOI
-from .grammar.rules.soi import SOI
+from .grammar.rules.special import EOI
+from .grammar.rules.special import SOI
 from .grammar.rules.special import Any
 from .pairs import Pairs
 from .state import ParserState

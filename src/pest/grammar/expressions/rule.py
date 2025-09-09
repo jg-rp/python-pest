@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 from typing import Iterable
 from typing import Iterator
 
-import regex as re
 from typing_extensions import Self
 
 from pest.grammar import Expression
@@ -20,24 +19,7 @@ if TYPE_CHECKING:
 class Rule(Expression):
     """Base class for all rules."""
 
-    __slots__ = ("name", "modifier", "doc")
-
-    def __init__(
-        self,
-        name: str,
-        modifier: str | None = None,
-        doc: Iterable[str] | None = None,
-    ):
-        super().__init__(tag=None)
-        self.name = name
-        self.modifier = modifier
-        self.doc = tuple(doc) if doc else None
-
-
-class GrammarRule(Rule):
-    """A named grammar rule."""
-
-    __slots__ = ("expression",)
+    __slots__ = ("name", "expression", "modifier", "doc")
 
     def __init__(
         self,
@@ -46,8 +28,11 @@ class GrammarRule(Rule):
         modifier: str | None = None,
         doc: Iterable[str] | None = None,
     ):
-        super().__init__(name, modifier, doc)
+        super().__init__(tag=None)
+        self.name = name
         self.expression = expression
+        self.modifier = modifier
+        self.doc = tuple(doc) if doc else None
 
     def __str__(self) -> str:
         doc = "".join(f"///{line}\n" for line in self.doc) if self.doc else ""
@@ -115,54 +100,9 @@ class GrammarRule(Rule):
         return self.__class__(self.name, expressions[0], self.modifier, self.doc)
 
 
+class GrammarRule(Rule):
+    """A named grammar rule."""
+
+
 class BuiltInRule(Rule):
     """The base class for all built-in rules."""
-
-    def children(self) -> list[Expression]:
-        """Return this expressions children."""
-        return []
-
-    def with_children(self, _expressions: list[Expression]) -> Self:
-        """Return a new instance of this expression with child expressions replaced."""
-        return self
-
-
-class BuiltInRegexRule(BuiltInRule):
-    """A built-in rule based on a regular expression."""
-
-    __slots__ = ("_re", "patterns")
-
-    def __init__(self, name: str, *patterns: str):
-        super().__init__(name, "_", None)
-        self.patterns = patterns
-        self._re = re.compile("|".join(patterns))
-
-    def __str__(self) -> str:
-        return self.name
-
-    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
-        """Attempt to match this expression against the input at `start`."""
-        if match := self._re.match(state.input, start):
-            yield Success(None, match.end())
-
-
-class BuiltInRegexRangeRule(BuiltInRule):
-    """A built-in rule based on a range of characters."""
-
-    __slots__ = ("_re", "ranges")
-
-    def __init__(self, name: str, *ranges: tuple[str, str]):
-        super().__init__(name, "_", None)
-        self.ranges = ranges
-        _ranges = "".join(
-            f"{re.escape(start)}-{re.escape(end)}" for start, end in ranges
-        )
-        self._re = re.compile(f"[{_ranges}]")
-
-    def __str__(self) -> str:
-        return self.name
-
-    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
-        """Attempt to match this expression against the input at `start`."""
-        if match := self._re.match(state.input, start):
-            yield Success(None, match.end())

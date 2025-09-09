@@ -16,7 +16,7 @@ class Any(BuiltInRule):
     """A built-in rule matching any single "character"."""
 
     def __init__(self) -> None:
-        super().__init__("ANY", "_", None)
+        super().__init__("ANY", self, "_", None)
 
     def __str__(self) -> str:
         return "ANY"
@@ -31,3 +31,45 @@ class Any(BuiltInRule):
         """Attempt to match this expression against the input at `start`."""
         if start < len(state.input):
             yield Success(None, start + 1)
+
+
+class SOI(BuiltInRule):
+    """A built-in rule matching the start of input."""
+
+    def __init__(self) -> None:
+        super().__init__("SOI", self, "_", None)
+
+    def __str__(self) -> str:
+        return "SOI"
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, SOI)
+
+    def __hash__(self) -> int:
+        return hash(self.__class__)
+
+    def parse(self, _state: ParserState, start: int) -> Iterator[Success]:
+        """Attempt to match this expression against the input at `start`."""
+        if start == 0:
+            yield Success(None, 0)
+
+
+class EOI(BuiltInRule):
+    """A built-in rule matching the end of input."""
+
+    def __init__(self) -> None:
+        super().__init__("EOI", self, "_", None)
+
+    def __str__(self) -> str:
+        return "EOI"
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, SOI)
+
+    def __hash__(self) -> int:
+        return hash(self.__class__)
+
+    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
+        """Attempt to match this expression against the input at `start`."""
+        if start == len(state.input):
+            yield Success(None, start)
