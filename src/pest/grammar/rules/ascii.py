@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING
 
 from pest.grammar.expressions.choice import Choice
 from pest.grammar.expressions.rule import BuiltInRule
-from pest.grammar.expressions.terminals import Literal
 from pest.grammar.expressions.terminals import Range
+from pest.grammar.expressions.terminals import String
 
 if TYPE_CHECKING:
     from pest.grammar.expression import Expression
@@ -45,7 +45,7 @@ class ASCIINewline(BuiltInRule):
 
     def __init__(self) -> None:
         super().__init__(
-            "NEWLINE", Choice(Literal("\n"), Literal("\r\n"), Literal("\r")), "_"
+            "NEWLINE", Choice(String("\n"), String("\r\n"), String("\r")), "_"
         )
 
 

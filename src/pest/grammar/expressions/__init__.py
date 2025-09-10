@@ -12,9 +12,9 @@ from .prefix import PositivePredicate
 from .rule import GrammarRule
 from .rule import Rule
 from .sequence import Sequence
-from .terminals import CaseInsensitiveString
+from .terminals import CIString
 from .terminals import Identifier
-from .terminals import Literal
+from .terminals import String
 from .terminals import PeekSlice
 from .terminals import Push
 from .terminals import PushLiteral
@@ -26,13 +26,13 @@ __all__ = (
     "GrammarRule",
     "Rule",
     "Sequence",
-    "CaseInsensitiveString",
+    "CIString",
     "Identifier",
     "PeekSlice",
     "Push",
     "PushLiteral",
     "Range",
-    "Literal",
+    "String",
     "PositivePredicate",
     "NegativePredicate",
     "Optional",

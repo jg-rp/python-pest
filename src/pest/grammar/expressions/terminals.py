@@ -120,7 +120,7 @@ class Identifier(Terminal):
         yield from state.parse(state.parser.rules[self.value], start)
 
 
-class Literal(Terminal):
+class String(Terminal):
     """A terminal string literal."""
 
     __slots__ = ("value",)
@@ -142,7 +142,7 @@ class Literal(Terminal):
             yield Success(None, start + len(self.value))
 
 
-class CaseInsensitiveString(Terminal):
+class CIString(Terminal):
     """A terminal string literal that matches case insensitively."""
 
     __slots__ = ("value", "_re")

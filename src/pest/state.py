@@ -14,6 +14,9 @@ if TYPE_CHECKING:
 
     from .parser import Parser
 
+# TODO: state restore checkpoints
+# We need to restore the stack and atomic depth after predicates and when backtracking.
+
 
 class ParserState:
     """Holds parsing state.
@@ -29,6 +32,7 @@ class ParserState:
         "stack",
         "cache",
         "expr_stack",
+        "rule_stack",
         "failed_pos",
     )
 
@@ -39,6 +43,7 @@ class ParserState:
         self.stack: list[str] = []
         self.cache: dict[tuple[int, int], list[Success] | None] = {}
         self.expr_stack: list[tuple[Expression, int]] = []
+        self.rule_stack: list[Rule] = []
         self.failed_pos: int = 0
 
     def parse(self, expr: Expression, pos: int) -> Iterator[Success]:
@@ -50,8 +55,14 @@ class ParserState:
                 yield from cached
             return
 
+        if isinstance(expr, Rule):
+            self.rule_stack.append(expr)
+
         self.expr_stack.append((expr, pos))
         results = list(expr.parse(self, pos))
+
+        if isinstance(expr, Rule):
+            assert id(self.rule_stack.pop()) == id(expr)
 
         if results:
             self.cache[key] = results
@@ -144,7 +155,13 @@ class ParserState:
                     if result.pair and self.atomic_depth == 0:
                         yield result
 
-            if comment_rule:
+            # XXX: bit of a hack
+            # We're relying on knowing the name of the current rule so we don't
+            # recurse indefinitely when parsing COMMENT, which will often
+            # include a sequence with implicit whitespace.
+            if comment_rule and (
+                not self.rule_stack or self.rule_stack[-1].name != "COMMENT"
+            ):
                 for result in self.parse(comment_rule, new_pos):
                     matched = True
                     new_pos = result.pos

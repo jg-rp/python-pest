@@ -6,12 +6,12 @@ from typing import TYPE_CHECKING
 from typing import Mapping
 
 from .exceptions import PestGrammarSyntaxError
-from .expressions import CaseInsensitiveString
+from .expressions import CIString
 from .expressions import Choice
 from .expressions import GrammarRule
 from .expressions import Group
 from .expressions import Identifier
-from .expressions import Literal
+from .expressions import String
 from .expressions import NegativePredicate
 from .expressions import Optional
 from .expressions import PeekSlice
@@ -143,9 +143,9 @@ class Parser:
         left: Expression
 
         if left_kind == TokenKind.STRING:
-            left = Literal(self.next().value)
+            left = String(self.next().value)
         elif left_kind == TokenKind.STRING_CI:
-            left = CaseInsensitiveString(self.next().value)
+            left = CIString(self.next().value)
         elif left_kind == TokenKind.LPAREN:
             self.pos += 1
             left = Group(self.parse_expression(), tag=tag)

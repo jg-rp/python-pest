@@ -11,7 +11,7 @@ from pest.grammar.expressions.rule import BuiltInRegexRule
 from pest.grammar.expressions.rule import GrammarRule
 from pest.grammar.expressions.rule import Rule
 from pest.grammar.expressions.terminals import Identifier
-from pest.grammar.expressions.terminals import Literal
+from pest.grammar.expressions.terminals import String
 
 # TODO: case insensitive literal
 # TODO: char range
@@ -24,7 +24,7 @@ from pest.grammar.expressions.terminals import Literal
 def squash_choice(expr: Expression, _rules: Mapping[str, Rule]) -> Expression:
     """Replace literal and regex choices with a single regex."""
     if not isinstance(expr, Choice) or not all(
-        isinstance(e, (Literal, LazyRegexExpression, BuiltInRegexRule))
+        isinstance(e, (String, LazyRegexExpression, BuiltInRegexRule))
         for e in expr.expressions
     ):
         return expr
@@ -32,7 +32,7 @@ def squash_choice(expr: Expression, _rules: Mapping[str, Rule]) -> Expression:
     regex = LazyRegexExpression()
 
     for ex in expr.expressions:
-        if isinstance(ex, Literal):
+        if isinstance(ex, String):
             # if len(ex.value) == 1:
             #     regex.positive_ranges.append((re.escape(ex.value), re.escape(ex.value)))
             # else:
