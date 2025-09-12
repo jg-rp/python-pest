@@ -14,11 +14,11 @@ from .rule import Rule
 from .sequence import Sequence
 from .terminals import CIString
 from .terminals import Identifier
-from .terminals import String
 from .terminals import PeekSlice
 from .terminals import Push
 from .terminals import PushLiteral
 from .terminals import Range
+from .terminals import String
 
 __all__ = (
     "Choice",

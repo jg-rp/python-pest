@@ -143,5 +143,5 @@ convention = "google"
 "src/pest/grammar/rules/unicode.py" = ["D101"]
 "src/pest/grammar/scanner.py" = ["D102"]
 "src/pest/grammar/unescape.py" = ["PLR2004"]
-"tests/*" = ["D100", "D101", "D104", "D103"]
+"tests/*" = ["D100", "D101", "D104", "D103", "PLR2004"]
 "tests/test_sql_grammar.py" = ["E501"]

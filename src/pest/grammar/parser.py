@@ -6,12 +6,11 @@ from typing import TYPE_CHECKING
 from typing import Mapping
 
 from .exceptions import PestGrammarSyntaxError
-from .expressions import CIString
 from .expressions import Choice
+from .expressions import CIString
 from .expressions import GrammarRule
 from .expressions import Group
 from .expressions import Identifier
-from .expressions import String
 from .expressions import NegativePredicate
 from .expressions import Optional
 from .expressions import PeekSlice
@@ -27,6 +26,7 @@ from .expressions import RepeatOnce
 from .expressions import RepeatRange
 from .expressions import Rule
 from .expressions import Sequence
+from .expressions import String
 from .tokens import Token
 from .tokens import TokenKind
 

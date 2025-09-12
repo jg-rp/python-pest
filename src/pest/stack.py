@@ -98,5 +98,5 @@ class Stack(Sequence[T]):
             new_size = len(self.popped) - rewind_count
             recovered = self.popped[new_size:]
             del self.popped[new_size:]
-            self.items.extend(recovered)
+            self.items.extend(reversed(recovered))
             assert len(self.popped) == new_size
