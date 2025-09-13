@@ -68,7 +68,7 @@ class Repeat(Expression):
         return f"{self.expression}*"
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
-        """Try to parse all parts in sequence starting at `pos`."""
+        """Attempt to match this expression against the input at `start`."""
         position = start
         matched = False
 
@@ -113,7 +113,7 @@ class RepeatOnce(Expression):
         return f"{self.tag_str()}{self.expression}+"
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
-        """Try to parse all parts in sequence starting at `pos`."""
+        """Attempt to match this expression against the input at `start`."""
         results = list(state.parse(self.expression, start))
 
         if not results:
@@ -167,22 +167,26 @@ class RepeatExact(Expression):
         return f"{self.expression}{{{self.number}}}"
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
-        """Try to parse all parts in sequence starting at `pos`."""
+        """Attempt to match this expression against the input at `start`."""
         successes: list[Success] = []
+        match_count = 0
         position = start
 
         while True:
             results = list(state.parse(self.expression, position))
+
             if not results:
                 break
+
             position = results[-1].pos
             successes.extend(results)
+            match_count += 1
 
             for success in state.parse_implicit_rules(position):
                 position = success.pos
                 successes.append(success)
 
-        if len(successes) == self.number:
+        if match_count == self.number:
             yield from successes
 
     def children(self) -> list[Expression]:
@@ -214,8 +218,9 @@ class RepeatMin(Expression):
         return f"{self.expression}{{{self.number},}}"
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
-        """Try to parse all parts in sequence starting at `pos`."""
+        """Attempt to match this expression against the input at `start`."""
         successes: list[Success] = []
+        match_count = 0
         position = start
 
         while True:
@@ -224,12 +229,13 @@ class RepeatMin(Expression):
                 break
             position = results[-1].pos
             successes.extend(results)
+            match_count += 1
 
             for success in state.parse_implicit_rules(position):
                 position = success.pos
                 successes.append(success)
 
-        if len(successes) >= self.number:
+        if match_count >= self.number:
             yield from successes
 
     def children(self) -> list[Expression]:
@@ -261,7 +267,7 @@ class RepeatMax(Expression):
         return f"{self.expression}{{,{self.number}}}"
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
-        """Try to parse all parts in sequence starting at `pos`."""
+        """Attempt to match this expression against the input at `start`."""
         successes: list[Success] = []
         position = start
 
@@ -310,8 +316,9 @@ class RepeatRange(Expression):
         return f"{self.expression}{{{self.min}, {self.max}}}"
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
-        """Try to parse all parts in sequence starting at `pos`."""
+        """Attempt to match this expression against the input at `start`."""
         successes: list[Success] = []
+        match_count = 0
         position = start
 
         while True:
@@ -320,12 +327,13 @@ class RepeatRange(Expression):
                 break
             position = results[-1].pos
             successes.extend(results)
+            match_count += 1
 
             for success in state.parse_implicit_rules(position):
                 position = success.pos
                 successes.append(success)
 
-        if len(successes) >= self.min and len(successes) <= self.max:
+        if match_count >= self.min and match_count <= self.max:
             yield from successes
 
     def children(self) -> list[Expression]:

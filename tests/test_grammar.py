@@ -422,3 +422,190 @@ def test_repeat_once_atomic_space(parser: Parser) -> None:
             "inner": [],
         }
     ]
+
+
+def test_repeat_min_max_twice(parser: Parser) -> None:
+    pairs = parser.parse("repeat_min_max", "abc abc")
+    assert pairs.as_list() == [
+        {
+            "rule": "repeat_min_max",
+            "span": {"str": "abc abc", "start": 0, "end": 7},
+            "inner": [
+                {
+                    "rule": "string",
+                    "span": {"str": "abc", "start": 0, "end": 3},
+                    "inner": [],
+                },
+                {
+                    "rule": "string",
+                    "span": {"str": "abc", "start": 4, "end": 7},
+                    "inner": [],
+                },
+            ],
+        }
+    ]
+
+
+def test_repeat_min_max_thrice(parser: Parser) -> None:
+    pairs = parser.parse("repeat_min_max", "abc abc abc")
+    assert pairs.as_list() == [
+        {
+            "rule": "repeat_min_max",
+            "span": {"str": "abc abc abc", "start": 0, "end": 11},
+            "inner": [
+                {
+                    "rule": "string",
+                    "span": {"str": "abc", "start": 0, "end": 3},
+                    "inner": [],
+                },
+                {
+                    "rule": "string",
+                    "span": {"str": "abc", "start": 4, "end": 7},
+                    "inner": [],
+                },
+                {
+                    "rule": "string",
+                    "span": {"str": "abc", "start": 8, "end": 11},
+                    "inner": [],
+                },
+            ],
+        }
+    ]
+
+
+def test_repeat_min_max_atomic_twice(parser: Parser) -> None:
+    pairs = parser.parse("repeat_min_max_atomic", "abcabc")
+    assert pairs.as_list() == [
+        {
+            "rule": "repeat_min_max_atomic",
+            "span": {"str": "abcabc", "start": 0, "end": 6},
+            "inner": [],
+        }
+    ]
+
+
+def test_repeat_min_max_atomic_thrice(parser: Parser) -> None:
+    pairs = parser.parse("repeat_min_max_atomic", "abcabcabc")
+    assert pairs.as_list() == [
+        {
+            "rule": "repeat_min_max_atomic",
+            "span": {"str": "abcabcabc", "start": 0, "end": 9},
+            "inner": [],
+        }
+    ]
+
+
+def test_repeat_min_max_atomic_space(parser: Parser) -> None:
+    with pytest.raises(PestParsingError):
+        parser.parse("repeat_min_max_atomic", "abc abc")
+
+
+def test_repeat_exact(parser: Parser) -> None:
+    pairs = parser.parse("repeat_exact", "abc abc")
+    assert pairs.as_list() == [
+        {
+            "rule": "repeat_exact",
+            "span": {"str": "abc abc", "start": 0, "end": 7},
+            "inner": [
+                {
+                    "rule": "string",
+                    "span": {"str": "abc", "start": 0, "end": 3},
+                    "inner": [],
+                },
+                {
+                    "rule": "string",
+                    "span": {"str": "abc", "start": 4, "end": 7},
+                    "inner": [],
+                },
+            ],
+        }
+    ]
+
+
+def test_repeat_min_once(parser: Parser) -> None:
+    with pytest.raises(PestParsingError):
+        parser.parse("repeat_min", "abc")
+
+
+def test_repeat_min_twice(parser: Parser) -> None:
+    pairs = parser.parse("repeat_min", "abc abc")
+    assert pairs.as_list() == [
+        {
+            "rule": "repeat_min",
+            "span": {"str": "abc abc", "start": 0, "end": 7},
+            "inner": [
+                {
+                    "rule": "string",
+                    "span": {"str": "abc", "start": 0, "end": 3},
+                    "inner": [],
+                },
+                {
+                    "rule": "string",
+                    "span": {"str": "abc", "start": 4, "end": 7},
+                    "inner": [],
+                },
+            ],
+        }
+    ]
+
+
+def test_repeat_min_thrice(parser: Parser) -> None:
+    pairs = parser.parse("repeat_min", "abc abc  abc")
+    assert pairs.as_list() == [
+        {
+            "rule": "repeat_min",
+            "span": {"str": "abc abc  abc", "start": 0, "end": 12},
+            "inner": [
+                {
+                    "rule": "string",
+                    "span": {"str": "abc", "start": 0, "end": 3},
+                    "inner": [],
+                },
+                {
+                    "rule": "string",
+                    "span": {"str": "abc", "start": 4, "end": 7},
+                    "inner": [],
+                },
+                {
+                    "rule": "string",
+                    "span": {"str": "abc", "start": 9, "end": 12},
+                    "inner": [],
+                },
+            ],
+        }
+    ]
+
+
+def test_repeat_min_atomic_once(parser: Parser) -> None:
+    with pytest.raises(PestParsingError):
+        parser.parse("repeat_min_atomic", "abc")
+
+
+def test_repeat_min_atomic_twice(parser: Parser) -> None:
+    pairs = parser.parse("repeat_min_atomic", "abcabc")
+    assert pairs.as_list() == [
+        {
+            "rule": "repeat_min_atomic",
+            "span": {"str": "abcabc", "start": 0, "end": 6},
+            "inner": [],
+        }
+    ]
+
+
+def test_repeat_min_atomic_thrice(parser: Parser) -> None:
+    pairs = parser.parse("repeat_min_atomic", "abcabcabc")
+    assert pairs.as_list() == [
+        {
+            "rule": "repeat_min_atomic",
+            "span": {"str": "abcabcabc", "start": 0, "end": 9},
+            "inner": [],
+        }
+    ]
+
+
+def test_repeat_min_atomic_space(parser: Parser) -> None:
+    with pytest.raises(PestParsingError):
+        parser.parse("repeat_min_atomic", "abc abc")
+
+
+# TODO: repeat_max_once
