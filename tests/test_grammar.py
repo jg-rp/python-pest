@@ -212,4 +212,213 @@ def test_sequence_atomic_compound_rule(parser: Parser) -> None:
     ]
 
 
-# TODO: sequence_compound_nested
+def test_sequence_compound_nested_rule(parser: Parser) -> None:
+    pairs = parser.parse("sequence_compound_nested", "abcabc")
+    assert pairs.as_list() == [
+        {
+            "rule": "sequence_compound_nested",
+            "span": {"str": "abcabc", "start": 0, "end": 6},
+            "inner": [
+                {
+                    "rule": "sequence_nested",
+                    "span": {"str": "abcabc", "start": 0, "end": 6},
+                    "inner": [
+                        {
+                            "rule": "string",
+                            "span": {"str": "abc", "start": 0, "end": 3},
+                            "inner": [],
+                        },
+                        {
+                            "rule": "string",
+                            "span": {"str": "abc", "start": 3, "end": 6},
+                            "inner": [],
+                        },
+                    ],
+                }
+            ],
+        }
+    ]
+
+
+def test_sequence_compound_nested_space(parser: Parser) -> None:
+    with pytest.raises(PestParsingError):
+        parser.parse("sequence_compound_nested", "abc abc")
+
+
+def test_choice_string(parser: Parser) -> None:
+    pairs = parser.parse("choice", "abc")
+    assert pairs.as_list() == [
+        {
+            "rule": "choice",
+            "span": {"str": "abc", "start": 0, "end": 3},
+            "inner": [
+                {
+                    "rule": "string",
+                    "span": {"str": "abc", "start": 0, "end": 3},
+                    "inner": [],
+                }
+            ],
+        }
+    ]
+
+
+def test_choice_range(parser: Parser) -> None:
+    pairs = parser.parse("choice", "0")
+    assert pairs.as_list() == [
+        {
+            "rule": "choice",
+            "span": {"str": "0", "start": 0, "end": 1},
+            "inner": [
+                {
+                    "rule": "range",
+                    "span": {"str": "0", "start": 0, "end": 1},
+                    "inner": [],
+                }
+            ],
+        }
+    ]
+
+
+def test_optional_string(parser: Parser) -> None:
+    pairs = parser.parse("optional", "abc")
+    assert pairs.as_list() == [
+        {
+            "rule": "optional",
+            "span": {"str": "abc", "start": 0, "end": 3},
+            "inner": [
+                {
+                    "rule": "string",
+                    "span": {"str": "abc", "start": 0, "end": 3},
+                    "inner": [],
+                }
+            ],
+        }
+    ]
+
+
+def test_optional_empty(parser: Parser) -> None:
+    pairs = parser.parse("optional", "")
+    assert pairs.as_list() == [
+        {"rule": "optional", "span": {"str": "", "start": 0, "end": 0}, "inner": []}
+    ]
+
+
+def test_repeat_empty(parser: Parser) -> None:
+    pairs = parser.parse("repeat", "")
+    assert pairs.as_list() == [
+        {"rule": "repeat", "span": {"str": "", "start": 0, "end": 0}, "inner": []}
+    ]
+
+
+def test_repeat_strings(parser: Parser) -> None:
+    pairs = parser.parse("repeat", "abc   abc")
+    assert pairs.as_list() == [
+        {
+            "rule": "repeat",
+            "span": {"str": "abc   abc", "start": 0, "end": 9},
+            "inner": [
+                {
+                    "rule": "string",
+                    "span": {"str": "abc", "start": 0, "end": 3},
+                    "inner": [],
+                },
+                {
+                    "rule": "string",
+                    "span": {"str": "abc", "start": 6, "end": 9},
+                    "inner": [],
+                },
+            ],
+        }
+    ]
+
+
+def test_repeat_atomic_empty(parser: Parser) -> None:
+    pairs = parser.parse("repeat_atomic", "")
+    assert pairs.as_list() == [
+        {
+            "rule": "repeat_atomic",
+            "span": {"str": "", "start": 0, "end": 0},
+            "inner": [],
+        }
+    ]
+
+
+def test_repeat_atomic_strings(parser: Parser) -> None:
+    pairs = parser.parse("repeat_atomic", "abcabc")
+    assert pairs.as_list() == [
+        {
+            "rule": "repeat_atomic",
+            "span": {"str": "abcabc", "start": 0, "end": 6},
+            "inner": [],
+        }
+    ]
+
+
+# XXX: We differ from Rust pest here.
+# I think `!parses_to` asserts EOF for every test case.
+def test_repeat_atomic_space(parser: Parser) -> None:
+    pairs = parser.parse("repeat_atomic", "abc abc")
+    # We match the first `abc` then stop at the space.
+    assert pairs.as_list() == [
+        {
+            "rule": "repeat_atomic",
+            "span": {"str": "abc", "start": 0, "end": 3},
+            "inner": [],
+        }
+    ]
+
+
+def test_repeat_once_empty(parser: Parser) -> None:
+    with pytest.raises(PestParsingError):
+        parser.parse("repeat_once", "")
+
+
+def test_repeat_once_strings(parser: Parser) -> None:
+    pairs = parser.parse("repeat_once", "abc   abc")
+    assert pairs.as_list() == [
+        {
+            "rule": "repeat_once",
+            "span": {"str": "abc   abc", "start": 0, "end": 9},
+            "inner": [
+                {
+                    "rule": "string",
+                    "span": {"str": "abc", "start": 0, "end": 3},
+                    "inner": [],
+                },
+                {
+                    "rule": "string",
+                    "span": {"str": "abc", "start": 6, "end": 9},
+                    "inner": [],
+                },
+            ],
+        }
+    ]
+
+
+def test_repeat_once_atomic_empty(parser: Parser) -> None:
+    with pytest.raises(PestParsingError):
+        parser.parse("repeat_once_atomic", "")
+
+
+def test_repeat_once_atomic_strings(parser: Parser) -> None:
+    pairs = parser.parse("repeat_once_atomic", "abcabc")
+    assert pairs.as_list() == [
+        {
+            "rule": "repeat_once_atomic",
+            "span": {"str": "abcabc", "start": 0, "end": 6},
+            "inner": [],
+        }
+    ]
+
+
+# XXX: We differ from Rust pest here.
+# I think `!parses_to` asserts EOF for every test case.
+def test_repeat_once_atomic_space(parser: Parser) -> None:
+    pairs = parser.parse("repeat_once_atomic", "abc abc")
+    assert pairs.as_list() == [
+        {
+            "rule": "repeat_once_atomic",
+            "span": {"str": "abc", "start": 0, "end": 3},
+            "inner": [],
+        }
+    ]

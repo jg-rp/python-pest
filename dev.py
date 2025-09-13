@@ -10,7 +10,7 @@ parser = Parser.from_grammar(grammar)
 # for token in tokenize("repeat_max = { string{, 2} }"):
 #     print(token)
 
-pairs = parser.parse("sequence_atomic_compound", "abcabc")
+pairs = parser.parse("repeat_once_atomic", "abc abc")
 
 # print(parser)
 
