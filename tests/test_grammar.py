@@ -1,6 +1,14 @@
+"""These tests are translated from Rust pest's `grammars.rs`.
+
+https://github.com/pest-parser/pest/blob/master/vm/tests/grammar.rs.
+
+See LICENSE_PEST.txt
+"""
+
 import pytest
 
 from pest import Parser
+from pest import PestParsingError
 
 
 @pytest.fixture(scope="module")
@@ -151,15 +159,57 @@ def test_sequence_non_atomic_rule(parser: Parser) -> None:
             "span": {"str": "abc   abc", "start": 0, "end": 9},
             "inner": [
                 {
-                    "rule": "string",
-                    "span": {"str": "abc", "start": 0, "end": 3},
-                    "inner": [],
-                },
-                {
-                    "rule": "string",
-                    "span": {"str": "abc", "start": 6, "end": 9},
-                    "inner": [],
-                },
+                    "rule": "sequence",
+                    "span": {"str": "abc   abc", "start": 0, "end": 9},
+                    "inner": [
+                        {
+                            "rule": "string",
+                            "span": {"str": "abc", "start": 0, "end": 3},
+                            "inner": [],
+                        },
+                        {
+                            "rule": "string",
+                            "span": {"str": "abc", "start": 6, "end": 9},
+                            "inner": [],
+                        },
+                    ],
+                }
             ],
         }
     ]
+
+
+def test_atomic_space(parser: Parser) -> None:
+    with pytest.raises(PestParsingError):
+        parser.parse("sequence_atomic", "abc abc")
+
+
+def test_sequence_atomic_compound_rule(parser: Parser) -> None:
+    pairs = parser.parse("sequence_atomic_compound", "abcabc")
+    assert pairs.as_list() == [
+        {
+            "rule": "sequence_atomic_compound",
+            "span": {"str": "abcabc", "start": 0, "end": 6},
+            "inner": [
+                {
+                    "rule": "sequence_compound",
+                    "span": {"str": "abcabc", "start": 0, "end": 6},
+                    "inner": [
+                        {
+                            "rule": "string",
+                            "span": {"str": "abc", "start": 0, "end": 3},
+                            "inner": [],
+                        },
+                        {
+                            "rule": "string",
+                            "span": {"str": "abc", "start": 3, "end": 6},
+                            "inner": [],
+                        },
+                    ],
+                }
+            ],
+        }
+    ]
+
+
+# TODO: sequence_compound_nested

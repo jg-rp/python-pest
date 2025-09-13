@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Mapping
 
-from .exceptions import PestParserError
+from .exceptions import PestParsingError
 from .grammar import parse
 
 # TODO: Move this to grammar/rules/__init__.py
@@ -66,4 +66,4 @@ class Parser:
         if results:
             return Pairs([result.pair for result in results if result.pair])
 
-        raise PestParserError(state.failure_message())
+        raise PestParsingError(state.failure_message())

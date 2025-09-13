@@ -10,6 +10,7 @@ from typing_extensions import Self
 
 from pest.grammar import Expression
 from pest.grammar.expression import Success
+from pest.grammar.expressions.terminals import Identifier
 from pest.pairs import Pair
 
 if TYPE_CHECKING:
@@ -19,7 +20,7 @@ if TYPE_CHECKING:
 class Rule(Expression):
     """Base class for all rules."""
 
-    __slots__ = ("name", "expression", "modifier", "doc")
+    __slots__ = ("name", "expression", "modifier", "doc", "child_is_non_atomic")
 
     def __init__(
         self,
@@ -65,18 +66,38 @@ class Rule(Expression):
             # Yield children without an enclosing Pair
             yield from results
         elif self.modifier == "@":
-            # XXX: children could be non-atomic with `!` modifier
-            # Atomic rule silences children
-            yield Success(
-                Pair(
-                    input_=state.input,
-                    rule=self,
-                    start=start,
-                    end=end,
-                    children=[],
-                ),
-                pos=end,
-            )
+            if isinstance(self.expression, Rule):
+                rule: Rule | None = self.expression
+            elif isinstance(self.expression, Identifier):
+                rule = state.parser.rules.get(self.expression.value)
+            else:
+                rule = None
+
+            if not rule or rule.modifier not in ("!", "$"):
+                # Atomic rule silences children
+                yield Success(
+                    Pair(
+                        input_=state.input,
+                        rule=self,
+                        start=start,
+                        end=end,
+                        children=[],
+                    ),
+                    pos=end,
+                )
+            else:
+                # Non-atomic child rule.
+                # XXX: What about children's children?
+                yield Success(
+                    Pair(
+                        input_=state.input,
+                        rule=self,
+                        start=start,
+                        end=end,
+                        children=[success.pair for success in results if success.pair],
+                    ),
+                    pos=end,
+                )
         else:
             yield Success(
                 Pair(
