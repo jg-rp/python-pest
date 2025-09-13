@@ -102,6 +102,10 @@ class PeekSlice(Terminal):
         yield Success(None, position)
 
 
+# TODO: PEEK
+# TODO: PEEK_ALL
+
+
 class Identifier(Terminal):
     """A terminal pointing to rule, possibly a built-in rule."""
 

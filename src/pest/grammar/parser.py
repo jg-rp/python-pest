@@ -260,6 +260,7 @@ class Parser:
 
         if kind == TokenKind.COMMA:
             number = self.eat(TokenKind.NUMBER)
+            self.eat(TokenKind.RBRACE)
             return RepeatMax(expr, int(number.value))
 
         raise PestGrammarSyntaxError("expected a number or a comma", token=token)

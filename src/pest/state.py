@@ -2,20 +2,20 @@
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 from typing import TYPE_CHECKING
 from typing import Iterator
+from typing import Sequence
 
 from .grammar.expression import Success
 from .grammar.expression import Terminal
 from .grammar.expressions.rule import Rule
+from .stack import Stack
 
 if TYPE_CHECKING:
     from pest.grammar.expression import Expression
 
     from .parser import Parser
-
-# TODO: state restore checkpoints
-# We need to restore the stack and atomic depth after predicates and when backtracking.
 
 
 class ParserState:
@@ -28,7 +28,7 @@ class ParserState:
     __slots__ = (
         "parser",
         "input",
-        "atomic_depth",
+        "_atomic_depth",
         "stack",
         "cache",
         "expr_stack",
@@ -39,12 +39,23 @@ class ParserState:
     def __init__(self, parser: Parser, input_: str) -> None:
         self.parser = parser
         self.input = input_
-        self.atomic_depth = 0
-        self.stack: list[str] = []
+        # TODO: a snapshotting int class?
+        self._atomic_depth: list[int] = [0]
+        self.stack: Stack[str] = Stack()
         self.cache: dict[tuple[int, int], list[Success] | None] = {}
         self.expr_stack: list[tuple[Expression, int]] = []
         self.rule_stack: list[Rule] = []
         self.failed_pos: int = 0
+
+    @property
+    def atomic_depth(self) -> int:
+        """The current atomic rule state."""
+        return self._atomic_depth[-1]
+
+    @atomic_depth.setter
+    def atomic_depth(self, value: int) -> None:
+        """Set the current atomic depth."""
+        self._atomic_depth[-1] = value
 
     def parse(self, expr: Expression, pos: int) -> Iterator[Success]:
         """Parse `expr` or return a cached parse result."""
@@ -55,6 +66,7 @@ class ParserState:
                 yield from cached
             return
 
+        # TODO: context manager for rule stack?
         if isinstance(expr, Rule):
             self.rule_stack.append(expr)
 
@@ -176,23 +188,19 @@ class ParserState:
 
     def push(self, value: str) -> None:
         """Push a value onto the stack."""
-        self.stack.append(value)
+        self.stack.push(value)
 
-    def drop(self, n: int = 1) -> None:
-        """Drop the top `n` values from the stack."""
-        if n > len(self.stack):
-            raise IndexError("Cannot drop more elements than present in stack")
-        del self.stack[-n:]
+    def drop(self) -> None:
+        """Pops one item from the top of the stack."""
+        self.stack.pop()
 
     def peek(self) -> str | None:
-        """Peek at the top element of the stack.
+        """Peek at the top element of the stack."""
+        return self.stack.peek()
 
-        Returns:
-            The top value, or None if the stack is empty.
-        """
-        return self.stack[-1] if self.stack else None
-
-    def peek_slice(self, start: int | None = None, end: int | None = None) -> list[str]:
+    def peek_slice(
+        self, start: int | None = None, end: int | None = None
+    ) -> Sequence[str]:
         """Peek at a slice of the stack, similar to pest's `PEEK(start..end)`.
 
         Args:
@@ -213,3 +221,28 @@ class ParserState:
         if start is None and end is None:
             return self.stack[:]
         return self.stack[slice(start, end)]
+
+    def snapshot(self) -> None:
+        """Mark the current state as a checkpoint."""
+        self.stack.snapshot()
+        self._atomic_depth.append(self.atomic_depth)
+
+    def ok(self) -> None:
+        """Discard the last checkpoint after a successful match."""
+        self.stack.drop_snapshot()
+        self.atomic_depth = self._atomic_depth.pop()
+
+    def restore(self) -> None:
+        """Restore the state to the most recent checkpoint."""
+        self.stack.restore()
+        self._atomic_depth.pop()
+
+    @contextmanager
+    def suppress(self) -> Iterator[ParserState]:
+        """A context manager that resets parser state on exit."""
+        self.stack.snapshot()
+        # TODO: rule stack too?
+        atomic_depth = self.atomic_depth
+        yield self
+        self.atomic_depth = atomic_depth
+        self.stack.restore()

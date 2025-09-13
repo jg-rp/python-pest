@@ -2,12 +2,15 @@ import json
 
 from pest import Parser
 
-with open("tests/grammars/toml.pest", encoding="utf-8") as fd:
+with open("tests/grammars/grammar.pest", encoding="utf-8") as fd:
     grammar = fd.read()
 
 parser = Parser.from_grammar(grammar)
 
-# pairs = parser.parse("literal", "'\"'")
+# for token in tokenize("repeat_max = { string{, 2} }"):
+#     print(token)
+
+# pairs = parser.parse("string", "abc")
 
 # print(parser)
 

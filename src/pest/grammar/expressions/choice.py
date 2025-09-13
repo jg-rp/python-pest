@@ -33,9 +33,14 @@ class Choice(Expression):
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Attempt to match this expression against the input at `start`."""
         for expr in self.expressions:
-            if result := list(state.parse(expr, start)):
+            state.snapshot()
+            result = list(state.parse(expr, start))
+            if result:
+                state.ok()
                 yield from result
                 break
+            else:
+                state.restore()
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""

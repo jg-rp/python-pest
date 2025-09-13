@@ -23,12 +23,13 @@ RE_WHITESPACE = re.compile(r"[ \t\n\r]+")
 RE_IDENTIFIER = re.compile(r"[_a-zA-Z][_a-zA-Z0-9]*")
 RE_ASSIGN_OP = re.compile(r"=")  # TODO: scan until ch?
 RE_MODIFIER = re.compile(r"[_@\$!]")
-RE_TAG = re.compile(r"#[_a-zA-z][_a-zA-Z0-9](?=\s*=)")
+RE_TAG = re.compile(r"#[_a-zA-z][_a-zA-Z0-9]+(?=\s*=)")
 RE_NUMBER = re.compile(r"[0-9]+")
 RE_INTEGER = re.compile(r"-?[0-9]+")
 RE_PUSH_LITERAL = re.compile(r"PUSH_LITERAL")
 RE_PUSH = re.compile(r"PUSH")
 RE_PEEK = re.compile(r"PEEK")
+RE_PEEK_ALL = re.compile(r"PEEK_ALL")
 RE_RANGE_OP = re.compile(r"..")
 RE_CHAR = re.compile(
     r"'\\[\\\"\r\n\t\0']'|'\\x[0-9a-fA-F]{2}'|'\\u\{0-9a-fA-F]{2,6}\}'|'.'"
@@ -226,8 +227,9 @@ class Scanner:
             self.emit(TokenKind.POSITIVE_PREDICATE, self.next())
             self.skip_trivia()
         elif self.peek() == "!":
-            self.emit(TokenKind.NEGATIVE_PREDICATE, self.next())
-            self.skip_trivia()
+            while self.peek() == "!":
+                self.emit(TokenKind.NEGATIVE_PREDICATE, self.next())
+                self.skip_trivia()
 
         if self.accept_terminal():
             self.accept_postfix_op()
@@ -290,11 +292,16 @@ class Scanner:
 
             return True
 
+        if value := self.scan(RE_PEEK_ALL):
+            self.emit(TokenKind.PEEK_ALL, value)
+            return True
+
         if value := self.scan(RE_PEEK):
-            if self.peek() == "(":
-                self.emit(TokenKind.LPAREN, self.next())
+            self.emit(TokenKind.PEEK, value)
+            if self.peek() == "[":
+                self.emit(TokenKind.LBRACKET, self.next())
             else:
-                self.error("expected an opening paren")
+                return True
 
             self.skip_trivia()
 
@@ -311,8 +318,8 @@ class Scanner:
                 self.emit(TokenKind.INTEGER, value)
                 self.skip_trivia()
 
-            if self.peek() == ")":
-                self.emit(TokenKind.RPAREN, self.next())
+            if self.peek() == "]":
+                self.emit(TokenKind.RBRACKET, self.next())
             else:
                 self.error("expected a closing paren")
 
