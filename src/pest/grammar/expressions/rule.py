@@ -65,6 +65,7 @@ class Rule(Expression):
             # Yield children without an enclosing Pair
             yield from results
         elif self.modifier == "@":
+            # XXX: children could be non-atomic with `!` modifier
             # Atomic rule silences children
             yield Success(
                 Pair(

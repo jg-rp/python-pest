@@ -13,6 +13,8 @@ from .expressions import Group
 from .expressions import Identifier
 from .expressions import NegativePredicate
 from .expressions import Optional
+from .expressions import Peek
+from .expressions import PeekAll
 from .expressions import PeekSlice
 from .expressions import PositivePredicate
 from .expressions import Push
@@ -169,6 +171,9 @@ class Parser:
         elif left_kind == TokenKind.PEEK:
             self.pos += 1
             left = self.parse_peek_expression(tag)
+        elif left_kind == TokenKind.PEEK_ALL:
+            self.pos += 1
+            left = PeekAll(tag=tag)
         elif left_kind == TokenKind.CHAR:
             start = self.eat(TokenKind.CHAR).value[1:-1]
             self.eat(TokenKind.RANGE_OP)
@@ -266,6 +271,9 @@ class Parser:
         raise PestGrammarSyntaxError("expected a number or a comma", token=token)
 
     def parse_peek_expression(self, tag: str | None) -> Expression:
+        if self.current().kind != TokenKind.LBRACKET:
+            return Peek(tag=tag)
+
         self.eat(TokenKind.LBRACKET)
         if self.current().kind == TokenKind.INTEGER:
             start: str | None = self.next().value

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from contextlib import suppress
 from typing import TYPE_CHECKING
 from typing import Iterator
 
@@ -29,7 +30,7 @@ class PushLiteral(Terminal):
         return f'{self.tag_str()}PUSH("{self.value}")'
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
-        """Try to parse all parts in sequence starting at `pos`."""
+        """Attempt to match this expression against the input at `start`."""
         state.push(self.value)
         yield Success(None, start)
 
@@ -50,7 +51,7 @@ class Push(Expression):
         return f"{self.tag_str()}PUSH( {self.expression} )"
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
-        """Try to parse all parts in sequence starting at `pos`."""
+        """Attempt to match this expression against the input at `start`."""
         result = list(state.parse(self.expression, start))
         if not result:
             return
@@ -68,7 +69,10 @@ class Push(Expression):
 
 
 class PeekSlice(Terminal):
-    """A PEEK terminal with a range expression."""
+    """A PEEK terminal with a range expression.
+
+    Matches the range from the bottom of the stack to the top.
+    """
 
     __slots__ = ("start", "stop")
 
@@ -88,7 +92,7 @@ class PeekSlice(Terminal):
         return f"{self.tag_str()}PEEK[{start}..{stop}]"
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
-        """Try to parse all parts in sequence starting at `pos`."""
+        """Attempt to match this expression against the input at `start`."""
         position = start
 
         for literal in state.peek_slice(self.start, self.stop):
@@ -102,8 +106,45 @@ class PeekSlice(Terminal):
         yield Success(None, position)
 
 
-# TODO: PEEK
-# TODO: PEEK_ALL
+class Peek(Terminal):
+    """A PEEK terminal looking at the top of the stack."""
+
+    __slots__ = ()
+
+    def __str__(self) -> str:
+        return f"{self.tag_str()}PEEK"
+
+    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
+        """Attempt to match this expression against the input at `start`."""
+        with suppress(IndexError):
+            value = state.stack.peek()
+            if state.input.startswith(value, start):
+                yield Success(None, start + len(value))
+
+
+class PeekAll(Terminal):
+    """A PEEK_ALL terminal match the entire stack, top to bottom."""
+
+    __slots__ = ()
+
+    def __str__(self) -> str:
+        return f"{self.tag_str()}PEEK_ALL"
+
+    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
+        """Attempt to match this expression against the input at `start`."""
+        position = start
+
+        for literal in reversed(state.stack):
+            # XXX: can `literal` be empty?
+            if not state.input.startswith(literal, position):
+                return
+
+            position += len(literal)
+
+            if implicit_result := list(state.parse_implicit_rules(position)):
+                position = implicit_result[-1].pos
+
+        yield Success(None, position)
 
 
 class Identifier(Terminal):
@@ -119,7 +160,7 @@ class Identifier(Terminal):
         return f"{self.tag_str()}{self.value}"
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
-        """Try to parse all parts in sequence starting at `pos`."""
+        """Attempt to match this expression against the input at `start`."""
         # TODO: Assumes the rule exists.
         yield from state.parse(state.parser.rules[self.value], start)
 
@@ -141,7 +182,7 @@ class String(Terminal):
         return f'"{value}"'
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
-        """Try to parse all parts in sequence starting at `pos`."""
+        """Attempt to match this expression against the input at `start`."""
         if state.input.startswith(self.value, start):
             yield Success(None, start + len(self.value))
 
@@ -165,7 +206,7 @@ class CIString(Terminal):
         return f'{self.tag_str()}^"{value}"'
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
-        """Try to parse all parts in sequence starting at `pos`."""
+        """Attempt to match this expression against the input at `start`."""
         if self._re.match(state.input, start):
             yield Success(None, start + len(self.value))
 
@@ -186,6 +227,6 @@ class Range(Terminal):
         return f"{self.tag_str()}'{self.start}'..'{self.stop}'"
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
-        """Try to parse all parts in sequence starting at `pos`."""
+        """Attempt to match this expression against the input at `start`."""
         if match := self._re.match(state.input, start):
             yield Success(None, match.end())

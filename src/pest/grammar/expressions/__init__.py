@@ -14,6 +14,8 @@ from .rule import Rule
 from .sequence import Sequence
 from .terminals import CIString
 from .terminals import Identifier
+from .terminals import Peek
+from .terminals import PeekAll
 from .terminals import PeekSlice
 from .terminals import Push
 from .terminals import PushLiteral
@@ -28,6 +30,8 @@ __all__ = (
     "Sequence",
     "CIString",
     "Identifier",
+    "Peek",
+    "PeekAll",
     "PeekSlice",
     "Push",
     "PushLiteral",
