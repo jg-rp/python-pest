@@ -890,6 +890,7 @@ def test_repeat_mutate_stack(parser: Parser) -> None:
 
 
 def test_checkpoint_restore(parser: Parser) -> None:
+    # XXX: make EOI non-silent?
     pairs = parser.parse("checkpoint_restore", "a")
     assert pairs.as_list() == [
         {
@@ -898,3 +899,127 @@ def test_checkpoint_restore(parser: Parser) -> None:
             "inner": [],
         }
     ]
+
+
+def test_ascii_digits(parser: Parser) -> None:
+    pairs = parser.parse("ascii_digits", "6")
+    assert pairs.as_list() == [
+        {
+            "rule": "ascii_digits",
+            "span": {"str": "6", "start": 0, "end": 1},
+            "inner": [],
+        }
+    ]
+
+
+def test_ascii_nonzero_digits(parser: Parser) -> None:
+    pairs = parser.parse("ascii_nonzero_digits", "5")
+    assert pairs.as_list() == [
+        {
+            "rule": "ascii_nonzero_digits",
+            "span": {"str": "5", "start": 0, "end": 1},
+            "inner": [],
+        }
+    ]
+
+
+def test_ascii_bin_digits(parser: Parser) -> None:
+    pairs = parser.parse("ascii_bin_digits", "1")
+    assert pairs.as_list() == [
+        {
+            "rule": "ascii_bin_digits",
+            "span": {"str": "1", "start": 0, "end": 1},
+            "inner": [],
+        }
+    ]
+
+
+def test_ascii_oct_digits(parser: Parser) -> None:
+    pairs = parser.parse("ascii_oct_digits", "3")
+    assert pairs.as_list() == [
+        {
+            "rule": "ascii_oct_digits",
+            "span": {"str": "3", "start": 0, "end": 1},
+            "inner": [],
+        }
+    ]
+
+
+def test_ascii_hex_digits(parser: Parser) -> None:
+    pairs = parser.parse("ascii_hex_digits", "6bC")
+    assert pairs.as_list() == [
+        {
+            "rule": "ascii_hex_digits",
+            "span": {"str": "6bC", "start": 0, "end": 3},
+            "inner": [],
+        }
+    ]
+
+
+def test_ascii_alpha_lowers(parser: Parser) -> None:
+    pairs = parser.parse("ascii_alpha_lowers", "a")
+    assert pairs.as_list() == [
+        {
+            "rule": "ascii_alpha_lowers",
+            "span": {"str": "a", "start": 0, "end": 1},
+            "inner": [],
+        }
+    ]
+
+
+def test_ascii_alpha_uppers(parser: Parser) -> None:
+    pairs = parser.parse("ascii_alpha_uppers", "K")
+    assert pairs.as_list() == [
+        {
+            "rule": "ascii_alpha_uppers",
+            "span": {"str": "K", "start": 0, "end": 1},
+            "inner": [],
+        }
+    ]
+
+
+def test_ascii_alphas(parser: Parser) -> None:
+    pairs = parser.parse("ascii_alphas", "wF")
+    assert pairs.as_list() == [
+        {
+            "rule": "ascii_alphas",
+            "span": {"str": "wF", "start": 0, "end": 2},
+            "inner": [],
+        }
+    ]
+
+
+def test_ascii_alphanumerics(parser: Parser) -> None:
+    pairs = parser.parse("ascii_alphanumerics", "4jU")
+    assert pairs.as_list() == [
+        {
+            "rule": "ascii_alphanumerics",
+            "span": {"str": "4jU", "start": 0, "end": 3},
+            "inner": [],
+        }
+    ]
+
+
+def test_asciis(parser: Parser) -> None:
+    pairs = parser.parse("asciis", "x02")
+    assert pairs.as_list() == [
+        {
+            "rule": "asciis",
+            "span": {"str": "x02", "start": 0, "end": 3},
+            "inner": [],
+        }
+    ]
+
+
+def test_newline(parser: Parser) -> None:
+    pairs = parser.parse("newline", "\n\r\n\r")
+    assert pairs.as_list() == [
+        {
+            "rule": "newline",
+            "span": {"str": "\n\r\n\r", "start": 0, "end": 4},
+            "inner": [],
+        }
+    ]
+
+
+# TODO: unicode

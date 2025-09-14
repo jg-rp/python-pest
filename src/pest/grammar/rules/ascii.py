@@ -20,7 +20,7 @@ ASCII_RULE_MAP: dict[str, tuple[str, str] | list[tuple[str, str]]] = {
     "ASCII_OCT_DIGIT": ("0", "7"),
     "ASCII_HEX_DIGIT": [("0", "9"), ("a", "f"), ("A", "F")],
     "ASCII_ALPHANUMERIC": [("0", "9"), ("a", "z"), ("A", "Z")],
-    "ASCII": ("\u0000", "\u0074"),
+    "ASCII": ("\u0000", "\u007f"),
     "ASCII_ALPHA_LOWER": ("a", "z"),
     "ASCII_ALPHA_UPPER": ("A", "Z"),
     "ASCII_ALPHA": [("a", "z"), ("A", "Z")],
