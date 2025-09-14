@@ -133,16 +133,19 @@ class PeekAll(Terminal):
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Attempt to match this expression against the input at `start`."""
         position = start
+        stack_size = len(state.stack)
 
-        for literal in reversed(state.stack):
+        for i, literal in enumerate(reversed(state.stack)):
             # XXX: can `literal` be empty?
             if not state.input.startswith(literal, position):
                 return
 
             position += len(literal)
 
-            if implicit_result := list(state.parse_implicit_rules(position)):
-                position = implicit_result[-1].pos
+            if i < stack_size:
+                implicit_result = list(state.parse_implicit_rules(position))
+                if implicit_result:
+                    position = implicit_result[-1].pos
 
         yield Success(None, position)
 
@@ -185,6 +188,7 @@ class PopAll(Terminal):
 
             position += len(literal)
 
+            # TODO: don't skip trivia after the last pop
             if implicit_result := list(state.parse_implicit_rules(position)):
                 position = implicit_result[-1].pos
 

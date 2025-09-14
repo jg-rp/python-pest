@@ -197,6 +197,7 @@ class Pairs(Iterable[Pair]):
         for pair in self._pairs:
             yield from pair.tokens()
 
+    # TODO: rename to "serialize" or "dump" or "dumps"
     def as_list(self) -> list[dict[str, object]]:
         """Return list of pest-debug-like JSON dicts."""
         return [pair.as_dict() for pair in self._pairs]

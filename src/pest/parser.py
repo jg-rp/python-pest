@@ -39,7 +39,7 @@ class Parser:
 
     def __init__(self, rules: Mapping[str, Rule], doc: list[str] | None = None):
         # Built-in rules overwrite grammar defined rules.
-        self.rules: dict[str, Rule] = {**rules, **self.BUILTIN}
+        self.rules: dict[str, Rule] = {**self.BUILTIN, **rules}
         self.doc = doc
 
     @classmethod
@@ -59,6 +59,7 @@ class Parser:
         """Parse `input_` starting from `rule`."""
         state = ParserState(self, input_)
         results = list(self.rules[rule].parse(state, 0))
+
         if results:
             return Pairs([result.pair for result in results if result.pair])
 

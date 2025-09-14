@@ -2,7 +2,7 @@ import json
 
 from pest import Parser
 
-with open("tests/grammars/grammar.pest", encoding="utf-8") as fd:
+with open("tests/grammars/lists.pest", encoding="utf-8") as fd:
     grammar = fd.read()
 
 parser = Parser.from_grammar(grammar)
@@ -10,7 +10,7 @@ parser = Parser.from_grammar(grammar)
 # for token in tokenize("repeat_max = { string{, 2} }"):
 #     print(token)
 
-pairs = parser.parse("unicode", "نامهای")
+pairs = parser.parse("lists", "- a\n  - b\n- c")
 
 # print(parser)
 

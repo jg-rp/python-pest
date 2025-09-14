@@ -34,9 +34,12 @@ class Sequence(Expression):
         """Try to parse left followed by right starting at `start`."""
         position = start
         results: list[Success] = []
+        state.snapshot()
+
         for i, expr in enumerate(self.expressions):
             result = list(state.parse(expr, position))
             if not result:
+                state.restore()
                 return
 
             position = result[-1].pos
@@ -49,6 +52,7 @@ class Sequence(Expression):
                     position = implicit_result[-1].pos
                     results.extend(implicit_result)
 
+        state.ok()
         yield from results
 
     def children(self) -> list[Expression]:

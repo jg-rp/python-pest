@@ -1038,4 +1038,71 @@ def test_unicode(parser: Parser) -> None:
     ]
 
 
-# TODO: shadowing
+def test_shadow_builtin(parser: Parser) -> None:
+    pairs = parser.parse("SYMBOL", "shadows builtin")
+    assert pairs.as_list() == [
+        {
+            "rule": "SYMBOL",
+            "span": {"str": "shadows builtin", "start": 0, "end": 15},
+            "inner": [],
+        }
+    ]
+
+
+def test_han(parser: Parser) -> None:
+    pairs = parser.parse("han", "你好")
+    assert pairs.as_list() == [
+        {
+            "rule": "han",
+            "span": {"str": "\u4f60\u597d", "start": 0, "end": 2},
+            "inner": [],
+        }
+    ]
+
+
+def test_hangul(parser: Parser) -> None:
+    pairs = parser.parse("hangul", "여보세요")
+    assert pairs.as_list() == [
+        {
+            "rule": "hangul",
+            "span": {"str": "\uc5ec\ubcf4\uc138\uc694", "start": 0, "end": 4},
+            "inner": [],
+        }
+    ]
+
+
+def test_hiragana(parser: Parser) -> None:
+    pairs = parser.parse("hiragana", "こんにちは")
+    assert pairs.as_list() == [
+        {
+            "rule": "hiragana",
+            "span": {"str": "\u3053\u3093\u306b\u3061\u306f", "start": 0, "end": 5},
+            "inner": [],
+        }
+    ]
+
+
+def test_arabic(parser: Parser) -> None:
+    pairs = parser.parse("arabic", "نامهای")
+    assert pairs.as_list() == [
+        {
+            "rule": "arabic",
+            "span": {
+                "str": "\u0646\u0627\u0645\u0647\u0627\u06cc",
+                "start": 0,
+                "end": 6,
+            },
+            "inner": [],
+        }
+    ]
+
+
+def test_emoji(parser: Parser) -> None:
+    pairs = parser.parse("emoji", "👶")
+    assert pairs.as_list() == [
+        {
+            "rule": "emoji",
+            "span": {"str": "👶", "start": 0, "end": 1},
+            "inner": [],
+        }
+    ]
