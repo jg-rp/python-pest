@@ -1022,4 +1022,20 @@ def test_newline(parser: Parser) -> None:
     ]
 
 
-# TODO: unicode
+# NOTE: Our start and end indexes are in Unicode code points, not bytes.
+def test_unicode(parser: Parser) -> None:
+    pairs = parser.parse("unicode", "نامهای")
+    assert pairs.as_list() == [
+        {
+            "rule": "unicode",
+            "span": {
+                "str": "\u0646\u0627\u0645\u0647\u0627\u06cc",
+                "start": 0,
+                "end": 6,
+            },
+            "inner": [],
+        }
+    ]
+
+
+# TODO: shadowing

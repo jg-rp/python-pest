@@ -34,7 +34,7 @@ class Sequence(Expression):
         """Try to parse left followed by right starting at `start`."""
         position = start
         results: list[Success] = []
-        for expr in self.expressions:
+        for i, expr in enumerate(self.expressions):
             result = list(state.parse(expr, position))
             if not result:
                 return
@@ -42,9 +42,12 @@ class Sequence(Expression):
             position = result[-1].pos
             results.extend(result)
 
-            if implicit_result := list(state.parse_implicit_rules(position)):
-                position = implicit_result[-1].pos
-                results.extend(implicit_result)
+            # Only skip trivia between expressions, not after the last one.
+            if i < len(self.expressions) - 1:
+                implicit_result = list(state.parse_implicit_rules(position))
+                if implicit_result:
+                    position = implicit_result[-1].pos
+                    results.extend(implicit_result)
 
         yield from results
 

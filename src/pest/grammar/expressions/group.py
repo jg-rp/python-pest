@@ -37,6 +37,7 @@ class Group(Expression):
             - None if any part fails.
         """
         # XXX: Do we need a `Group` expression?
+        # A group might have a tag.
         yield from state.parse(self.expression, start)
 
     def children(self) -> list[Expression]:

@@ -75,9 +75,11 @@ class Repeat(Expression):
         while True:
             state.snapshot()
             results = list(state.parse(self.expression, position))
+
             if not results:
                 state.restore()
                 break
+
             matched = True
             position = results[-1].pos
             state.ok()
