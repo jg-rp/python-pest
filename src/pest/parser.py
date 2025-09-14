@@ -7,13 +7,11 @@ from typing import Mapping
 
 from .exceptions import PestParsingError
 from .grammar import parse
-
-# TODO: Move this to grammar/rules/__init__.py
-# TODO: unicode rules
 from .grammar.rules.ascii import ASCII_RULES
 from .grammar.rules.special import EOI
 from .grammar.rules.special import SOI
 from .grammar.rules.special import Any
+from .grammar.rules.unicode import UNICODE_RULES
 from .pairs import Pairs
 from .state import ParserState
 
@@ -31,12 +29,10 @@ class Parser:
 
     __slots__ = ("rules", "doc")
 
-    # TODO: built-in rules
-    # All built-in rules are silent
-    # - PEEK_ALL
     BUILTIN: dict[str, Rule] = {
         "ANY": Any(),
         **ASCII_RULES,
+        **UNICODE_RULES,
         "SOI": SOI(),
         "EOI": EOI(),
     }

@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 from typing import Iterator
 from typing import NamedTuple
 
+import regex as re
 from typing_extensions import Self
 
 if TYPE_CHECKING:
@@ -77,3 +78,22 @@ class Terminal(Expression):
         """Return a new instance of this expression with child expressions replaced."""
         assert not expressions
         return self
+
+
+class RegexExpression(Terminal):
+    """A simple terminal expression with a `pattern` and a `regex`."""
+
+    __slots__ = ("pattern", "regex")
+
+    def __init__(self, pattern: str):
+        super().__init__()
+        self.pattern = pattern
+        self.regex = re.compile(pattern)
+
+    def __str__(self) -> str:
+        return f"/{self.pattern}/"
+
+    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
+        """Attempt to match this expression against the input at `start`."""
+        if match := self.regex.match(state.input, start):
+            yield Success(None, match.end())
