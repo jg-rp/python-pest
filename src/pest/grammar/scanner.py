@@ -16,21 +16,24 @@ from .unescape import unescape_string
 
 StateFn: TypeAlias = Callable[[], Optional["StateFn"]]
 
-RE_GRAMMAR_DOC = re.compile(r"//!")
-RE_RULE_DOC = re.compile(r"///")
-RE_NEWLINE = re.compile(r"\r?\n")
-RE_WHITESPACE = re.compile(r"[ \t\n\r]+")
-RE_IDENTIFIER = re.compile(r"[_a-zA-Z][_a-zA-Z0-9]*")
 RE_ASSIGN_OP = re.compile(r"=")  # TODO: scan until ch?
-RE_MODIFIER = re.compile(r"[_@\$!]")
-RE_TAG = re.compile(r"#[_a-zA-z][_a-zA-Z0-9]+(?=\s*=)")
-RE_NUMBER = re.compile(r"[0-9]+")
+RE_DROP = re.compile(r"DROP")
+RE_GRAMMAR_DOC = re.compile(r"//!")
+RE_IDENTIFIER = re.compile(r"[_a-zA-Z][_a-zA-Z0-9]*")
 RE_INTEGER = re.compile(r"-?[0-9]+")
-RE_PUSH_LITERAL = re.compile(r"PUSH_LITERAL")
-RE_PUSH = re.compile(r"PUSH")
+RE_MODIFIER = re.compile(r"[_@\$!]")
+RE_NEWLINE = re.compile(r"\r?\n")
+RE_NUMBER = re.compile(r"[0-9]+")
 RE_PEEK = re.compile(r"PEEK")
 RE_PEEK_ALL = re.compile(r"PEEK_ALL")
+RE_POP = re.compile(r"POP")
+RE_POP_ALL = re.compile(r"POP_ALL")
+RE_PUSH = re.compile(r"PUSH")
+RE_PUSH_LITERAL = re.compile(r"PUSH_LITERAL")
 RE_RANGE_OP = re.compile(r"..")
+RE_RULE_DOC = re.compile(r"///")
+RE_TAG = re.compile(r"#[_a-zA-z][_a-zA-Z0-9]+(?=\s*=)")
+RE_WHITESPACE = re.compile(r"[ \t\n\r]+")
 RE_CHAR = re.compile(
     r"'\\[\\\"\r\n\t\0']'|'\\x[0-9a-fA-F]{2}'|'\\u\{0-9a-fA-F]{2,6}\}'|'.'"
 )
@@ -294,6 +297,18 @@ class Scanner:
 
         if value := self.scan(RE_PEEK_ALL):
             self.emit(TokenKind.PEEK_ALL, value)
+            return True
+
+        if value := self.scan(RE_POP_ALL):
+            self.emit(TokenKind.POP_ALL, value)
+            return True
+
+        if value := self.scan(RE_POP):
+            self.emit(TokenKind.POP, value)
+            return True
+
+        if value := self.scan(RE_DROP):
+            self.emit(TokenKind.DROP, value)
             return True
 
         if value := self.scan(RE_PEEK):

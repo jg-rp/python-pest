@@ -9,6 +9,7 @@ from typing import Sequence
 
 from .grammar.expression import Success
 from .grammar.expression import Terminal
+from .grammar.expressions.rule import GrammarRule
 from .grammar.expressions.rule import Rule
 from .stack import Stack
 
@@ -96,7 +97,13 @@ class ParserState:
 
         # Walk stack to find relevant context
         rule = next(
-            (e for e, _ in reversed(self.expr_stack) if isinstance(e, Rule)), None
+            (
+                e
+                for e, _ in reversed(self.expr_stack)
+                if isinstance(e, GrammarRule)
+                and e.name not in ("COMMENT", "WHITESPACE")
+            ),
+            None,
         )
 
         non_terminal = next(
@@ -110,34 +117,7 @@ class ParserState:
         )
 
         rule_str = f", in rule {rule.name}" if rule else ""
-        return (
-            f"error at {line}:{col}{rule_str}: expected {expected}, "
-            f"found {found!r}{self._rule_tree_view()}"
-        )
-
-    def _rule_tree_view(self) -> str:
-        if not self.expr_stack:
-            return ""
-
-        # unwind stack until we see a loop
-        seen: set[tuple[Expression, int]] = set()
-        unwound: list[tuple[Expression, int]] = []
-        for expr, pos in self.expr_stack:
-            key = (expr, pos)
-            if key in seen:
-                break  # loop detected
-            seen.add(key)
-            unwound.append((expr, pos))
-
-        parts: list[str] = []
-        indent = 0
-        for expr, pos in unwound:
-            if isinstance(expr, Rule):
-                prefix = "  " * indent + f"- {expr.name}:{pos}"
-                parts.append(prefix)
-                indent += 1
-
-        return "\n" + "\n".join(parts)
+        return f"error at {line}:{col}{rule_str}: expected {expected}, found {found!r}"
 
     def parse_implicit_rules(self, pos: int) -> Iterator[Success]:
         """Parse any implicit rules (`WHITESPACE` and `COMMENT`) starting at `pos`.

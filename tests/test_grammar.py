@@ -608,4 +608,293 @@ def test_repeat_min_atomic_space(parser: Parser) -> None:
         parser.parse("repeat_min_atomic", "abc abc")
 
 
-# TODO: repeat_max_once
+def test_repeat_max_once(parser: Parser) -> None:
+    pairs = parser.parse("repeat_max", "abc")
+    assert pairs.as_list() == [
+        {
+            "rule": "repeat_max",
+            "span": {"str": "abc", "start": 0, "end": 3},
+            "inner": [
+                {
+                    "rule": "string",
+                    "span": {"str": "abc", "start": 0, "end": 3},
+                    "inner": [],
+                }
+            ],
+        }
+    ]
+
+
+def test_repeat_max_twice(parser: Parser) -> None:
+    pairs = parser.parse("repeat_max", "abc abc")
+    assert pairs.as_list() == [
+        {
+            "rule": "repeat_max",
+            "span": {"str": "abc abc", "start": 0, "end": 7},
+            "inner": [
+                {
+                    "rule": "string",
+                    "span": {"str": "abc", "start": 0, "end": 3},
+                    "inner": [],
+                },
+                {
+                    "rule": "string",
+                    "span": {"str": "abc", "start": 4, "end": 7},
+                    "inner": [],
+                },
+            ],
+        }
+    ]
+
+
+# XXX: typo in Rust `repeat_max_thrice`?
+def test_repeat_max_thrice(parser: Parser) -> None:
+    with pytest.raises(PestParsingError):
+        parser.parse("repeat_max", "abc abc abc")
+
+
+def test_repeat_max_atomic_once(parser: Parser) -> None:
+    pairs = parser.parse("repeat_max_atomic", "abc")
+    assert pairs.as_list() == [
+        {
+            "rule": "repeat_max_atomic",
+            "span": {"str": "abc", "start": 0, "end": 3},
+            "inner": [],
+        }
+    ]
+
+
+def test_repeat_max_atomic_twice(parser: Parser) -> None:
+    pairs = parser.parse("repeat_max_atomic", "abcabc")
+    assert pairs.as_list() == [
+        {
+            "rule": "repeat_max_atomic",
+            "span": {"str": "abcabc", "start": 0, "end": 6},
+            "inner": [],
+        }
+    ]
+
+
+def test_repeat_max_atomic_thrice(parser: Parser) -> None:
+    with pytest.raises(PestParsingError):
+        parser.parse("repeat_max_atomic", "abcabcabc")
+
+
+def test_repeat_max_atomic_space(parser: Parser) -> None:
+    pairs = parser.parse("repeat_max_atomic", "abc abc")
+    # Not end of input
+    assert pairs.as_list() == [
+        {
+            "rule": "repeat_max_atomic",
+            "span": {"str": "abc", "start": 0, "end": 3},
+            "inner": [],
+        }
+    ]
+
+
+def test_repeat_comment(parser: Parser) -> None:
+    pairs = parser.parse("repeat_once", "abc$$$ $$$abc")
+    assert pairs.as_list() == [
+        {
+            "rule": "repeat_once",
+            "span": {"str": "abc$$$ $$$abc", "start": 0, "end": 13},
+            "inner": [
+                {
+                    "rule": "string",
+                    "span": {"str": "abc", "start": 0, "end": 3},
+                    "inner": [],
+                },
+                {
+                    "rule": "string",
+                    "span": {"str": "abc", "start": 10, "end": 13},
+                    "inner": [],
+                },
+            ],
+        }
+    ]
+
+
+def test_soi_at_start(parser: Parser) -> None:
+    pairs = parser.parse("soi_at_start", "abc")
+    assert pairs.as_list() == [
+        {
+            "rule": "soi_at_start",
+            "span": {"str": "abc", "start": 0, "end": 3},
+            "inner": [
+                {
+                    "rule": "string",
+                    "span": {"str": "abc", "start": 0, "end": 3},
+                    "inner": [],
+                }
+            ],
+        }
+    ]
+
+
+def test_peek(parser: Parser) -> None:
+    pairs = parser.parse("peek_", "0111")
+    assert pairs.as_list() == [
+        {
+            "rule": "peek_",
+            "span": {"str": "0111", "start": 0, "end": 4},
+            "inner": [
+                {
+                    "rule": "range",
+                    "span": {"str": "0", "start": 0, "end": 1},
+                    "inner": [],
+                },
+                {
+                    "rule": "range",
+                    "span": {"str": "1", "start": 1, "end": 2},
+                    "inner": [],
+                },
+            ],
+        }
+    ]
+
+
+def test_peek_all(parser: Parser) -> None:
+    pairs = parser.parse("peek_all", "0110")
+    assert pairs.as_list() == [
+        {
+            "rule": "peek_all",
+            "span": {"str": "0110", "start": 0, "end": 4},
+            "inner": [
+                {
+                    "rule": "range",
+                    "span": {"str": "0", "start": 0, "end": 1},
+                    "inner": [],
+                },
+                {
+                    "rule": "range",
+                    "span": {"str": "1", "start": 1, "end": 2},
+                    "inner": [],
+                },
+            ],
+        }
+    ]
+
+
+def test_peek_slice_23(parser: Parser) -> None:
+    pairs = parser.parse("peek_slice_23", "0123412")
+    assert pairs.as_list() == [
+        {
+            "rule": "peek_slice_23",
+            "span": {"str": "0123412", "start": 0, "end": 7},
+            "inner": [
+                {
+                    "rule": "range",
+                    "span": {"str": "0", "start": 0, "end": 1},
+                    "inner": [],
+                },
+                {
+                    "rule": "range",
+                    "span": {"str": "1", "start": 1, "end": 2},
+                    "inner": [],
+                },
+                {
+                    "rule": "range",
+                    "span": {"str": "2", "start": 2, "end": 3},
+                    "inner": [],
+                },
+                {
+                    "rule": "range",
+                    "span": {"str": "3", "start": 3, "end": 4},
+                    "inner": [],
+                },
+                {
+                    "rule": "range",
+                    "span": {"str": "4", "start": 4, "end": 5},
+                    "inner": [],
+                },
+            ],
+        }
+    ]
+
+
+def test_pop(parser: Parser) -> None:
+    pairs = parser.parse("pop_", "0110")
+    assert pairs.as_list() == [
+        {
+            "rule": "pop_",
+            "span": {"str": "0110", "start": 0, "end": 4},
+            "inner": [
+                {
+                    "rule": "range",
+                    "span": {"str": "0", "start": 0, "end": 1},
+                    "inner": [],
+                },
+                {
+                    "rule": "range",
+                    "span": {"str": "1", "start": 1, "end": 2},
+                    "inner": [],
+                },
+            ],
+        }
+    ]
+
+
+def test_pop_all(parser: Parser) -> None:
+    pairs = parser.parse("pop_all", "0110")
+    assert pairs.as_list() == [
+        {
+            "rule": "pop_all",
+            "span": {"str": "0110", "start": 0, "end": 4},
+            "inner": [
+                {
+                    "rule": "range",
+                    "span": {"str": "0", "start": 0, "end": 1},
+                    "inner": [],
+                },
+                {
+                    "rule": "range",
+                    "span": {"str": "1", "start": 1, "end": 2},
+                    "inner": [],
+                },
+            ],
+        }
+    ]
+
+
+def test_pop_fail(parser: Parser) -> None:
+    pairs = parser.parse("pop_fail", "010")
+    assert pairs.as_list() == [
+        {
+            "rule": "pop_fail",
+            "span": {"str": "010", "start": 0, "end": 3},
+            "inner": [
+                {
+                    "rule": "range",
+                    "span": {"str": "0", "start": 0, "end": 1},
+                    "inner": [],
+                },
+                {
+                    "rule": "range",
+                    "span": {"str": "1", "start": 1, "end": 2},
+                    "inner": [],
+                },
+            ],
+        }
+    ]
+
+
+def test_repeat_mutate_stack(parser: Parser) -> None:
+    pairs = parser.parse("repeat_mutate_stack", "a,b,c,cba")
+    assert pairs.as_list() == [
+        {
+            "rule": "repeat_mutate_stack",
+            "span": {"str": "a,b,c,cba", "start": 0, "end": 9},
+            "inner": [],
+        }
+    ]
+
+
+def test_checkpoint_restore(parser: Parser) -> None:
+    pairs = parser.parse("checkpoint_restore", "a")
+    assert pairs.as_list() == [
+        {
+            "rule": "checkpoint_restore",
+            "span": {"str": "a", "start": 0, "end": 1},
+            "inner": [],
+        }
+    ]

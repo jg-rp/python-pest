@@ -36,6 +36,7 @@ class TokenKind(Enum):
     PEEK_ALL = auto()  # PEEK_ALL
     REPEAT_ONCE_OP = auto()  # +
     POP = auto()  # POP
+    POP_ALL = auto()  # POP_ALL
     PUSH = auto()  # PUSH
     PUSH_LITERAL = auto()  # PUSH_LITERAL("a")
     OPTION_OP = auto()  # ?

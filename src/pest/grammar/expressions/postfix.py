@@ -73,11 +73,14 @@ class Repeat(Expression):
         matched = False
 
         while True:
+            state.snapshot()
             results = list(state.parse(self.expression, position))
             if not results:
+                state.restore()
                 break
             matched = True
             position = results[-1].pos
+            state.ok()
             yield from results
 
             for success in state.parse_implicit_rules(position):
@@ -114,11 +117,14 @@ class RepeatOnce(Expression):
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Attempt to match this expression against the input at `start`."""
+        state.snapshot()
         results = list(state.parse(self.expression, start))
 
         if not results:
+            state.restore()
             return
 
+        state.ok()
         yield from results
 
         position = results[-1].pos
@@ -128,10 +134,13 @@ class RepeatOnce(Expression):
             yield success
 
         while True:
+            state.snapshot()
             results = list(state.parse(self.expression, position))
             if not results:
+                state.restore()
                 break
             position = results[-1].pos
+            state.ok()
             yield from results
 
             for success in state.parse_implicit_rules(position):
@@ -171,6 +180,7 @@ class RepeatExact(Expression):
         successes: list[Success] = []
         match_count = 0
         position = start
+        state.snapshot()
 
         while True:
             results = list(state.parse(self.expression, position))
@@ -187,7 +197,10 @@ class RepeatExact(Expression):
                 successes.append(success)
 
         if match_count == self.number:
+            state.ok()
             yield from successes
+        else:
+            state.restore()
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""
@@ -222,6 +235,7 @@ class RepeatMin(Expression):
         successes: list[Success] = []
         match_count = 0
         position = start
+        state.snapshot()
 
         while True:
             results = list(state.parse(self.expression, position))
@@ -236,7 +250,10 @@ class RepeatMin(Expression):
                 successes.append(success)
 
         if match_count >= self.number:
+            state.ok()
             yield from successes
+        else:
+            state.restore()
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""
@@ -269,7 +286,9 @@ class RepeatMax(Expression):
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Attempt to match this expression against the input at `start`."""
         successes: list[Success] = []
+        match_count = 0
         position = start
+        state.snapshot()
 
         while True:
             results = list(state.parse(self.expression, position))
@@ -277,13 +296,17 @@ class RepeatMax(Expression):
                 break
             position = results[-1].pos
             successes.extend(results)
+            match_count += 1
 
             for success in state.parse_implicit_rules(position):
                 position = success.pos
                 successes.append(success)
 
-        if len(successes) <= self.number:
+        if match_count <= self.number:
+            state.ok()
             yield from successes
+        else:
+            state.restore()
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""
@@ -320,6 +343,7 @@ class RepeatRange(Expression):
         successes: list[Success] = []
         match_count = 0
         position = start
+        state.snapshot()
 
         while True:
             results = list(state.parse(self.expression, position))
@@ -334,7 +358,10 @@ class RepeatRange(Expression):
                 successes.append(success)
 
         if match_count >= self.min and match_count <= self.max:
+            state.ok()
             yield from successes
+        else:
+            state.restore()
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""

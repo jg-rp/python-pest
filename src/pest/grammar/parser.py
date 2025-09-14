@@ -8,6 +8,7 @@ from typing import Mapping
 from .exceptions import PestGrammarSyntaxError
 from .expressions import Choice
 from .expressions import CIString
+from .expressions import Drop
 from .expressions import GrammarRule
 from .expressions import Group
 from .expressions import Identifier
@@ -16,6 +17,8 @@ from .expressions import Optional
 from .expressions import Peek
 from .expressions import PeekAll
 from .expressions import PeekSlice
+from .expressions import Pop
+from .expressions import PopAll
 from .expressions import PositivePredicate
 from .expressions import Push
 from .expressions import PushLiteral
@@ -174,6 +177,15 @@ class Parser:
         elif left_kind == TokenKind.PEEK_ALL:
             self.pos += 1
             left = PeekAll(tag=tag)
+        elif left_kind == TokenKind.POP:
+            self.pos += 1
+            left = Pop(tag=tag)
+        elif left_kind == TokenKind.DROP:
+            self.pos += 1
+            left = Drop(tag=tag)
+        elif left_kind == TokenKind.POP_ALL:
+            self.pos += 1
+            left = PopAll(tag=tag)
         elif left_kind == TokenKind.CHAR:
             start = self.eat(TokenKind.CHAR).value[1:-1]
             self.eat(TokenKind.RANGE_OP)

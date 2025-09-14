@@ -147,6 +147,65 @@ class PeekAll(Terminal):
         yield Success(None, position)
 
 
+class Pop(Terminal):
+    """A POP terminal popping off the top of the stack."""
+
+    __slots__ = ()
+
+    def __str__(self) -> str:
+        return f"{self.tag_str()}POP"
+
+    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
+        """Attempt to match this expression against the input at `start`."""
+        with suppress(IndexError):
+            value = state.stack.peek()
+            if state.input.startswith(value, start):
+                state.stack.pop()
+                yield Success(None, start + len(value))
+
+
+class PopAll(Terminal):
+    """A POP_ALL terminal matching the entire stack, top to bottom."""
+
+    __slots__ = ()
+
+    def __str__(self) -> str:
+        return f"{self.tag_str()}POP_ALL"
+
+    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
+        """Attempt to match this expression against the input at `start`."""
+        position = start
+        state.snapshot()
+
+        while not state.stack.empty():
+            literal = state.stack.pop()
+            if not state.input.startswith(literal, position):
+                state.restore()
+                return
+
+            position += len(literal)
+
+            if implicit_result := list(state.parse_implicit_rules(position)):
+                position = implicit_result[-1].pos
+
+        yield Success(None, position)
+
+
+class Drop(Terminal):
+    """A DROP terminal that matches if the stack is not empty."""
+
+    __slots__ = ()
+
+    def __str__(self) -> str:
+        return f"{self.tag_str()}DROP"
+
+    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
+        """Attempt to match this expression against the input at `start`."""
+        if not state.stack.empty():
+            state.stack.pop()
+            yield Success(None, start)
+
+
 class Identifier(Terminal):
     """A terminal pointing to rule, possibly a built-in rule."""
 

@@ -10,7 +10,7 @@ parser = Parser.from_grammar(grammar)
 # for token in tokenize("repeat_max = { string{, 2} }"):
 #     print(token)
 
-pairs = parser.parse("repeat_min_atomic", "abcabc")
+pairs = parser.parse("checkpoint_restore", "a")
 
 # print(parser)
 
