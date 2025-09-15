@@ -12,6 +12,7 @@ import regex as re
 from typing_extensions import Self
 
 if TYPE_CHECKING:
+    from pest.grammar.expressions.rule import Rule
     from pest.pairs import Pair
     from pest.state import ParserState
 
@@ -36,10 +37,11 @@ class Expression(ABC):
     A rule binds a name to a single top-level Expression.
     """
 
-    __slots__ = ("tag",)
+    __slots__ = ("tag", "_pure")
 
     def __init__(self, tag: str | None = None):
         self.tag = tag
+        self._pure: bool | None = None
 
     @abstractmethod
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
@@ -65,6 +67,12 @@ class Expression(ABC):
     def tag_str(self) -> str:
         """Return a string representation of this expressions tag."""
         return f"{self.tag} = " if self.tag else ""
+
+    def is_pure(self, rules: dict[str, Rule], seen: set[str]) -> bool:
+        """True if the expression has no side effects and is safe for memoization."""
+        if self._pure is None:
+            self._pure = all(child.is_pure(rules, seen) for child in self.children())
+        return self._pure
 
 
 class Terminal(Expression):

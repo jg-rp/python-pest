@@ -120,4 +120,18 @@ def test_nested_two_levels(parser: Parser) -> None:
 
 def test_nested_then_not(parser: Parser) -> None:
     pairs = parser.parse("lists", "- a\n  - b\n- c")
-    assert pairs.as_list() == []
+    assert pairs.as_list() == [
+        {"rule": "item", "span": {"str": "a", "start": 2, "end": 3}, "inner": []},
+        {
+            "rule": "children",
+            "span": {"str": "  - b", "start": 4, "end": 9},
+            "inner": [
+                {
+                    "rule": "item",
+                    "span": {"str": "b", "start": 8, "end": 9},
+                    "inner": [],
+                }
+            ],
+        },
+        {"rule": "item", "span": {"str": "c", "start": 12, "end": 13}, "inner": []},
+    ]

@@ -14,6 +14,7 @@ from pest.grammar.expression import Success
 from pest.grammar.expression import Terminal
 
 if TYPE_CHECKING:
+    from pest.grammar.expressions.rule import Rule
     from pest.state import ParserState
 
 
@@ -33,6 +34,10 @@ class PushLiteral(Terminal):
         """Attempt to match this expression against the input at `start`."""
         state.push(self.value)
         yield Success(None, start)
+
+    def is_pure(self, _rules: dict[str, Rule], _seen: set[str]) -> bool:
+        """True if the expression has no side effects and is safe for memoization."""
+        return False
 
 
 # TODO: PUSH(expression) is not terminal
@@ -66,6 +71,10 @@ class Push(Expression):
     def with_children(self, expressions: list[Expression]) -> Self:
         """Return a new instance of this expression with child expressions replaced."""
         return self.__class__(expressions[0], self.tag)
+
+    def is_pure(self, _rules: dict[str, Rule], _seen: set[str]) -> bool:
+        """True if the expression has no side effects and is safe for memoization."""
+        return False
 
 
 class PeekSlice(Terminal):
@@ -105,6 +114,10 @@ class PeekSlice(Terminal):
         # (as does a PEEK_ALL on an empty stack).
         yield Success(None, position)
 
+    def is_pure(self, _rules: dict[str, Rule], _seen: set[str]) -> bool:
+        """True if the expression has no side effects and is safe for memoization."""
+        return False
+
 
 class Peek(Terminal):
     """A PEEK terminal looking at the top of the stack."""
@@ -120,6 +133,10 @@ class Peek(Terminal):
             value = state.stack.peek()
             if state.input.startswith(value, start):
                 yield Success(None, start + len(value))
+
+    def is_pure(self, _rules: dict[str, Rule], _seen: set[str]) -> bool:
+        """True if the expression has no side effects and is safe for memoization."""
+        return False
 
 
 class PeekAll(Terminal):
@@ -149,6 +166,10 @@ class PeekAll(Terminal):
 
         yield Success(None, position)
 
+    def is_pure(self, _rules: dict[str, Rule], _seen: set[str]) -> bool:
+        """True if the expression has no side effects and is safe for memoization."""
+        return False
+
 
 class Pop(Terminal):
     """A POP terminal popping off the top of the stack."""
@@ -165,6 +186,10 @@ class Pop(Terminal):
             if state.input.startswith(value, start):
                 state.stack.pop()
                 yield Success(None, start + len(value))
+
+    def is_pure(self, _rules: dict[str, Rule], _seen: set[str]) -> bool:
+        """True if the expression has no side effects and is safe for memoization."""
+        return False
 
 
 class PopAll(Terminal):
@@ -194,6 +219,10 @@ class PopAll(Terminal):
 
         yield Success(None, position)
 
+    def is_pure(self, _rules: dict[str, Rule], _seen: set[str]) -> bool:
+        """True if the expression has no side effects and is safe for memoization."""
+        return False
+
 
 class Drop(Terminal):
     """A DROP terminal that matches if the stack is not empty."""
@@ -208,6 +237,10 @@ class Drop(Terminal):
         if not state.stack.empty():
             state.stack.pop()
             yield Success(None, start)
+
+    def is_pure(self, _rules: dict[str, Rule], _seen: set[str]) -> bool:
+        """True if the expression has no side effects and is safe for memoization."""
+        return False
 
 
 class Identifier(Terminal):
@@ -226,6 +259,13 @@ class Identifier(Terminal):
         """Attempt to match this expression against the input at `start`."""
         # TODO: Assumes the rule exists.
         yield from state.parse(state.parser.rules[self.value], start)
+
+    def is_pure(self, rules: dict[str, Rule], seen: set[str]) -> bool:
+        """True if the expression has no side effects and is safe for memoization."""
+        if self.value not in seen and self._pure is None:
+            seen.add(self.value)
+            self._pure = rules[self.value].is_pure(rules, seen)
+        return self._pure or False
 
 
 class String(Terminal):

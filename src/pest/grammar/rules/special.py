@@ -5,6 +5,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Iterator
 
+from typing_extensions import Self
+
+from pest.grammar.expression import Expression
 from pest.grammar.expression import Success
 from pest.grammar.expressions.rule import BuiltInRule
 
@@ -16,60 +19,84 @@ class Any(BuiltInRule):
     """A built-in rule matching any single "character"."""
 
     def __init__(self) -> None:
-        super().__init__("ANY", self, "_", None)
+        super().__init__("ANY", _Any(), "_", None)
 
     def __str__(self) -> str:
         return "ANY"
 
-    def __eq__(self, other: object) -> bool:
-        return isinstance(other, Any)
 
-    def __hash__(self) -> int:
-        return hash(self.__class__)
+class _Any(Expression):
+    def __str__(self) -> str:
+        return "ANY"
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Attempt to match this expression against the input at `start`."""
         if start < len(state.input):
             yield Success(None, start + 1)
 
+    def children(self) -> list[Expression]:
+        """Return this expressions children."""
+        return []
+
+    def with_children(self, expressions: list[Expression]) -> Self:
+        """Return a new instance of this expression with child expressions replaced."""
+        assert not expressions
+        return self
+
 
 class SOI(BuiltInRule):
     """A built-in rule matching the start of input."""
 
     def __init__(self) -> None:
-        super().__init__("SOI", self, "_", None)
+        super().__init__("SOI", _SOI(), "_", None)
 
     def __str__(self) -> str:
         return "SOI"
 
-    def __eq__(self, other: object) -> bool:
-        return isinstance(other, SOI)
 
-    def __hash__(self) -> int:
-        return hash(self.__class__)
+class _SOI(Expression):
+    def __str__(self) -> str:
+        return "SOI"
 
     def parse(self, _state: ParserState, start: int) -> Iterator[Success]:
         """Attempt to match this expression against the input at `start`."""
         if start == 0:
             yield Success(None, 0)
 
+    def children(self) -> list[Expression]:
+        """Return this expressions children."""
+        return []
+
+    def with_children(self, expressions: list[Expression]) -> Self:
+        """Return a new instance of this expression with child expressions replaced."""
+        assert not expressions
+        return self
+
 
 class EOI(BuiltInRule):
     """A built-in rule matching the end of input."""
 
     def __init__(self) -> None:
-        super().__init__("EOI", self, "_", None)
+        super().__init__("EOI", _EOI(), "_", None)
 
     def __str__(self) -> str:
         return "EOI"
 
-    def __eq__(self, other: object) -> bool:
-        return isinstance(other, SOI)
 
-    def __hash__(self) -> int:
-        return hash(self.__class__)
+class _EOI(Expression):
+    def __str__(self) -> str:
+        return "EOI"
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Attempt to match this expression against the input at `start`."""
         if start == len(state.input):
             yield Success(None, start)
+
+    def children(self) -> list[Expression]:
+        """Return this expressions children."""
+        return []
+
+    def with_children(self, expressions: list[Expression]) -> Self:
+        """Return a new instance of this expression with child expressions replaced."""
+        assert not expressions
+        return self

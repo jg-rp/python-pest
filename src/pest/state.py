@@ -60,8 +60,8 @@ class ParserState:
 
     def parse(self, expr: Expression, pos: int) -> Iterator[Success]:
         """Parse `expr` or return a cached parse result."""
-        key = (pos, id(expr))
-        if key in self.cache:
+        key = (pos, id(expr)) if expr.is_pure(self.parser.rules, set()) else None
+        if key and key in self.cache:
             cached = self.cache[key]
             if cached is not None:
                 yield from cached
@@ -78,13 +78,17 @@ class ParserState:
             assert id(self.rule_stack.pop()) == id(expr)
 
         if results:
-            self.cache[key] = results
+            if key:
+                self.cache[key] = results
+
             yield from results
             self.expr_stack.pop()
         else:
             if pos > self.failed_pos:
                 self.failed_pos = pos
-            self.cache[key] = None
+
+            if key:
+                self.cache[key] = None
 
     def failure_message(self) -> str:
         """Generate a human-readable error message for the furthest failure."""
