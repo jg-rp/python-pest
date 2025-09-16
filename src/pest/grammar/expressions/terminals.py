@@ -35,7 +35,7 @@ class PushLiteral(Terminal):
         state.push(self.value)
         yield Success(None, start)
 
-    def is_pure(self, _rules: dict[str, Rule], _seen: set[str]) -> bool:
+    def is_pure(self, _rules: dict[str, Rule], _seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
         return False
 
@@ -72,7 +72,7 @@ class Push(Expression):
         """Return a new instance of this expression with child expressions replaced."""
         return self.__class__(expressions[0], self.tag)
 
-    def is_pure(self, _rules: dict[str, Rule], _seen: set[str]) -> bool:
+    def is_pure(self, _rules: dict[str, Rule], _seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
         return False
 
@@ -114,7 +114,7 @@ class PeekSlice(Terminal):
         # (as does a PEEK_ALL on an empty stack).
         yield Success(None, position)
 
-    def is_pure(self, _rules: dict[str, Rule], _seen: set[str]) -> bool:
+    def is_pure(self, _rules: dict[str, Rule], _seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
         return False
 
@@ -134,7 +134,7 @@ class Peek(Terminal):
             if state.input.startswith(value, start):
                 yield Success(None, start + len(value))
 
-    def is_pure(self, _rules: dict[str, Rule], _seen: set[str]) -> bool:
+    def is_pure(self, _rules: dict[str, Rule], _seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
         return False
 
@@ -166,7 +166,7 @@ class PeekAll(Terminal):
 
         yield Success(None, position)
 
-    def is_pure(self, _rules: dict[str, Rule], _seen: set[str]) -> bool:
+    def is_pure(self, _rules: dict[str, Rule], _seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
         return False
 
@@ -187,7 +187,7 @@ class Pop(Terminal):
                 state.stack.pop()
                 yield Success(None, start + len(value))
 
-    def is_pure(self, _rules: dict[str, Rule], _seen: set[str]) -> bool:
+    def is_pure(self, _rules: dict[str, Rule], _seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
         return False
 
@@ -219,7 +219,7 @@ class PopAll(Terminal):
 
         yield Success(None, position)
 
-    def is_pure(self, _rules: dict[str, Rule], _seen: set[str]) -> bool:
+    def is_pure(self, _rules: dict[str, Rule], _seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
         return False
 
@@ -238,7 +238,7 @@ class Drop(Terminal):
             state.stack.pop()
             yield Success(None, start)
 
-    def is_pure(self, _rules: dict[str, Rule], _seen: set[str]) -> bool:
+    def is_pure(self, _rules: dict[str, Rule], _seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
         return False
 
@@ -260,8 +260,9 @@ class Identifier(Terminal):
         # TODO: Assumes the rule exists.
         yield from state.parse(state.parser.rules[self.value], start)
 
-    def is_pure(self, rules: dict[str, Rule], seen: set[str]) -> bool:
+    def is_pure(self, rules: dict[str, Rule], seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
+        seen = seen or set()
         if self.value not in seen and self._pure is None:
             seen.add(self.value)
             self._pure = rules[self.value].is_pure(rules, seen)

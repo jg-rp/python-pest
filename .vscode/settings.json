@@ -1,3 +1,9 @@
 {
-  "cSpell.words": ["codepoint", "keepends", "lookaheads"]
+  "cSpell.words": [
+    "codepoint",
+    "keepends",
+    "lookaheads",
+    "POSTORDER",
+    "PREORDER"
+  ]
 }

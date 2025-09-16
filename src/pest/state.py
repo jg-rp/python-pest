@@ -60,7 +60,7 @@ class ParserState:
 
     def parse(self, expr: Expression, pos: int) -> Iterator[Success]:
         """Parse `expr` or return a cached parse result."""
-        key = (pos, id(expr)) if expr.is_pure(self.parser.rules, set()) else None
+        key = (pos, id(expr)) if expr.is_pure(self.parser.rules) else None
         if key and key in self.cache:
             cached = self.cache[key]
             if cached is not None:

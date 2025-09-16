@@ -5,6 +5,7 @@ from __future__ import annotations
 from abc import ABC
 from abc import abstractmethod
 from typing import TYPE_CHECKING
+from typing import Callable
 from typing import Iterator
 from typing import NamedTuple
 
@@ -68,11 +69,23 @@ class Expression(ABC):
         """Return a string representation of this expressions tag."""
         return f"{self.tag} = " if self.tag else ""
 
-    def is_pure(self, rules: dict[str, Rule], seen: set[str]) -> bool:
+    def is_pure(self, rules: dict[str, Rule], seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
         if self._pure is None:
             self._pure = all(child.is_pure(rules, seen) for child in self.children())
         return self._pure
+
+    def map_bottom_up(self, func: Callable[[Expression], Expression]) -> Expression:
+        """Apply `func` in a post order tree traversal of this expression tree."""
+        new_children = [c.map_bottom_up(func) for c in self.children()]
+        expr = self.with_children(new_children)
+        return func(expr)
+
+    def map_top_down(self, func: Callable[[Expression], Expression]) -> Expression:
+        """Apply `func` in a pre order tree traversal of this expression tree."""
+        expr = func(self)
+        new_children = [c.map_top_down(func) for c in expr.children()]
+        return expr.with_children(new_children)
 
 
 class Terminal(Expression):

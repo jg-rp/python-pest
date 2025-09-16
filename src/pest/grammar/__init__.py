@@ -1,8 +1,12 @@
 from typing import Mapping
 
 from .expression import Expression
+from .expressions.postfix import Repeat
+from .expressions.prefix import NegativePredicate
 from .expressions.rule import GrammarRule
 from .expressions.rule import Rule
+from .expressions.sequence import Sequence
+from .expressions.terminals import Identifier
 from .parser import Parser
 from .scanner import Scanner
 from .scanner import tokenize
@@ -13,7 +17,11 @@ __all__ = (
     "Expression",
     "Parser",
     "GrammarRule",
+    "Identifier",
+    "NegativePredicate",
+    "Repeat",
     "Rule",
+    "Sequence",
     "Scanner",
     "Token",
     "TokenKind",

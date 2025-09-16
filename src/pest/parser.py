@@ -46,6 +46,13 @@ class Parser:
     def from_grammar(cls, grammar: str) -> Parser:
         """Parse `grammar` and return a new Parser for it."""
         rules, doc = parse(grammar, cls.BUILTIN)
+
+        # TODO: validate rules
+        # - validate_repetition
+        # - validate_choices
+        # - validate_whitespace_comment
+        # - validate_tag_silent_rules
+
         return cls(rules, doc)
 
     # for name, rule in grammar.rules.items():

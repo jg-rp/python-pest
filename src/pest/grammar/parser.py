@@ -121,6 +121,10 @@ class Parser:
             self.eat(TokenKind.LBRACE)
             expression = self.parse_expression()
             self.eat(TokenKind.RBRACE)
+
+            # TODO: validate rules
+            # - duplicate rules
+
             rules[identifier.value] = GrammarRule(
                 identifier.value, expression, modifier, rule_doc
             )
