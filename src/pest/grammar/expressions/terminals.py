@@ -334,3 +334,44 @@ class Range(Terminal):
         """Attempt to match this expression against the input at `start`."""
         if match := self._re.match(state.input, start):
             yield Success(None, match.end())
+
+
+class Skip(Terminal):
+    """A terminal that matches characters until one of a set of substrings is found.
+
+    Attributes:
+        subs: The list of substrings that terminate the match.
+    """
+
+    __slots__ = ("subs",)
+
+    def __init__(self, subs: list[str]):
+        super().__init__(tag=None)
+        self.subs = subs
+
+    def __str__(self) -> str:
+        # TODO: escape whitespace
+        strings = " | ".join(f'"{s}"' for s in self.subs)
+        return f"(!({strings}) ~ ANY)*"
+
+    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
+        """Attempt to match this expression against the input at `start`.
+
+        The match consumes characters until the earliest occurrence of any of
+        the substrings in `self.subs`.
+
+        Notes:
+            - Benchmarks show this simple "loop and find" implementation to be
+              faster than an Aho-Corasick approach up to a couple hundred
+              substrings (`len(self.subs)`).
+        """
+        best_index: int | None = None
+        s = state.input
+
+        for sub in self.subs:
+            pos = s.find(sub, start)
+            if pos != -1 and (best_index is None or pos < best_index):
+                best_index = pos
+
+        if best_index is not None:
+            yield Success(None, best_index)

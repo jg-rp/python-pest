@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from typing_extensions import Self
+
 from pest.grammar.expressions.choice import Choice
 from pest.grammar.expressions.rule import BuiltInRule
 from pest.grammar.expressions.terminals import Range
@@ -12,7 +14,7 @@ from pest.grammar.expressions.terminals import String
 if TYPE_CHECKING:
     from pest.grammar.expression import Expression
 
-
+# TODO: convert these to Choice so they can be merged and skipped?
 ASCII_RULE_MAP: dict[str, tuple[str, str] | list[tuple[str, str]]] = {
     "ASCII_DIGIT": ("0", "9"),
     "ASCII_NONZERO_DIGIT": ("1", "9"),
@@ -39,19 +41,17 @@ class ASCIIRule(BuiltInRule):
             expr = Choice(*[Range(*chars) for chars in char_ranges])
         super().__init__(name, expr, "_")
 
-
-class ASCIINewline(BuiltInRule):
-    """The built-in NEWLINE rule."""
-
-    def __init__(self) -> None:
-        super().__init__(
-            "NEWLINE", Choice(String("\n"), String("\r\n"), String("\r")), "_"
-        )
+    def with_children(self, expressions: list[Expression]) -> Self:
+        """Return a new instance of this expression with child expressions replaced."""
+        assert len(expressions) == 1
+        return self
 
 
 ASCII_RULES = {
     **{
         name: ASCIIRule(name, char_range) for name, char_range in ASCII_RULE_MAP.items()
     },
-    "NEWLINE": ASCIINewline(),
+    "NEWLINE": BuiltInRule(
+        "NEWLINE", Choice(String("\n"), String("\r\n"), String("\r")), "_"
+    ),
 }

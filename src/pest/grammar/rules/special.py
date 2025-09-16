@@ -24,6 +24,12 @@ class Any(BuiltInRule):
     def __str__(self) -> str:
         return "ANY"
 
+    def with_children(self, expressions: list[Expression]) -> Self:
+        """Return a new instance of this expression with child expressions replaced."""
+        assert len(expressions) == 1
+        assert isinstance(expressions[0], _Any)
+        return self
+
 
 class _Any(Expression):
     def __str__(self) -> str:
@@ -53,6 +59,12 @@ class SOI(BuiltInRule):
     def __str__(self) -> str:
         return "SOI"
 
+    def with_children(self, expressions: list[Expression]) -> Self:
+        """Return a new instance of this expression with child expressions replaced."""
+        assert len(expressions) == 1
+        assert isinstance(expressions[0], _SOI)
+        return self
+
 
 class _SOI(Expression):
     def __str__(self) -> str:
@@ -81,6 +93,12 @@ class EOI(BuiltInRule):
 
     def __str__(self) -> str:
         return "EOI"
+
+    def with_children(self, expressions: list[Expression]) -> Self:
+        """Return a new instance of this expression with child expressions replaced."""
+        assert len(expressions) == 1
+        assert isinstance(expressions[0], _EOI)
+        return self
 
 
 class _EOI(Expression):

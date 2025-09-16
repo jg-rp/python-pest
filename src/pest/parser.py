@@ -7,6 +7,10 @@ from typing import Mapping
 
 from .exceptions import PestParsingError
 from .grammar import parse
+from .grammar.optimizer import Optimizer
+from .grammar.optimizer import OptimizerStep
+from .grammar.optimizer import PassDirection
+from .grammar.optimizers.skippers import skip
 from .grammar.rules.ascii import ASCII_RULES
 from .grammar.rules.special import EOI
 from .grammar.rules.special import SOI
@@ -41,6 +45,18 @@ class Parser:
         # Built-in rules overwrite grammar defined rules.
         self.rules: dict[str, Rule] = {**self.BUILTIN, **rules}
         self.doc = doc
+
+        optimizer = Optimizer(
+            self.rules,
+            [OptimizerStep("skip", skip, PassDirection.PREORDER)],
+            # debug=True,
+        )
+
+        for name, rule in rules.items():
+            self.rules[name].expression = optimizer.optimize(rule.expression)
+
+        # for s in optimizer.log:
+        #     print(s)
 
     @classmethod
     def from_grammar(cls, grammar: str) -> Parser:

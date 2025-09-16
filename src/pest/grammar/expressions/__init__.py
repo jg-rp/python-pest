@@ -23,6 +23,7 @@ from .terminals import PopAll
 from .terminals import Push
 from .terminals import PushLiteral
 from .terminals import Range
+from .terminals import Skip
 from .terminals import String
 
 __all__ = (
@@ -42,6 +43,7 @@ __all__ = (
     "Push",
     "PushLiteral",
     "Range",
+    "Skip",
     "String",
     "PositivePredicate",
     "NegativePredicate",
