@@ -31,8 +31,6 @@ class Parser:
         doc: An optional list of `GRAMMAR_DOC` lines.
     """
 
-    __slots__ = ("rules", "doc")
-
     BUILTIN: dict[str, Rule] = {
         "ANY": Any(),
         **ASCII_RULES,
@@ -41,25 +39,30 @@ class Parser:
         "EOI": EOI(),
     }
 
-    def __init__(self, rules: Mapping[str, Rule], doc: list[str] | None = None):
+    OPTIMIZER = Optimizer(
+        [OptimizerStep("skip", skip, PassDirection.PREORDER)],
+        debug=True,
+    )
+
+    def __init__(
+        self,
+        rules: Mapping[str, Rule],
+        doc: list[str] | None = None,
+        optimizer: Optimizer | None = None,
+    ):
         # Built-in rules overwrite grammar defined rules.
         self.rules: dict[str, Rule] = {**self.BUILTIN, **rules}
         self.doc = doc
 
-        optimizer = Optimizer(
-            self.rules,
-            [OptimizerStep("skip", skip, PassDirection.PREORDER)],
-            # debug=True,
-        )
-
-        for name, rule in rules.items():
-            self.rules[name].expression = optimizer.optimize(rule.expression)
-
-        # for s in optimizer.log:
-        #     print(s)
+        if optimizer:
+            optimizer.optimize(self.rules)
+            if optimizer.debug:
+                for entry in optimizer.log:
+                    # TODO: logging.debug
+                    print(entry)
 
     @classmethod
-    def from_grammar(cls, grammar: str) -> Parser:
+    def from_grammar(cls, grammar: str, *, optimize: bool = True) -> Parser:
         """Parse `grammar` and return a new Parser for it."""
         rules, doc = parse(grammar, cls.BUILTIN)
 
@@ -69,7 +72,7 @@ class Parser:
         # - validate_whitespace_comment
         # - validate_tag_silent_rules
 
-        return cls(rules, doc)
+        return cls(rules, doc, cls.OPTIMIZER if optimize else None)
 
     # for name, rule in grammar.rules.items():
     #     grammar.rules[name].expression = registry.optimize(rule.expression)

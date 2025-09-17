@@ -10,7 +10,7 @@ parser = Parser.from_grammar(grammar)
 # for token in tokenize("repeat_max = { string{, 2} }"):
 #     print(token)
 
-# pairs = parser.parse("Quote", "(abc)")
+pairs = parser.parse("array_table", "[[a.b]]\nc = 'd'")
 
 # print(parser)
 
@@ -19,4 +19,4 @@ parser = Parser.from_grammar(grammar)
 
 # pairs = parser.parse("toml", example)
 
-# print(json.dumps(pairs.as_list(), indent=2))
+print(json.dumps(pairs.as_list(), indent=2))

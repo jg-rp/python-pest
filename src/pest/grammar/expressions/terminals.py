@@ -375,3 +375,5 @@ class Skip(Terminal):
 
         if best_index is not None:
             yield Success(None, best_index)
+        else:
+            yield Success(None, len(s))

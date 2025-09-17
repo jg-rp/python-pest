@@ -1,12 +1,13 @@
 import pytest
+from _pytest.fixtures import SubRequest
 
 from pest import Parser
 
 
-@pytest.fixture(scope="module")
-def parser() -> Parser:
+@pytest.fixture(scope="module", params=["not optimized", "optimized"])
+def parser(request: SubRequest) -> Parser:
     with open("tests/grammars/json.pest", encoding="utf-8") as fd:
-        return Parser.from_grammar(fd.read())
+        return Parser.from_grammar(fd.read(), optimize=request.param == "optimize")
 
 
 def test_null_rule(parser: Parser) -> None:

@@ -26,7 +26,7 @@ class UnicodePropertyRule(BuiltInRule):
 
     def with_children(self, expressions: list[Expression]) -> Self:
         """Return a new instance of this expression with child expressions replaced."""
-        assert not expressions
+        assert len(expressions) == 1
         return self
 
 

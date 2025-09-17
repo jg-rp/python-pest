@@ -22,24 +22,28 @@ if TYPE_CHECKING:
 
 def skip(expr: Expression, rules: Mapping[str, Rule]) -> Expression:
     """Transform repeated negative predicate ~ ANY into a regex expression."""
-    # TODO: only if rule has no inner (is atomic, explicitly or implicitly)
-    # TODO: What would this look like with a `match` statement?
-    if (
-        isinstance(expr, Repeat)
-        and isinstance(expr.expression, Group)
-        and isinstance(expr.expression.expression, Sequence)
-        and len(expr.expression.expression.expressions) == 2  # noqa: PLR2004
-    ):
-        left, right = expr.expression.expression.expressions
+    # NOTE: The reference implementation only applies "skip" to atomic type rules.
+    # As far as I can tell, this is acting like an "early return" as the "ANY" in
+    # Rep-NegPred-Any would consume whitespace and comments.
 
-        if isinstance(left, NegativePredicate) and isinstance(right, Any):
-            if isinstance(left.expression, Rule):
-                new_expr = _skip(left.expression.expression, rules, [])
-            else:
-                new_expr = _skip(left.expression, rules, [])
+    # TODO: performance implications of `match`/`case`
+    match expr:
+        case Repeat(expression=Group(expression=Sequence(expressions=[left, right]))):
+            match (left, right):
+                case (NegativePredicate(expression=inner), Any()) if isinstance(
+                    inner, Rule
+                ):
+                    new_expr = _skip(inner.expression, rules, [])
+                    if new_expr:
+                        return new_expr
 
-            if new_expr:
-                return new_expr
+                case (NegativePredicate(expression=inner), Any()):
+                    new_expr = _skip(inner, rules, [])
+                    if new_expr:
+                        return new_expr
+
+        case _:
+            return expr
 
     return expr
 
