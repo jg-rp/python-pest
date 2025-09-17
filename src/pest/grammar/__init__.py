@@ -3,7 +3,13 @@ from typing import Mapping
 from .expression import Expression
 from .expressions.choice import Choice
 from .expressions.group import Group
+from .expressions.postfix import Optional
 from .expressions.postfix import Repeat
+from .expressions.postfix import RepeatExact
+from .expressions.postfix import RepeatMax
+from .expressions.postfix import RepeatMin
+from .expressions.postfix import RepeatOnce
+from .expressions.postfix import RepeatRange
 from .expressions.prefix import NegativePredicate
 from .expressions.rule import GrammarRule
 from .expressions.rule import Rule
@@ -37,6 +43,12 @@ __all__ = (
     "String",
     "CIString",
     "Group",
+    "RepeatMax",
+    "RepeatMin",
+    "RepeatOnce",
+    "RepeatRange",
+    "RepeatExact",
+    "Optional",
 )
 
 

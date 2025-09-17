@@ -5,6 +5,8 @@
     "keepends",
     "lookaheads",
     "POSTORDER",
-    "PREORDER"
+    "PREORDER",
+    "unroller",
+    "unrollers"
   ]
 }

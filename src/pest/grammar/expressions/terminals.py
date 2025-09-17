@@ -255,6 +255,9 @@ class Identifier(Terminal):
     def __str__(self) -> str:
         return f"{self.tag_str()}{self.value}"
 
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, Identifier) and other.value == self.value
+
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Attempt to match this expression against the input at `start`."""
         # TODO: Assumes the rule exists.
@@ -284,6 +287,9 @@ class String(Terminal):
             self.value.replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n")
         )
         return f'"{value}"'
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, String) and self.value == other.value
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Attempt to match this expression against the input at `start`."""

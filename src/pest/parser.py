@@ -11,6 +11,7 @@ from .grammar.optimizer import Optimizer
 from .grammar.optimizer import OptimizerStep
 from .grammar.optimizer import PassDirection
 from .grammar.optimizers.skippers import skip
+from .grammar.optimizers.unroller import unroll
 from .grammar.rules.ascii import ASCII_RULES
 from .grammar.rules.special import EOI
 from .grammar.rules.special import SOI
@@ -24,6 +25,7 @@ if TYPE_CHECKING:
 
 DEFAULT_OPTIMIZER_PASSES = [
     OptimizerStep("skip", skip, PassDirection.PREORDER),
+    OptimizerStep("unroll", unroll, PassDirection.POSTORDER),
 ]
 
 DEFAULT_OPTIMIZER = Optimizer(DEFAULT_OPTIMIZER_PASSES)

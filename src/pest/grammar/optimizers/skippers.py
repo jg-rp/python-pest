@@ -1,4 +1,26 @@
-"""Optimizer passes..."""
+"""Transform Rep-NegPred-Any into a SkipUntil expression.
+
+Example Input:
+
+```
+Repeat                                '(!("a" | "b") ~ ANY)*'
+    └── Group                         '(!("a" | "b") ~ ANY)'
+        └── Sequence                  '!("a" | "b") ~ ANY'
+            ├── NegativePredicate     '!("a" | "b")'
+            │   └── Group             '("a" | "b")'
+            │       └── Choice        '"a" | "b"'
+            │           ├── String    '"a"'
+            │           └── String    '"b"'
+            └── Any                   'ANY'
+                └── _Any              'ANY'
+```
+
+After a "skip" pass we get a single, optimized `SkipUntil` expression.
+
+```
+SkipUntil                             '(!("a" | "b") ~ ANY)*'
+```
+"""
 
 from __future__ import annotations
 
@@ -49,6 +71,9 @@ def skip(expr: Expression, rules: Mapping[str, Rule]) -> Expression:
 def _skip(
     expr: Expression, rules: Mapping[str, Rule], subs: list[str]
 ) -> SkipUntil | None:
+    if isinstance(expr, Group):
+        expr = expr.expression
+
     if isinstance(expr, Choice):
         for ex in expr.expressions:
             inlined_subs = _skip(ex, rules, subs)
@@ -67,6 +92,6 @@ def _skip(
     if isinstance(expr, Identifier):
         rule = rules.get(expr.value)
         if rule:
-            return _skip(rule, rules, subs)
+            return _skip(rule.expression, rules, subs)
 
     return None

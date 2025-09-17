@@ -30,6 +30,9 @@ class Sequence(Expression):
         sequence = " ~ ".join(str(expr) for expr in self.expressions)
         return f"{self.tag_str()}{sequence}"
 
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, Sequence) and other.expressions == self.expressions
+
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse left followed by right starting at `start`."""
         position = start
