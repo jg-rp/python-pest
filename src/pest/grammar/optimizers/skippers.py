@@ -12,7 +12,7 @@ from pest.grammar import NegativePredicate
 from pest.grammar import Repeat
 from pest.grammar import Rule
 from pest.grammar import Sequence
-from pest.grammar import Skip
+from pest.grammar import SkipUntil
 from pest.grammar import String
 from pest.grammar.rules.special import Any
 
@@ -21,12 +21,10 @@ if TYPE_CHECKING:
 
 
 def skip(expr: Expression, rules: Mapping[str, Rule]) -> Expression:
-    """Transform repeated negative predicate ~ ANY into a regex expression."""
+    """Transform Rep-NegPred-Any into a SkipUntil expression."""
     # NOTE: The reference implementation only applies "skip" to atomic type rules.
     # As far as I can tell, this is acting like an "early return" as the "ANY" in
     # Rep-NegPred-Any would consume whitespace and comments.
-
-    # TODO: performance implications of `match`/`case`
     match expr:
         case Repeat(expression=Group(expression=Sequence(expressions=[left, right]))):
             match (left, right):
@@ -48,21 +46,23 @@ def skip(expr: Expression, rules: Mapping[str, Rule]) -> Expression:
     return expr
 
 
-def _skip(expr: Expression, rules: Mapping[str, Rule], subs: list[str]) -> Skip | None:
+def _skip(
+    expr: Expression, rules: Mapping[str, Rule], subs: list[str]
+) -> SkipUntil | None:
     if isinstance(expr, Choice):
         for ex in expr.expressions:
             inlined_subs = _skip(ex, rules, subs)
             if not inlined_subs:
                 return None
-        return Skip(subs)
+        return SkipUntil(subs)
 
-    if isinstance(expr, Skip):
+    if isinstance(expr, SkipUntil):
         subs.extend(expr.subs)
-        return Skip(subs)
+        return SkipUntil(subs)
 
     if isinstance(expr, String):
         subs.append(expr.value)
-        return Skip(subs)
+        return SkipUntil(subs)
 
     if isinstance(expr, Identifier):
         rule = rules.get(expr.value)

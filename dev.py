@@ -1,23 +1,19 @@
-import json
-
+from pest import DEFAULT_OPTIMIZER_PASSES
+from pest import Optimizer
 from pest import Parser
+from pest.grammar import parse
 
-with open("tests/grammars/toml.pest", encoding="utf-8") as fd:
-    grammar = fd.read()
+# rules, _ = parse('rule = { (!("a" | "b") ~ ANY)* }', Parser.BUILTIN)
+rules, _ = parse("rule = { (!NEWLINE ~ ANY)* }", Parser.BUILTIN)
 
+print(rules["rule"].tree_view())
 
-parser = Parser.from_grammar(grammar, optimize=True)
+optimizer = Optimizer(DEFAULT_OPTIMIZER_PASSES)
+optimized = optimizer.optimize(rules, debug=True)
 
-# for token in tokenize("repeat_max = { string{, 2} }"):
-#     print(token)
+print("")
+for entry in optimizer.log:
+    print(entry)
 
-# pairs = parser.parse("array_table", "[[a.b]]\nc = 'd'")
-
-# print(parser)
-
-# with open("tests/examples/example.toml", encoding="utf-8") as fd:
-#     example = fd.read()
-
-# pairs = parser.parse("toml", example)
-
-# print(json.dumps(pairs.as_list(), indent=2))
+print("")
+print(rules["rule"].tree_view())

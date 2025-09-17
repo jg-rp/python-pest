@@ -10,7 +10,7 @@ from .expressions.rule import Rule
 from .expressions.sequence import Sequence
 from .expressions.terminals import CIString
 from .expressions.terminals import Identifier
-from .expressions.terminals import Skip
+from .expressions.terminals import SkipUntil
 from .expressions.terminals import String
 from .parser import Parser
 from .scanner import Scanner
@@ -29,7 +29,7 @@ __all__ = (
     "Rule",
     "Sequence",
     "Scanner",
-    "Skip",
+    "SkipUntil",
     "Token",
     "TokenKind",
     "parse",

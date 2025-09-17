@@ -336,7 +336,7 @@ class Range(Terminal):
             yield Success(None, match.end())
 
 
-class Skip(Terminal):
+class SkipUntil(Terminal):
     """A terminal that matches characters until one of a set of substrings is found.
 
     Attributes:
@@ -356,6 +356,9 @@ class Skip(Terminal):
         ]
         strings = " | ".join(f'"{s}"' for s in _subs)
         return f"(!({strings}) ~ ANY)*"
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, SkipUntil) and other.subs == self.subs
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Attempt to match this expression against the input at `start`.

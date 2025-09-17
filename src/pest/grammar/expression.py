@@ -87,6 +87,36 @@ class Expression(ABC):
         new_children = [c.map_top_down(func) for c in expr.children()]
         return expr.with_children(new_children)
 
+    def tree_view(self) -> str:
+        """Return an ASCII tree view of this expression and its children."""
+        # Collect nodes: (prefix, connector, class_name, repr_value)
+        nodes = []
+
+        def collect(
+            node: Expression, prefix: str = "", *, is_last: bool = True
+        ) -> None:
+            connector = "" if prefix == "" else ("└── " if is_last else "├── ")
+            nodes.append((prefix, connector, node.__class__.__name__, repr(str(node))))
+            child_prefix = prefix + ("    " if is_last else "│   ")
+            for i, child in enumerate(node.children()):
+                last = i == len(node.children()) - 1
+                collect(child, child_prefix, is_last=last)
+
+        collect(self)
+
+        # Find maximum width of the left-hand side
+        widths = [len(prefix + connector + cls) for prefix, connector, cls, _ in nodes]
+        max_width = max(widths) if widths else 0
+
+        # Build aligned lines
+        lines = []
+        for (prefix, connector, cls, val), width in zip(nodes, widths, strict=True):
+            left = prefix + connector + cls
+            padding = " " * (max_width - width + 4)  # +4 for spacing column
+            lines.append(left + padding + val)
+
+        return "\n".join(lines)
+
 
 class Terminal(Expression):
     """Base class for terminal expressions."""

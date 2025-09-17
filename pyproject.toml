@@ -144,5 +144,6 @@ convention = "google"
 "src/pest/grammar/scanner.py" = ["D102"]
 "src/pest/grammar/unescape.py" = ["PLR2004"]
 "benchmarks/*" = ["D100", "D101", "D104", "D103", "PLR2004", "T201"]
+"dev.py" = ["D100", "D101", "D104", "D103", "PLR2004", "T201"]
 "tests/*" = ["D100", "D101", "D104", "D103", "PLR2004"]
 "tests/test_sql_grammar.py" = ["E501"]
