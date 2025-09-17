@@ -128,3 +128,6 @@ class GrammarRule(Rule):
 
 class BuiltInRule(Rule):
     """The base class for all built-in rules."""
+
+    def __str__(self) -> str:
+        return self.name

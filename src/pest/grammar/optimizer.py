@@ -38,37 +38,53 @@ class Optimizer:
     def __init__(
         self,
         passes: list[OptimizerStep],
-        *,
-        debug: bool = False,
     ):
         self.passes = passes
-        self.debug = debug
+        # TODO: Write to logging.debug instead?
         self.log: list[str] = []
 
-    def optimize(self, rules: Mapping[str, Rule]) -> Mapping[str, Rule]:
+    def optimize(
+        self, rules: Mapping[str, Rule], *, debug: bool = False
+    ) -> Mapping[str, Rule]:
         """Apply optimization passes to all rules."""
+        if debug:
+            self.log.clear()
+
         for name, rule in rules.items():
+            expr = rule.expression
             for step in self.passes:
                 if step.fixed_point:
-                    expr = self._run_fixed_point(rule.expression, step, rules)
+                    expr = self._run_fixed_point(expr, step, rules, debug=debug)
                 else:
-                    expr = self._run_once(rule.expression, step, rules)
+                    expr = self._run_once(rule.expression, step, rules, debug=debug)
             rules[name].expression = expr
         return rules
 
     def _run_once(
-        self, expr: Expression, step: OptimizerStep, rules: Mapping[str, Rule]
+        self,
+        expr: Expression,
+        step: OptimizerStep,
+        rules: Mapping[str, Rule],
+        *,
+        debug: bool,
     ) -> Expression:
         if step.direction == PassDirection.POSTORDER:
-            return expr.map_bottom_up(lambda e: self._apply(step, e, rules))
-        return expr.map_top_down(lambda e: self._apply(step, e, rules))
+            return expr.map_bottom_up(
+                lambda e: self._apply(step, e, rules, debug=debug)
+            )
+        return expr.map_top_down(lambda e: self._apply(step, e, rules, debug=debug))
 
     def _run_fixed_point(
-        self, expr: Expression, step: OptimizerStep, rules: Mapping[str, Rule]
+        self,
+        expr: Expression,
+        step: OptimizerStep,
+        rules: Mapping[str, Rule],
+        *,
+        debug: bool,
     ) -> Expression:
         max_iters = 20
         for _ in range(max_iters):
-            new_expr = self._run_once(expr, step, rules)
+            new_expr = self._run_once(expr, step, rules, debug=debug)
             if new_expr is expr:  # No change
                 return expr
             expr = new_expr
@@ -77,9 +93,14 @@ class Optimizer:
         )
 
     def _apply(
-        self, step: OptimizerStep, expr: Expression, rules: Mapping[str, Rule]
+        self,
+        step: OptimizerStep,
+        expr: Expression,
+        rules: Mapping[str, Rule],
+        *,
+        debug: bool,
     ) -> Expression:
         new_expr = step.func(expr, rules)
-        if new_expr is not expr and self.debug:
+        if debug and new_expr is not expr:
             self.log.append(f"{step.name}: {expr} → {new_expr}")
         return new_expr

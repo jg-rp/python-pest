@@ -8,13 +8,16 @@ See LICENSE_PEST.txt
 import pytest
 from _pytest.fixtures import SubRequest
 
+from pest import DEFAULT_OPTIMIZER
+from pest import DUMMY_OPTIMIZER
 from pest import Parser
 
 
 @pytest.fixture(scope="module", params=["not optimized", "optimized"])
 def parser(request: SubRequest) -> Parser:
+    optimizer = DEFAULT_OPTIMIZER if request.param == "optimized" else DUMMY_OPTIMIZER
     with open("tests/grammars/surround.pest", encoding="utf-8") as fd:
-        return Parser.from_grammar(fd.read(), optimize=request.param == "optimized")
+        return Parser.from_grammar(fd.read(), optimizer=optimizer)
 
 
 def test_item(parser: Parser) -> None:

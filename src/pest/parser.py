@@ -22,6 +22,15 @@ from .state import ParserState
 if TYPE_CHECKING:
     from .grammar.expressions import Rule
 
+DEFAULT_OPTIMIZER_PASSES = [
+    OptimizerStep("skip", skip, PassDirection.PREORDER),
+]
+
+DEFAULT_OPTIMIZER = Optimizer(DEFAULT_OPTIMIZER_PASSES)
+
+"""A grammar optimizer that does nothing."""
+DUMMY_OPTIMIZER = Optimizer([])
+
 
 class Parser:
     """A pest generated parser.
@@ -39,31 +48,27 @@ class Parser:
         "EOI": EOI(),
     }
 
-    # TODO: move debug to Optimizer.optimize
-    OPTIMIZER = Optimizer(
-        [OptimizerStep("skip", skip, PassDirection.PREORDER)],
-        debug=False,
-    )
-
     def __init__(
         self,
         rules: Mapping[str, Rule],
         doc: list[str] | None = None,
-        optimizer: Optimizer | None = None,
+        *,
+        optimizer: Optimizer,
+        debug: bool = False,
     ):
         # Built-in rules overwrite grammar defined rules.
         self.rules: dict[str, Rule] = {**self.BUILTIN, **rules}
         self.doc = doc
-
-        if optimizer:
-            optimizer.optimize(self.rules)
-            if optimizer.debug:
-                for entry in optimizer.log:
-                    # TODO: logging.debug
-                    print(entry)
+        optimizer.optimize(self.rules, debug=debug)
 
     @classmethod
-    def from_grammar(cls, grammar: str, *, optimize: bool = True) -> Parser:
+    def from_grammar(
+        cls,
+        grammar: str,
+        *,
+        optimizer: Optimizer = DEFAULT_OPTIMIZER,
+        debug: bool = False,
+    ) -> Parser:
         """Parse `grammar` and return a new Parser for it."""
         rules, doc = parse(grammar, cls.BUILTIN)
 
@@ -73,7 +78,7 @@ class Parser:
         # - validate_whitespace_comment
         # - validate_tag_silent_rules
 
-        return cls(rules, doc, cls.OPTIMIZER if optimize else None)
+        return cls(rules, doc, optimizer=optimizer, debug=debug)
 
     # for name, rule in grammar.rules.items():
     #     grammar.rules[name].expression = registry.optimize(rule.expression)

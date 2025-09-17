@@ -1,5 +1,7 @@
 import timeit
 
+from pest import DEFAULT_OPTIMIZER
+from pest import DUMMY_OPTIMIZER
 from pest import Parser
 
 with open("tests/grammars/http.pest", encoding="utf-8") as fd:
@@ -9,8 +11,19 @@ with open("benchmarks/requests.http", encoding="ascii") as fd:
     data = fd.read()
 
 
-optimized_http_parser = Parser.from_grammar(grammar)
-unoptimized_http_parser = Parser.from_grammar(grammar, optimize=False)
+optimized_http_parser = Parser.from_grammar(grammar, debug=True)
+
+if DEFAULT_OPTIMIZER.log:
+    print(f"{len(DEFAULT_OPTIMIZER.log)} optimized expressions:")
+    for entry in DEFAULT_OPTIMIZER.log:
+        print(f"  {entry}")
+else:
+    print("Zero optimizations applied!")
+
+
+unoptimized_http_parser = Parser.from_grammar(
+    grammar, optimizer=DUMMY_OPTIMIZER, debug=True
+)
 
 
 def run_optimized() -> None:
@@ -25,7 +38,7 @@ n_runs = 2
 n_repeat = 3
 
 t_optimized = min(timeit.repeat(run_optimized, number=n_runs, repeat=n_repeat))
-print("Optimized:   ", t_optimized)
+print("\nOptimized:   ", t_optimized)
 
 t_unoptimized = min(timeit.repeat(run_unoptimized, number=n_runs, repeat=n_repeat))
 print("Unoptimized: ", t_unoptimized)

@@ -350,8 +350,11 @@ class Skip(Terminal):
         self.subs = subs
 
     def __str__(self) -> str:
-        # TODO: escape whitespace
-        strings = " | ".join(f'"{s}"' for s in self.subs)
+        _subs = [
+            s.replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n")
+            for s in self.subs
+        ]
+        strings = " | ".join(f'"{s}"' for s in _subs)
         return f"(!({strings}) ~ ANY)*"
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
