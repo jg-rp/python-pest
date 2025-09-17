@@ -5,12 +5,13 @@ from pest import Parser
 with open("tests/grammars/toml.pest", encoding="utf-8") as fd:
     grammar = fd.read()
 
-parser = Parser.from_grammar(grammar)
+
+parser = Parser.from_grammar(grammar, optimize=True)
 
 # for token in tokenize("repeat_max = { string{, 2} }"):
 #     print(token)
 
-pairs = parser.parse("array_table", "[[a.b]]\nc = 'd'")
+# pairs = parser.parse("array_table", "[[a.b]]\nc = 'd'")
 
 # print(parser)
 
@@ -19,4 +20,4 @@ pairs = parser.parse("array_table", "[[a.b]]\nc = 'd'")
 
 # pairs = parser.parse("toml", example)
 
-print(json.dumps(pairs.as_list(), indent=2))
+# print(json.dumps(pairs.as_list(), indent=2))

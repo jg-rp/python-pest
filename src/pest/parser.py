@@ -39,9 +39,10 @@ class Parser:
         "EOI": EOI(),
     }
 
+    # TODO: move debug to Optimizer.optimize
     OPTIMIZER = Optimizer(
         [OptimizerStep("skip", skip, PassDirection.PREORDER)],
-        debug=True,
+        debug=False,
     )
 
     def __init__(
