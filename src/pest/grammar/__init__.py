@@ -1,6 +1,7 @@
 from typing import Mapping
 
 from .expression import Expression
+from .expression import RegexExpression
 from .expressions.choice import Choice
 from .expressions.group import Group
 from .expressions.postfix import Optional
@@ -49,6 +50,7 @@ __all__ = (
     "RepeatRange",
     "RepeatExact",
     "Optional",
+    "RegexExpression",
 )
 
 

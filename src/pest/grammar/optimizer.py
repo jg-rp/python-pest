@@ -51,6 +51,7 @@ class Optimizer:
             self.log.clear()
 
         for name, rule in rules.items():
+            # TODO: some passes should only be applied to atomic rules
             expr = rule.expression
             for step in self.passes:
                 if step.fixed_point:
