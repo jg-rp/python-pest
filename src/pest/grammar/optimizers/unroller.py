@@ -46,7 +46,7 @@ def unroll(expr: Expression, _rules: Mapping[str, Rule]) -> Expression:
         case RepeatExact(expression=inner, number=num):
             return Sequence(*repeat(inner, num))
         case RepeatMin(expression=inner, number=num):
-            return Sequence(*chain(repeat(inner, num), [inner]))
+            return Sequence(*chain(repeat(inner, num), [Repeat(inner)]))
         case RepeatMax(expression=inner, number=num):
             return Sequence(*repeat(Optional(inner), num))
         case RepeatRange(expression=inner, min=min_, max=max_):

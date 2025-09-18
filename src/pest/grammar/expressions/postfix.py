@@ -70,6 +70,9 @@ class Repeat(Expression):
     def __str__(self) -> str:
         return f"{self.expression}*"
 
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, Repeat) and self.expression == other.expression
+
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Attempt to match this expression against the input at `start`."""
         position = start
