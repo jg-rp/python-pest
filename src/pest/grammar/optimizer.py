@@ -56,7 +56,7 @@ class Optimizer:
                 if step.fixed_point:
                     expr = self._run_fixed_point(expr, step, rules, debug=debug)
                 else:
-                    expr = self._run_once(rule.expression, step, rules, debug=debug)
+                    expr = self._run_once(expr, step, rules, debug=debug)
             rules[name].expression = expr
         return rules
 

@@ -652,8 +652,7 @@ def test_repeat_max_twice(parser: Parser) -> None:
 
 
 # XXX: typo in Rust `repeat_max_thrice`?
-# XXX: We differ from Rust pest here.
-# I think `!parses_to` asserts EOF for every test case.
+# NOTE: `!parses_to` asserts EOF for every test case. We assert a partial parse.
 def test_repeat_max_thrice(parser: Parser) -> None:
     pairs = parser.parse("repeat_max", "abc abc abc")
     assert pairs.as_list() == [
@@ -698,9 +697,16 @@ def test_repeat_max_atomic_twice(parser: Parser) -> None:
     ]
 
 
+# NOTE: `!parses_to` asserts EOF for every test case. We assert a partial parse.
 def test_repeat_max_atomic_thrice(parser: Parser) -> None:
-    with pytest.raises(PestParsingError):
-        parser.parse("repeat_max_atomic", "abcabcabc")
+    pairs = parser.parse("repeat_max_atomic", "abcabcabc")
+    assert pairs.as_list() == [
+        {
+            "rule": "repeat_max_atomic",
+            "span": {"str": "abcabc", "start": 0, "end": 6},
+            "inner": [],
+        }
+    ]
 
 
 def test_repeat_max_atomic_space(parser: Parser) -> None:

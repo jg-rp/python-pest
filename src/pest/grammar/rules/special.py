@@ -21,6 +21,9 @@ class Any(BuiltInRule):
     def __init__(self) -> None:
         super().__init__("ANY", _Any(), "_", None)
 
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, Any)
+
     def with_children(self, expressions: list[Expression]) -> Self:
         """Return a new instance of this expression with child expressions replaced."""
         assert len(expressions) == 1
@@ -53,6 +56,9 @@ class SOI(BuiltInRule):
     def __init__(self) -> None:
         super().__init__("SOI", _SOI(), "_", None)
 
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, SOI)
+
     def with_children(self, expressions: list[Expression]) -> Self:
         """Return a new instance of this expression with child expressions replaced."""
         assert len(expressions) == 1
@@ -84,6 +90,9 @@ class EOI(BuiltInRule):
 
     def __init__(self) -> None:
         super().__init__("EOI", _EOI(), "_", None)
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, EOI)
 
     def with_children(self, expressions: list[Expression]) -> Self:
         """Return a new instance of this expression with child expressions replaced."""

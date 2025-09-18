@@ -315,6 +315,9 @@ class CIString(Terminal):
         )
         return f'{self.tag_str()}^"{value}"'
 
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, CIString) and self.value == other.value
+
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Attempt to match this expression against the input at `start`."""
         if self._re.match(state.input, start):

@@ -294,23 +294,23 @@ class RepeatMax(Expression):
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Attempt to match this expression against the input at `start`."""
         successes: list[Success] = []
-        match_count = 0
         position = start
         state.snapshot()
 
-        while True:
+        for i in range(self.number):
             results = list(state.parse(self.expression, position))
             if not results:
                 break
+
             position = results[-1].pos
             successes.extend(results)
-            match_count += 1
 
-            for success in state.parse_implicit_rules(position):
-                position = success.pos
-                successes.append(success)
+            if i < self.number - 1:
+                for success in state.parse_implicit_rules(position):
+                    position = success.pos
+                    successes.append(success)
 
-        if match_count <= self.number:
+        if successes:
             state.ok()
             yield from successes
         else:
