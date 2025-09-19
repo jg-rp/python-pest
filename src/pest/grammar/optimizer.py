@@ -50,14 +50,15 @@ class Optimizer:
         if debug:
             self.log.clear()
 
-        for name, rule in rules.items():
-            # TODO: some passes should only be applied to atomic rules
-            expr = rule.expression
-            for step in self.passes:
+        for step in self.passes:
+            for name, rule in rules.items():
+                # TODO: some passes should only be applied to atomic rules
+                expr = rule.expression
+
                 if step.fixed_point:
-                    expr = self._run_fixed_point(expr, step, rules, debug=debug)
+                    expr = self._run_fixed_point(expr, step, rules, name, debug=debug)
                 else:
-                    expr = self._run_once(expr, step, rules, debug=debug)
+                    expr = self._run_once(expr, step, rules, name, debug=debug)
             rules[name].expression = expr
         return rules
 
@@ -66,26 +67,30 @@ class Optimizer:
         expr: Expression,
         step: OptimizerStep,
         rules: Mapping[str, Rule],
+        start_rule_name: str,
         *,
         debug: bool,
     ) -> Expression:
         if step.direction == PassDirection.POSTORDER:
             return expr.map_bottom_up(
-                lambda e: self._apply(step, e, rules, debug=debug)
+                lambda e: self._apply(step, e, rules, start_rule_name, debug=debug)
             )
-        return expr.map_top_down(lambda e: self._apply(step, e, rules, debug=debug))
+        return expr.map_top_down(
+            lambda e: self._apply(step, e, rules, start_rule_name, debug=debug)
+        )
 
     def _run_fixed_point(
         self,
         expr: Expression,
         step: OptimizerStep,
         rules: Mapping[str, Rule],
+        start_rule_name: str,
         *,
         debug: bool,
     ) -> Expression:
         max_iters = 20
         for _ in range(max_iters):
-            new_expr = self._run_once(expr, step, rules, debug=debug)
+            new_expr = self._run_once(expr, step, rules, start_rule_name, debug=debug)
             if new_expr is expr:  # No change
                 return expr
             expr = new_expr
@@ -98,10 +103,11 @@ class Optimizer:
         step: OptimizerStep,
         expr: Expression,
         rules: Mapping[str, Rule],
+        start_rule_name: str,
         *,
         debug: bool,
     ) -> Expression:
         new_expr = step.func(expr, rules)
         if debug and new_expr is not expr:
-            self.log.append(f"{step.name}: {expr} → {new_expr}")
+            self.log.append(f"{step.name}({start_rule_name}): {expr} → {new_expr}")
         return new_expr

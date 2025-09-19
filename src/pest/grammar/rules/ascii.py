@@ -14,7 +14,6 @@ from pest.grammar.expressions.terminals import String
 if TYPE_CHECKING:
     from pest.grammar.expression import Expression
 
-# TODO: convert these to Choice so they can be merged and skipped?
 ASCII_RULE_MAP: dict[str, tuple[str, str] | list[tuple[str, str]]] = {
     "ASCII_DIGIT": ("0", "9"),
     "ASCII_NONZERO_DIGIT": ("1", "9"),

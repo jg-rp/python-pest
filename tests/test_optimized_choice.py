@@ -1,40 +1,46 @@
 import regex as re
 
 from pest.grammar.expressions.choice import ChoiceCase
+from pest.grammar.expressions.choice import ChoiceChoice
+from pest.grammar.expressions.choice import ChoiceLiteral
+from pest.grammar.expressions.choice import ChoiceRange
 from pest.grammar.expressions.choice import LazyChoiceRegex
-from pest.grammar.expressions.choice import _Choice  # noqa: F401
 from pest.grammar.expressions.choice import build_optimized_pattern
 from pest.grammar.rules.unicode import UnicodePropertyRule
 
 
 def test_single_sensitive_literal() -> None:
-    pattern = build_optimized_pattern([("a", ChoiceCase.SENSITIVE)])
+    pattern = build_optimized_pattern([ChoiceLiteral("a", ChoiceCase.SENSITIVE)])
     regex = re.compile(pattern)
     assert regex.fullmatch("a")
     assert not regex.fullmatch("A")
+    assert pattern == "[a]"
 
 
 def test_single_insensitive_literal() -> None:
-    pattern = build_optimized_pattern([("a", ChoiceCase.INSENSITIVE)])
+    pattern = build_optimized_pattern([ChoiceLiteral("a", ChoiceCase.INSENSITIVE)])
     regex = re.compile(pattern)
     assert regex.fullmatch("a")
     assert regex.fullmatch("A")
+    assert pattern == "[Aa]"
 
 
 def test_range() -> None:
-    pattern = build_optimized_pattern([("a", "z")])
+    pattern = build_optimized_pattern([ChoiceRange("a", "z")])
     regex = re.compile(pattern)
     assert regex.fullmatch("a")
     assert regex.fullmatch("m")
     assert regex.fullmatch("z")
     assert not regex.fullmatch("A")
+    assert pattern == "[a-z]"
 
 
 def test_multi_char_literal() -> None:
-    pattern = build_optimized_pattern([("abc", ChoiceCase.SENSITIVE)])
+    pattern = build_optimized_pattern([ChoiceLiteral("abc", ChoiceCase.SENSITIVE)])
     regex = re.compile(pattern)
     assert regex.fullmatch("abc")
     assert not regex.fullmatch("ABC")
+    assert pattern == "abc"
 
 
 def test_unicode_property() -> None:
@@ -43,14 +49,15 @@ def test_unicode_property() -> None:
     regex = re.compile(pattern)
     assert regex.fullmatch("α")  # Greek alpha
     assert not regex.fullmatch("a")
+    assert pattern == r"\p{Script=Greek}"
 
 
 def test_mixed_choices() -> None:
     greek = UnicodePropertyRule("\\p{Script=Greek}", "MOCK_PROP")
-    choices: list[_Choice] = [
-        ("abc", ChoiceCase.SENSITIVE),
-        ("x", ChoiceCase.INSENSITIVE),
-        ("0", "9"),
+    choices: list[ChoiceChoice] = [
+        ChoiceLiteral("abc", ChoiceCase.SENSITIVE),
+        ChoiceLiteral("x", ChoiceCase.INSENSITIVE),
+        ChoiceRange("0", "9"),
         greek,
     ]
     pattern = build_optimized_pattern(choices)
@@ -68,8 +75,8 @@ def test_mixed_choices() -> None:
 def test_duplicate_characters_collapsed_exact() -> None:
     pattern = build_optimized_pattern(
         [
-            ("a", ChoiceCase.SENSITIVE),
-            ("a", ChoiceCase.SENSITIVE),
+            ChoiceLiteral("a", ChoiceCase.SENSITIVE),
+            ChoiceLiteral("a", ChoiceCase.SENSITIVE),
         ]
     )
     assert pattern == "[a]"
@@ -78,8 +85,8 @@ def test_duplicate_characters_collapsed_exact() -> None:
 def test_overlapping_ranges_collapsed_exact() -> None:
     pattern = build_optimized_pattern(
         [
-            ("a", "c"),
-            ("b", "d"),
+            ChoiceRange("a", "c"),
+            ChoiceRange("b", "d"),
         ]
     )
     assert pattern == "[a-d]"
@@ -88,8 +95,8 @@ def test_overlapping_ranges_collapsed_exact() -> None:
 def test_adjacent_ranges_merged() -> None:
     pattern = build_optimized_pattern(
         [
-            ("a", "c"),
-            ("d", "f"),
+            ChoiceRange("a", "c"),
+            ChoiceRange("d", "f"),
         ]
     )
     assert pattern == "[a-f]"
@@ -98,8 +105,8 @@ def test_adjacent_ranges_merged() -> None:
 def test_single_within_range_removed() -> None:
     pattern = build_optimized_pattern(
         [
-            ("a", "z"),
-            ("m", ChoiceCase.SENSITIVE),
+            ChoiceRange("a", "z"),
+            ChoiceLiteral("m", ChoiceCase.SENSITIVE),
         ]
     )
     assert pattern == "[a-z]"
@@ -107,8 +114,10 @@ def test_single_within_range_removed() -> None:
 
 def test_lazy_choice_regex_initial_and_update() -> None:
     greek = UnicodePropertyRule("\\p{Script=Greek}", "MOCK_PROP")
-    regex_builder = LazyChoiceRegex([("a", ChoiceCase.SENSITIVE)])
-    regex_builder.update(("0", "9"), ("x", ChoiceCase.INSENSITIVE), greek)
+    regex_builder = LazyChoiceRegex([ChoiceLiteral("a", ChoiceCase.SENSITIVE)])
+    regex_builder.update(
+        ChoiceRange("0", "9"), ChoiceLiteral("x", ChoiceCase.INSENSITIVE), greek
+    )
 
     pattern = regex_builder.build_optimized_pattern()
     compiled = re.compile(pattern)
@@ -122,22 +131,22 @@ def test_lazy_choice_regex_initial_and_update() -> None:
 
 def test_lazy_choice_regex_empty_then_update() -> None:
     regex_builder = LazyChoiceRegex()
-    regex_builder.update(("b", ChoiceCase.SENSITIVE))
+    regex_builder.update(ChoiceLiteral("b", ChoiceCase.SENSITIVE))
     assert regex_builder.build_optimized_pattern() == "[b]"
 
-    regex_builder.update(("c", ChoiceCase.SENSITIVE))
+    regex_builder.update(ChoiceLiteral("c", ChoiceCase.SENSITIVE))
     pattern = regex_builder.build_optimized_pattern()
     assert pattern == "[bc]"
 
 
 def test_large_range_and_literals_merging() -> None:
     regex_builder = LazyChoiceRegex()
-    regex_builder.update(("a", "f"))
-    regex_builder.update(("g", "k"))
-    regex_builder.update(("c", "h"))
-    regex_builder.update(("d", ChoiceCase.SENSITIVE))
-    regex_builder.update(("j", ChoiceCase.SENSITIVE))
-    regex_builder.update(("A", ChoiceCase.INSENSITIVE))
+    regex_builder.update(ChoiceRange("a", "f"))
+    regex_builder.update(ChoiceRange("g", "k"))
+    regex_builder.update(ChoiceRange("c", "h"))
+    regex_builder.update(ChoiceLiteral("d", ChoiceCase.SENSITIVE))
+    regex_builder.update(ChoiceLiteral("j", ChoiceCase.SENSITIVE))
+    regex_builder.update(ChoiceLiteral("A", ChoiceCase.INSENSITIVE))
 
     pattern = regex_builder.build_optimized_pattern()
     assert pattern == "[Aa-k]"
@@ -148,7 +157,7 @@ def test_large_mixed_literals_and_ranges() -> None:
     for ch in ["a", "d", "g", "j", "m", "p", "s", "v"]:
         start = ch
         end = chr(ord(ch) + 2)
-        regex_builder.update((start, end))
+        regex_builder.update(ChoiceRange(start, end))
 
     pattern = regex_builder.build_optimized_pattern()
     assert pattern == "[a-x]"

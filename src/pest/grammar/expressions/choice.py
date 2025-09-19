@@ -1,4 +1,4 @@
-"""The choice (`|`) operator."""
+"""The choice (`|`) operator and an optimized regex choice expression."""
 
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ from enum import Enum
 from enum import auto
 from typing import TYPE_CHECKING
 from typing import Iterator
+from typing import NamedTuple
 from typing import TypeAlias
 
 import regex as re
@@ -64,20 +65,42 @@ class ChoiceCase(Enum):
     INSENSITIVE = auto()
 
 
-_Range: TypeAlias = tuple[str, str]  # Character range
-_Literal: TypeAlias = tuple[str, ChoiceCase]  # str could be any length
-_Choice: TypeAlias = _Literal | _Range | UnicodePropertyRule
+class ChoiceLiteral(NamedTuple):
+    """Lazy choice regex literal."""
+
+    value: str
+    case: ChoiceCase
+
+
+class ChoiceRange(NamedTuple):
+    """Lazy choice regex character range."""
+
+    start: str
+    end: str
+
+
+ChoiceChoice: TypeAlias = ChoiceLiteral | ChoiceRange | UnicodePropertyRule
 
 
 class LazyChoiceRegex(Expression):
-    """An optimized choice expression."""
+    """An optimized expression for matching a set of choices using a single regex.
+
+    Supports single-character literals, multi-character literals (case-sensitive or
+    insensitive), character ranges, and Unicode property rules.
+
+    Args:
+        choices: Optional initial list of choices to match.
+    """
 
     __slots__ = ("_choices", "_compiled")
 
-    def __init__(self, choices: list[_Choice] | None = None):
+    def __init__(self, choices: list[ChoiceChoice] | None = None):
         super().__init__(None)
         self._choices = choices or []
         self._compiled: re.Pattern[str] | None = None
+
+    def __str__(self) -> str:
+        return f"/{self.pattern.pattern!r}/"
 
     @property
     def pattern(self) -> re.Pattern[str]:
@@ -100,13 +123,13 @@ class LazyChoiceRegex(Expression):
         assert len(expressions) == 0
         return self
 
-    def update(self, *choices: _Choice) -> LazyChoiceRegex:
-        """Update this regex's choices with `choices`."""
+    def update(self, *choices: ChoiceChoice) -> LazyChoiceRegex:
+        """Add choices to this regex and return self."""
         self._choices.extend(choices)
         return self
 
-    def copy(self, *choices: _Choice) -> LazyChoiceRegex:
-        """Return a new choice regex with choices from this expression and `choices`."""
+    def copy(self, *choices: ChoiceChoice) -> LazyChoiceRegex:
+        """Return a new LazyChoiceRegex with current and additional choices."""
         return LazyChoiceRegex(self._choices).update(*choices)
 
     def build_optimized_pattern(self) -> str:
@@ -114,44 +137,34 @@ class LazyChoiceRegex(Expression):
         return build_optimized_pattern(self._choices)
 
 
-def build_optimized_pattern(choices: list[_Choice]) -> str:  # noqa: PLR0912
-    """Return a regex pattern matching any item from `choices`."""
+def build_optimized_pattern(choices: list[ChoiceChoice]) -> str:  # noqa: PLR0912
+    """Build a regex pattern that matches any of the given choices."""
     if not choices:
         return ""
 
-    # Buckets
-    char_class_parts = []  # for single-char literals
-    ranges = []  # for character ranges
-    multi_sensitive = []  # for multi-char sensitive literals
-    insensitive_parts = []  # for insensitive literals (scoped flag)
-    unicode_props = []  # for UnicodeProperty patterns
+    char_class_parts: list[str] = []  # for single-char literals
+    ranges: list[tuple[str, str]] = []  # for character ranges
+    multi_sensitive: list[str] = []  # for multi-char sensitive literals
+    insensitive_parts: list[str] = []  # for insensitive literals (scoped flag)
+    unicode_props: list[str] = []  # for UnicodeProperty patterns
 
     for choice in choices:
-        # TODO: structural pattern matching
-        if isinstance(choice, UnicodePropertyRule) and isinstance(
-            choice.expression, RegexExpression
-        ):
-            unicode_props.append(choice.expression.pattern)
-        elif isinstance(choice, tuple):
-            if len(choice) == 2 and isinstance(choice[1], ChoiceCase):
-                lit, case = choice
-                if case == ChoiceCase.INSENSITIVE:
-                    if len(lit) == 1:
-                        char_class_parts.append(lit.upper())
-                        char_class_parts.append(lit.lower())
-                    else:
-                        insensitive_parts.append(f"(?i:{re.escape(lit)})")
-                elif case == ChoiceCase.SENSITIVE:
-                    if len(lit) == 1:
-                        char_class_parts.append(lit)
-                    else:
-                        multi_sensitive.append(re.escape(lit))
-            elif len(choice) == 2:  # Range  # noqa: PLR2004
-                ranges.append(choice)
-            else:
+        match choice:
+            case UnicodePropertyRule(expression=RegexExpression(pattern=pattern)):
+                unicode_props.append(pattern)
+            case ChoiceLiteral(value=val, case=ChoiceCase.INSENSITIVE) if len(val) == 1:
+                char_class_parts.append(val.upper())
+                char_class_parts.append(val.lower())
+            case ChoiceLiteral(value=val, case=ChoiceCase.INSENSITIVE):
+                insensitive_parts.append(f"(?i:{re.escape(val)})")
+            case ChoiceLiteral(value=val, case=ChoiceCase.SENSITIVE) if len(val) == 1:
+                char_class_parts.append(val)
+            case ChoiceLiteral(value=val, case=ChoiceCase.SENSITIVE):
+                multi_sensitive.append(re.escape(val))
+            case ChoiceRange(start, end):
+                ranges.append((start, end))
+            case _:
                 raise ValueError(f"Unrecognized choice: {choice}")
-        else:
-            raise ValueError(f"Unrecognized choice type: {choice}")
 
     parts = []
     if char_class_parts or ranges:
