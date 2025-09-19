@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Mapping
 
-from .exceptions import PestParsingError
 from .grammar import parse
 from .grammar.optimizer import Optimizer
 from .grammar.optimizer import OptimizerStep
@@ -101,4 +100,4 @@ class Parser:
         if results:
             return Pairs([result.pair for result in results if result.pair])
 
-        raise PestParsingError(state.failure_message())
+        return state.raise_failure()

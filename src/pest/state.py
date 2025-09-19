@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 from typing import Iterator
 from typing import Sequence
 
+from typing_extensions import Never
+
+from .exceptions import PestParsingError
 from .grammar.expression import Success
-from .grammar.expression import Terminal
-from .grammar.expressions.rule import GrammarRule
 from .grammar.expressions.rule import Rule
 from .stack import Stack
 
@@ -17,6 +19,15 @@ if TYPE_CHECKING:
     from pest.grammar.expression import Expression
 
     from .parser import Parser
+
+
+@dataclass
+class Attempt:
+    """A parse attempt at a specific position."""
+
+    expr: Expression
+    pos: int
+    positive: bool  # True for positive, False for negative
 
 
 class ParserState:
@@ -32,9 +43,10 @@ class ParserState:
         "_atomic_depth",
         "stack",
         "cache",
-        "expr_stack",
         "rule_stack",
-        "failed_pos",
+        "attempts",
+        "furthest_failure",
+        "neg_pred",
     )
 
     def __init__(self, parser: Parser, input_: str) -> None:
@@ -42,11 +54,12 @@ class ParserState:
         self.input = input_
         # TODO: a snapshotting int class?
         self._atomic_depth: list[int] = [0]
-        self.stack: Stack[str] = Stack()
+        self.stack: Stack[str] = Stack()  # User stack
         self.cache: dict[tuple[int, int], list[Success] | None] = {}
-        self.expr_stack: list[tuple[Expression, int]] = []
         self.rule_stack: list[Rule] = []
-        self.failed_pos: int = 0
+        self.attempts: list[Attempt] = []
+        self.neg_pred: int = 0  # Negative predicate depth.
+        self.furthest_failure: tuple[int, list[Attempt]] | None = None
 
     @property
     def atomic_depth(self) -> int:
@@ -60,6 +73,7 @@ class ParserState:
 
     def parse(self, expr: Expression, pos: int) -> Iterator[Success]:
         """Parse `expr` or return a cached parse result."""
+        # XXX: Caching often slows things down, depending on the grammar.
         key = (pos, id(expr)) if expr.is_pure(self.parser.rules) else None
         if key and key in self.cache:
             cached = self.cache[key]
@@ -71,57 +85,87 @@ class ParserState:
         if isinstance(expr, Rule):
             self.rule_stack.append(expr)
 
-        self.expr_stack.append((expr, pos))
+        self.attempts.append(Attempt(expr, pos, self.neg_pred == 0))
         results = list(expr.parse(self, pos))
 
         if isinstance(expr, Rule):
             assert id(self.rule_stack.pop()) == id(expr)
 
+        # Empty `results` indicates a failed parse.
         if results:
             if key:
                 self.cache[key] = results
-
             yield from results
-            self.expr_stack.pop()
         else:
-            if pos > self.failed_pos:
-                self.failed_pos = pos
-
             if key:
                 self.cache[key] = None
 
-    def failure_message(self) -> str:
-        """Generate a human-readable error message for the furthest failure."""
-        pos = self.failed_pos
-        # TODO: better line break detection
+            if (
+                self.furthest_failure is None
+                or pos > self.furthest_failure[0]
+                or (pos == self.furthest_failure[0] and self.neg_pred == 0)
+            ):
+                # Save a copy of the stack at this failure point
+                self.furthest_failure = (pos, self.attempts.copy())
+
+        self.attempts.pop()
+
+    def raise_failure(self) -> Never:
+        """Return a PestParsingError populated with context info."""
+        if not self.furthest_failure:
+            raise PestParsingError("no parse attempts recorded", [], [], -1, "", (0, 0))
+
+        pos, attempts = self.furthest_failure
+
+        if not attempts:
+            raise PestParsingError(
+                f"error at {pos}: unknown failure", [], [], pos, "", (0, 0)
+            )
+
+        furthest = max(attempts, key=lambda a: a.pos)
+        expr = furthest.expr
+        pos = furthest.pos
+        positive = furthest.positive
+
         line = self.input.count("\n", 0, pos) + 1
         col = pos - self.input.rfind("\n", 0, pos)
-
         found = self.input[pos : pos + 10] or "end of input"
 
-        # Walk stack to find relevant context
-        rule = next(
-            (
-                e
-                for e, _ in reversed(self.expr_stack)
-                if isinstance(e, GrammarRule)
-                and e.name not in ("COMMENT", "WHITESPACE")
-            ),
-            None,
+        context = "expected" if positive else "unexpected"
+
+        # TODO: Find nearest rule. We don't want to show the names of internal
+        # expression classes.
+        rule = (
+            getattr(expr, "name", None)
+            if hasattr(expr, "name")
+            else expr.__class__.__name__
         )
 
-        non_terminal = next(
-            (e for e, _ in reversed(self.expr_stack) if not isinstance(e, Terminal)),
-            None,
+        # TODO: something with stack trace
+        stack_trace = " > ".join(
+            getattr(a.expr, "name", str(a.expr)) for a in attempts if a.positive
         )
 
-        expected = str(
-            non_terminal
-            or (self.expr_stack[-1][0] if self.expr_stack else "expression")
-        )
+        msg = f"error at {line}:{col} in {rule}: {context} {expr}, found {found!r}"
 
-        rule_str = f", in rule {rule.name}" if rule else ""
-        return f"error at {line}:{col}{rule_str}: expected {expected}, found {found!r}"
+        # TODO: if furthest is Choice, positive and negative come from Choice.expression
+
+        raise PestParsingError(
+            msg,
+            [
+                str(attempt.expr)
+                for attempt in self.furthest_failure[1]
+                if attempt.positive
+            ],
+            [
+                str(attempt.expr)
+                for attempt in self.furthest_failure[1]
+                if not attempt.positive
+            ],
+            pos,
+            "",  # TODO: current line
+            (line, col),
+        )
 
     def parse_implicit_rules(self, pos: int) -> Iterator[Success]:
         """Parse any implicit rules (`WHITESPACE` and `COMMENT`) starting at `pos`.
@@ -230,3 +274,12 @@ class ParserState:
         yield self
         self.atomic_depth = atomic_depth
         self.stack.restore()
+
+    @contextmanager
+    def negative_predicate(self) -> Iterator[ParserState]:
+        """A context manager that increments and decrements negative predicate depth."""
+        self.neg_pred += 1
+        try:
+            yield self
+        finally:
+            self.neg_pred -= 1
