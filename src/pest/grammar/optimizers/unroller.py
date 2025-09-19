@@ -24,6 +24,7 @@ from itertools import repeat
 from typing import TYPE_CHECKING
 from typing import Mapping
 
+from pest.grammar import Group
 from pest.grammar import Optional
 from pest.grammar import Repeat
 from pest.grammar import RepeatExact
@@ -38,10 +39,12 @@ if TYPE_CHECKING:
     from pest.grammar import Expression
 
 
-def unroll(expr: Expression, _rules: Mapping[str, Rule]) -> Expression:
+def unroll(expr: Expression, _rules: Mapping[str, Rule]) -> Expression:  # noqa: PLR0911
     """Transform Rep{Once,Exact,Min,Max,MinMax} to Seq."""
     match expr:
         case RepeatOnce(expression=inner):
+            if isinstance(inner, Group):
+                return Sequence(inner.expression, Repeat(inner))
             return Sequence(inner, Repeat(inner))
         case RepeatExact(expression=inner, number=num):
             return Sequence(*repeat(inner, num))

@@ -10,6 +10,7 @@ from .grammar import parse
 from .grammar.optimizer import Optimizer
 from .grammar.optimizer import OptimizerStep
 from .grammar.optimizer import PassDirection
+from .grammar.optimizers.inliners import inline_builtin
 from .grammar.optimizers.skippers import skip
 from .grammar.optimizers.squash_choice import squash_choice
 from .grammar.optimizers.unroller import unroll
@@ -26,9 +27,9 @@ if TYPE_CHECKING:
 
 DEFAULT_OPTIMIZER_PASSES = [
     OptimizerStep("skip", skip, PassDirection.PREORDER),
-    OptimizerStep("unroll", unroll, PassDirection.POSTORDER),
-    OptimizerStep("skip", skip, PassDirection.PREORDER),
+    OptimizerStep("inline built-in", inline_builtin, PassDirection.PREORDER),
     OptimizerStep("squash_choice", squash_choice, PassDirection.POSTORDER),
+    OptimizerStep("unroll", unroll, PassDirection.POSTORDER),
 ]
 
 DEFAULT_OPTIMIZER = Optimizer(DEFAULT_OPTIMIZER_PASSES)

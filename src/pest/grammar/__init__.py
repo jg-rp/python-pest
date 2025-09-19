@@ -17,6 +17,7 @@ from .expressions.rule import Rule
 from .expressions.sequence import Sequence
 from .expressions.terminals import CIString
 from .expressions.terminals import Identifier
+from .expressions.terminals import Range
 from .expressions.terminals import SkipUntil
 from .expressions.terminals import String
 from .parser import Parser
@@ -51,6 +52,7 @@ __all__ = (
     "RepeatExact",
     "Optional",
     "RegexExpression",
+    "Range",
 )
 
 

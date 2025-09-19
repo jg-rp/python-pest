@@ -59,7 +59,7 @@ class Optimizer:
                     expr = self._run_fixed_point(expr, step, rules, name, debug=debug)
                 else:
                     expr = self._run_once(expr, step, rules, name, debug=debug)
-            rules[name].expression = expr
+                rules[name].expression = expr
         return rules
 
     def _run_once(

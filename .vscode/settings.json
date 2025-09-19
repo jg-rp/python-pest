@@ -6,6 +6,7 @@
     "lookaheads",
     "POSTORDER",
     "PREORDER",
+    "squashable",
     "unroller",
     "unrollers"
   ]

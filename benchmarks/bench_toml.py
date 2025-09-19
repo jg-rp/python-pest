@@ -33,7 +33,7 @@ def run_unoptimized() -> None:
     unoptimized_http_parser.parse("toml", data)
 
 
-n_runs = 2
+n_runs = 10
 n_repeat = 3
 
 t_optimized = min(timeit.repeat(run_optimized, number=n_runs, repeat=n_repeat))

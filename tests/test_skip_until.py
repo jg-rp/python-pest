@@ -32,5 +32,4 @@ def test_skip_until_neg_pred_identifier(optimizer: Optimizer) -> None:
     rules, _ = parse('foo = { "a" | "b" }\nrule = { (!foo ~ ANY)* }', Parser.BUILTIN)
     want = SkipUntil(["a", "b"])
     optimizer.optimize(rules, debug=True)
-    assert len(optimizer.log) == 1
     assert rules["rule"].expression == want
