@@ -359,10 +359,7 @@ class SkipUntil(Terminal):
         self.subs = subs
 
     def __str__(self) -> str:
-        _subs = [
-            s.replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n")
-            for s in self.subs
-        ]
+        _subs = [repr(s)[1:-1] for s in self.subs]
         strings = " | ".join(f'"{s}"' for s in _subs)
         return f"(!({strings}) ~ ANY)*"
 

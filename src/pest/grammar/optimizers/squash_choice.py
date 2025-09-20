@@ -27,19 +27,20 @@ def squash_choice(expr: Expression, _rules: Mapping[str, Rule]) -> Expression:
         return expr
 
     exprs = expr.expressions
-    if _squashable(exprs):
-        return _squash(exprs, LazyChoiceRegex()) or expr
-    return expr
+    return _squash(exprs, LazyChoiceRegex()) or expr
 
 
 def _squashable(
     choices: list[Expression],
-) -> TypeGuard[list[String | CIString | Range | Rule]]:
-    return all(isinstance(e, (String, CIString | Range | Rule)) for e in choices)
+) -> TypeGuard[list[String | CIString | Choice | Range | Rule | LazyChoiceRegex]]:
+    return all(
+        isinstance(e, (String, CIString, Range, Rule, LazyChoiceRegex)) for e in choices
+    )
 
 
 def _squash(
-    exprs: list[String | CIString | Range | Rule], new_expr: LazyChoiceRegex
+    exprs: list[Expression],
+    new_expr: LazyChoiceRegex,
 ) -> LazyChoiceRegex | None:
     for expr in exprs:
         if isinstance(expr, String):
@@ -57,6 +58,10 @@ def _squash(
         ):
             if not _squash(expr.expression.expressions, new_expr):
                 return None
+        elif isinstance(expr, Choice) and _squashable(expr.expressions):
+            _squash(expr.expressions, new_expr)
+        elif isinstance(expr, LazyChoiceRegex):
+            new_expr.update(*expr._choices)  # noqa: SLF001
         else:
             return None
 

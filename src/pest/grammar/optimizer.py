@@ -15,6 +15,10 @@ from pest.grammar import Rule
 from pest.grammar.expressions.rule import BuiltInRule
 
 from .expression import Expression
+from .optimizers.inliners import inline_builtin
+from .optimizers.skippers import skip
+from .optimizers.squash_choice import squash_choice
+from .optimizers.unroller import unroll
 
 OptimizerPass = Callable[[Expression, Mapping[str, Rule]], Expression]
 
@@ -34,6 +38,14 @@ class OptimizerStep:
     func: Callable[[Expression, Mapping[str, Rule]], Expression]
     direction: PassDirection
     fixed_point: bool = False
+
+
+DEFAULT_OPTIMIZER_PASSES = [
+    OptimizerStep("skip", skip, PassDirection.PREORDER),
+    OptimizerStep("inline built-in", inline_builtin, PassDirection.PREORDER),
+    OptimizerStep("unroll", unroll, PassDirection.POSTORDER),
+    OptimizerStep("squash_choice", squash_choice, PassDirection.POSTORDER),
+]
 
 
 class Optimizer:
@@ -134,12 +146,4 @@ class Optimizer:
         return new_expr
 
 
-"""A grammar optimizer that does nothing."""
-
-
-class DummyOptimizer(Optimizer):
-    def optimize(
-        self, rules: Mapping[str, Rule], *, debug: bool = False
-    ) -> Mapping[str, Rule]:
-        """Apply optimization passes to all rules."""
-        return rules
+DEFAULT_OPTIMIZER = Optimizer(DEFAULT_OPTIMIZER_PASSES)

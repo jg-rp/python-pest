@@ -11,8 +11,8 @@ with open("tests/grammars/toml.pest", encoding="utf-8") as fd:
 
 rules, _ = parse(grammar, Parser.BUILTIN)
 
-rule = "toml"
-print(rules[rule].expression.tree_view())
+rule = "COMMENT"
+print(rules[rule].tree_view())
 
 optimizer = Optimizer(DEFAULT_OPTIMIZER_PASSES)
 optimized = optimizer.optimize(rules, debug=True)
@@ -22,7 +22,7 @@ for entry in optimizer.log:
     print(entry)
 
 print("")
-print(optimized[rule].expression.tree_view())
+print(optimized[rule].tree_view())
 
 
 # parser = Parser.from_grammar(grammar)

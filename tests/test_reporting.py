@@ -2,14 +2,13 @@ import pytest
 from _pytest.fixtures import SubRequest
 
 from pest import DEFAULT_OPTIMIZER
-from pest import DUMMY_OPTIMIZER
 from pest import Parser
 from pest import PestParsingError
 
 
 @pytest.fixture(scope="module", params=["not optimized", "optimized"])
 def parser(request: SubRequest) -> Parser:
-    optimizer = DEFAULT_OPTIMIZER if request.param == "optimized" else DUMMY_OPTIMIZER
+    optimizer = DEFAULT_OPTIMIZER if request.param == "optimized" else None
     with open("tests/grammars/reporting.pest", encoding="utf-8") as fd:
         return Parser.from_grammar(fd.read(), optimizer=optimizer)
 

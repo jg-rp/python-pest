@@ -6,14 +6,7 @@ from typing import TYPE_CHECKING
 from typing import Mapping
 
 from .grammar import parse
-from .grammar.optimizer import DummyOptimizer
-from .grammar.optimizer import Optimizer
-from .grammar.optimizer import OptimizerStep
-from .grammar.optimizer import PassDirection
-from .grammar.optimizers.inliners import inline_builtin
-from .grammar.optimizers.skippers import skip
-from .grammar.optimizers.squash_choice import squash_choice
-from .grammar.optimizers.unroller import unroll
+from .grammar.optimizer import DEFAULT_OPTIMIZER
 from .grammar.rules.ascii import ASCII_RULES
 from .grammar.rules.special import EOI
 from .grammar.rules.special import SOI
@@ -24,16 +17,7 @@ from .state import ParserState
 
 if TYPE_CHECKING:
     from .grammar.expressions import Rule
-
-DEFAULT_OPTIMIZER_PASSES = [
-    OptimizerStep("skip", skip, PassDirection.PREORDER),
-    OptimizerStep("inline built-in", inline_builtin, PassDirection.PREORDER),
-    OptimizerStep("squash_choice", squash_choice, PassDirection.POSTORDER),
-    OptimizerStep("unroll", unroll, PassDirection.POSTORDER),
-]
-
-DEFAULT_OPTIMIZER = Optimizer(DEFAULT_OPTIMIZER_PASSES)
-DUMMY_OPTIMIZER = DummyOptimizer([])
+    from .grammar.optimizer import Optimizer
 
 
 class Parser:
@@ -57,20 +41,21 @@ class Parser:
         rules: Mapping[str, Rule],
         doc: list[str] | None = None,
         *,
-        optimizer: Optimizer,
+        optimizer: Optimizer | None = None,
         debug: bool = False,
     ):
         # Built-in rules overwrite grammar defined rules.
         self.rules: dict[str, Rule] = {**self.BUILTIN, **rules}
         self.doc = doc
-        optimizer.optimize(self.rules, debug=debug)
+        if optimizer:
+            optimizer.optimize(self.rules, debug=debug)
 
     @classmethod
     def from_grammar(
         cls,
         grammar: str,
         *,
-        optimizer: Optimizer = DEFAULT_OPTIMIZER,
+        optimizer: Optimizer | None = DEFAULT_OPTIMIZER,
         debug: bool = False,
     ) -> Parser:
         """Parse `grammar` and return a new Parser for it."""
