@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 from typing import Mapping
 
 from .grammar import parse
+from .grammar.optimizer import DummyOptimizer
 from .grammar.optimizer import Optimizer
 from .grammar.optimizer import OptimizerStep
 from .grammar.optimizer import PassDirection
@@ -32,9 +33,7 @@ DEFAULT_OPTIMIZER_PASSES = [
 ]
 
 DEFAULT_OPTIMIZER = Optimizer(DEFAULT_OPTIMIZER_PASSES)
-
-"""A grammar optimizer that does nothing."""
-DUMMY_OPTIMIZER = Optimizer([])
+DUMMY_OPTIMIZER = DummyOptimizer([])
 
 
 class Parser:
@@ -94,8 +93,9 @@ class Parser:
 
     def parse(self, rule: str, input_: str) -> Pairs:
         """Parse `input_` starting from `rule`."""
-        state = ParserState(self, input_)
-        results = list(self.rules[rule].parse(state, 0))
+        rule_ = self.rules[rule]
+        state = ParserState(self, input_, rule_)
+        results = list(rule_.parse(state, 0))
 
         if results:
             return Pairs([result.pair for result in results if result.pair])

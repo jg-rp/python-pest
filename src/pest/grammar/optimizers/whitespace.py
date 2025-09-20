@@ -13,7 +13,10 @@ if TYPE_CHECKING:
     from pest.grammar import Expression
 
 
-def whitespace(expr: Expression, _rules: Mapping[str, Rule]) -> Expression:
-    """"""
-    # TODO:
-    raise NotImplementedError
+# def inline_comment_whitespace(expr: Expression, rules: Mapping[str, Rule]) -> Expression:
+#     """"""
+#     ws = rules.get("WHITESPACE")
+#     if not ws:
+#         return expr
+
+#     if isinstance(expr, Sequence):

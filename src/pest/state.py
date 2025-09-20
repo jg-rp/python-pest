@@ -11,6 +11,8 @@ from typing import Sequence
 from typing_extensions import Never
 
 from .exceptions import PestParsingError
+from .grammar import Choice
+from .grammar import NegativePredicate
 from .grammar.expression import Success
 from .grammar.expressions.rule import Rule
 from .stack import Stack
@@ -26,6 +28,7 @@ class Attempt:
     """A parse attempt at a specific position."""
 
     expr: Expression
+    rule: Rule | None
     pos: int
     positive: bool  # True for positive, False for negative
 
@@ -46,20 +49,25 @@ class ParserState:
         "rule_stack",
         "attempts",
         "furthest_failure",
-        "neg_pred",
+        "_neg_pred_depth",
+        "skip",
     )
 
-    def __init__(self, parser: Parser, input_: str) -> None:
+    def __init__(self, parser: Parser, input_: str, start_rule: Rule) -> None:
         self.parser = parser
         self.input = input_
         # TODO: a snapshotting int class?
-        self._atomic_depth: list[int] = [0]
+        self._atomic_depth: list[int] = [0]  # A stack so we can restore state.
+        self._neg_pred_depth: list[int] = [0]  # A stack so we can restore state.
+
         self.stack: Stack[str] = Stack()  # User stack
-        self.cache: dict[tuple[int, int], list[Success] | None] = {}
-        self.rule_stack: list[Rule] = []
+
+        # TODO: Simplify rule stack and attempts.
+        self.rule_stack: list[Rule] = [start_rule]
         self.attempts: list[Attempt] = []
-        self.neg_pred: int = 0  # Negative predicate depth.
         self.furthest_failure: tuple[int, list[Attempt]] | None = None
+
+        self.skip = parser.rules.get("SKIP")
 
     @property
     def atomic_depth(self) -> int:
@@ -71,21 +79,30 @@ class ParserState:
         """Set the current atomic depth."""
         self._atomic_depth[-1] = value
 
+    @property
+    def neg_pred_depth(self) -> int:
+        """The current negative predicate depth."""
+        return self._neg_pred_depth[-1]
+
+    @neg_pred_depth.setter
+    def neg_pred_depth(self, value: int) -> None:
+        """Set the current negative predicate depth."""
+        self._neg_pred_depth[-1] = value
+
     def parse(self, expr: Expression, pos: int) -> Iterator[Success]:
         """Parse `expr` or return a cached parse result."""
-        # XXX: Caching often slows things down, depending on the grammar.
-        key = (pos, id(expr)) if expr.is_pure(self.parser.rules) else None
-        if key and key in self.cache:
-            cached = self.cache[key]
-            if cached is not None:
-                yield from cached
-            return
-
         # TODO: context manager for rule stack?
         if isinstance(expr, Rule):
             self.rule_stack.append(expr)
 
-        self.attempts.append(Attempt(expr, pos, self.neg_pred == 0))
+        self.attempts.append(
+            Attempt(
+                expr,
+                self.rule_stack[-1] if self.rule_stack else None,
+                pos,
+                self.neg_pred_depth == 0,
+            )
+        )
         results = list(expr.parse(self, pos))
 
         if isinstance(expr, Rule):
@@ -93,21 +110,20 @@ class ParserState:
 
         # Empty `results` indicates a failed parse.
         if results:
-            if key:
-                self.cache[key] = results
             yield from results
-        else:
-            if key:
-                self.cache[key] = None
+        elif (
+            self.furthest_failure is None
+            or pos > self.furthest_failure[0]
+            or (pos == self.furthest_failure[0] and self.neg_pred_depth == 0)
+        ):
+            # Save a copy of the stack at this failure point
+            # XXX: If pos hasn't changed, we aren't tracking deepest rule
+            self.furthest_failure = (pos, self.attempts.copy())
 
-            if (
-                self.furthest_failure is None
-                or pos > self.furthest_failure[0]
-                or (pos == self.furthest_failure[0] and self.neg_pred == 0)
-            ):
-                # Save a copy of the stack at this failure point
-                self.furthest_failure = (pos, self.attempts.copy())
-
+        # Failed choices naturally get popped off the stack here. Instead of
+        # going out of our way to do extra tracking for every choice, we defer
+        # positive and negative attempt management until there is actually a
+        # parse failure. See `raise_failure`.
         self.attempts.pop()
 
     def raise_failure(self) -> Never:
@@ -132,36 +148,38 @@ class ParserState:
         found = self.input[pos : pos + 10] or "end of input"
 
         context = "expected" if positive else "unexpected"
-
-        # TODO: Find nearest rule. We don't want to show the names of internal
-        # expression classes.
-        rule = (
-            getattr(expr, "name", None)
-            if hasattr(expr, "name")
-            else expr.__class__.__name__
-        )
+        if furthest.rule:
+            rule = f" in {furthest.rule.name}"
+        else:
+            rule = ""
 
         # TODO: something with stack trace
-        stack_trace = " > ".join(
-            getattr(a.expr, "name", str(a.expr)) for a in attempts if a.positive
-        )
+        # stack_trace = " > ".join(
+        #     getattr(a.expr, "name", str(a.expr)) for a in attempts if a.positive
+        # )
 
-        msg = f"error at {line}:{col} in {rule}: {context} {expr}, found {found!r}"
+        msg = f"error at {line}:{col}{rule}: {context} {expr}, found {found!r}"
+
+        if isinstance(expr, Choice):
+            positives = [
+                str(e) for e in expr.children() if not isinstance(e, NegativePredicate)
+            ]
+            negatives = [
+                str(e.expression)
+                for e in expr.children()
+                if isinstance(e, NegativePredicate)
+            ]
+        else:
+            positives = [str(expr)] if positive else []
+            negatives = [str(expr)] if not positive else []
 
         # TODO: if furthest is Choice, positive and negative come from Choice.expression
+        # TODO: don't forget optimized choices.
 
         raise PestParsingError(
             msg,
-            [
-                str(attempt.expr)
-                for attempt in self.furthest_failure[1]
-                if attempt.positive
-            ],
-            [
-                str(attempt.expr)
-                for attempt in self.furthest_failure[1]
-                if not attempt.positive
-            ],
+            positives,
+            negatives,
             pos,
             "",  # TODO: current line
             (line, col),
@@ -177,7 +195,12 @@ class ParserState:
         if self.atomic_depth > 0:
             return
 
-        # TODO: combine and cache whitespace and comment rules in to one?
+        if self.skip:
+            # Optimized skip rule.
+            yield from self.parse(self.skip, pos)
+            return
+
+        # Unoptimized whitespace and comment rules.
         whitespace_rule = self.parser.rules.get("WHITESPACE")
         comment_rule = self.parser.rules.get("COMMENT")
 
@@ -254,32 +277,32 @@ class ParserState:
         """Mark the current state as a checkpoint."""
         self.stack.snapshot()
         self._atomic_depth.append(self.atomic_depth)
+        self._neg_pred_depth.append(self.neg_pred_depth)
 
     def ok(self) -> None:
         """Discard the last checkpoint after a successful match."""
         self.stack.drop_snapshot()
         self.atomic_depth = self._atomic_depth.pop()
+        self.neg_pred_depth = self._neg_pred_depth.pop()
 
     def restore(self) -> None:
         """Restore the state to the most recent checkpoint."""
         self.stack.restore()
         self._atomic_depth.pop()
+        self._neg_pred_depth.pop()
 
     @contextmanager
-    def suppress(self) -> Iterator[ParserState]:
+    def suppress(self, *, negative: bool = False) -> Iterator[ParserState]:
         """A context manager that resets parser state on exit."""
         self.stack.snapshot()
         # TODO: rule stack too?
         atomic_depth = self.atomic_depth
+        if negative:
+            self.neg_pred_depth += 1
+
         yield self
+
+        if negative:
+            self.neg_pred_depth -= 1
         self.atomic_depth = atomic_depth
         self.stack.restore()
-
-    @contextmanager
-    def negative_predicate(self) -> Iterator[ParserState]:
-        """A context manager that increments and decrements negative predicate depth."""
-        self.neg_pred += 1
-        try:
-            yield self
-        finally:
-            self.neg_pred -= 1

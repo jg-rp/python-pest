@@ -7,8 +7,12 @@ from enum import Enum
 from enum import auto
 from typing import Callable
 from typing import Mapping
+from typing import MutableMapping
 
-from pest.grammar.expressions import Rule
+from pest.grammar import Choice
+from pest.grammar import Repeat
+from pest.grammar import Rule
+from pest.grammar.expressions.rule import BuiltInRule
 
 from .expression import Expression
 
@@ -60,7 +64,24 @@ class Optimizer:
                 else:
                     expr = self._run_once(expr, step, rules, name, debug=debug)
                 rules[name].expression = expr
+
         return rules
+
+    def _optimize_skip_rule(self, rules: MutableMapping[str, Rule]) -> None:
+        """Combine WHITESPACE and COMMENT into a single SKIP rule."""
+        comment = rules.get("COMMENT")
+        whitespace = rules.get("WHITESPACE")
+
+        if comment and whitespace:
+            rules["SKIP"] = BuiltInRule(
+                "SKIP",
+                Repeat(Choice(whitespace.expression, comment.expression)),
+                "$",
+            )
+        elif comment:
+            rules["SKIP"] = BuiltInRule("SKIP", Repeat(comment.expression), "$")
+        elif whitespace:
+            rules["SKIP"] = BuiltInRule("SKIP", Repeat(whitespace.expression), "_")
 
     def _run_once(
         self,
@@ -111,3 +132,14 @@ class Optimizer:
         if debug and new_expr is not expr:
             self.log.append(f"{step.name}({start_rule_name}): {expr} → {new_expr}")
         return new_expr
+
+
+"""A grammar optimizer that does nothing."""
+
+
+class DummyOptimizer(Optimizer):
+    def optimize(
+        self, rules: Mapping[str, Rule], *, debug: bool = False
+    ) -> Mapping[str, Rule]:
+        """Apply optimization passes to all rules."""
+        return rules

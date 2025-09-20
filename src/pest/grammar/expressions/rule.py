@@ -62,7 +62,7 @@ class Rule(Expression):
 
         end = results[-1].pos
 
-        if self.modifier == "_":
+        if self.modifier == "_" or self.name == "SKIP":
             # Yield children without an enclosing Pair
             yield from results
         elif self.modifier == "@":
