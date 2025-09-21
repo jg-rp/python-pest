@@ -18,6 +18,6 @@ def inline_builtin(expr: Expression, _rules: Mapping[str, Rule]) -> Expression:
     Inline rules are always silent so we can replace Identifier with the rule's
     inner expression.
     """
-    if isinstance(expr, BuiltInRule):
+    if isinstance(expr, BuiltInRule) and expr.name != "EOI":
         return expr.expression
     return expr

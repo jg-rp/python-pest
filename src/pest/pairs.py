@@ -116,7 +116,7 @@ class Position(NamedTuple):
 class Pair:
     """A matching pair of Tokens and everything between them."""
 
-    __slots__ = ("input", "rule", "start", "end", "children", "tag")
+    __slots__ = ("input", "rule", "start", "end", "children", "tag", "name")
 
     def __init__(
         self,
@@ -133,6 +133,7 @@ class Pair:
         self.end = end
         self.children = children or []
         self.tag = tag
+        self.name = rule.name
 
     def __str__(self) -> str:
         return self.input[self.start : self.end]
@@ -192,7 +193,7 @@ class Pairs(Iterable[Pair]):
     def __iter__(self) -> Iterator[Pair]:
         yield from self._pairs
 
-    def tokens(self) -> Iterator["Token"]:
+    def tokens(self) -> Iterator[Token]:
         """Yield start and end tokens for each pair."""
         for pair in self._pairs:
             yield from pair.tokens()

@@ -90,7 +90,7 @@ class EOI(BuiltInRule):
     """A built-in rule matching the end of input."""
 
     def __init__(self) -> None:
-        super().__init__("EOI", _EOI(), SILENT, None)
+        super().__init__("EOI", _EOI(), 0, None)
 
     def __eq__(self, other: object) -> bool:
         return isinstance(other, EOI)
