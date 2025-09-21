@@ -5,35 +5,49 @@ https://pest.rs/book/examples/ini.html
 
 import json
 from collections import defaultdict
+from enum import StrEnum  # Requires Python 3.11+
+from enum import auto
 
+from pest import Pair
 from pest import Parser
 
 with open("examples/ini/ini.pest") as fd:
     grammar = fd.read()
 
 with open("examples/ini/example.ini", encoding="ascii") as fd:
-    file = fd.read()
+    unparsed_file = fd.read()
 
 parser = Parser.from_grammar(grammar, optimizer=None)
 
-# The name of the rule to start from and the input string to parse.
-pairs = parser.parse("file", file)
+
+# Optionally enumerate your grammar rules manually for better type checking and
+# autocomplete. We might add a codegen step to generate this automatically in
+# the future.
+class Rule(StrEnum):
+    """Possible rule names for our grammar."""
+
+    SECTION = auto()
+    PROPERTY = auto()
+    EOI = "EOI"
+
+
+# "file" is the name of the rule to start from.
+# Raises a `PestParsingError` if `unparsed_file` fails to parse.
+file = parser.parse("file", unparsed_file).first()
 
 properties: defaultdict[str, dict[str, str]] = defaultdict(dict)
 current_section_name = ""
 
-for pair in next(iter(pairs)):
-    if pair.name == "section":
-        current_section_name = str(next(iter(pair.inner())))
-    elif pair.name == "property":
-        inner_rules = iter(pair.inner())  # { name ~ "=" ~ value }
-        name = str(next(inner_rules))
-        value = str(next(inner_rules))
-        section = properties[current_section_name][name] = value
-    elif pair.name == "EOI":
-        break
-    else:
-        raise Exception(f"unexpected rule {pair.name!r}")
+for pair in file:
+    match pair:
+        case Pair(Rule.SECTION, [first]):  # { name }
+            current_section_name = str(first)
+        case Pair(Rule.PROPERTY, [name, value]):  # { name ~ "=" ~ value }
+            properties[current_section_name][str(name)] = str(value)
+        case Pair(Rule.EOI):
+            break
+        case _:
+            raise Exception(f"unexpected rule {pair.name!r}")
 
 
 print(json.dumps(dict(properties), indent=2))

@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import Iterator
 from typing import NamedTuple
+from typing import overload
 
 if TYPE_CHECKING:
     from .grammar.rule import Rule
@@ -116,7 +117,8 @@ class Position(NamedTuple):
 class Pair:
     """A matching pair of Tokens and everything between them."""
 
-    __slots__ = ("input", "rule", "start", "end", "children", "tag", "name")
+    __slots__ = ("children", "end", "input", "name", "rule", "start", "tag")
+    __match_args__ = ("name", "children", "start", "end")
 
     def __init__(
         self,
@@ -137,6 +139,9 @@ class Pair:
 
     def __str__(self) -> str:
         return self.input[self.start : self.end]
+
+    def __repr__(self) -> str:
+        return f"Pair(rule={self.name!r}, text={str(self)!r})"
 
     def as_str(self) -> str:
         """Return the substring pointed to by this token pair."""
@@ -181,8 +186,18 @@ class Pair:
         """Return the line and column number of this pair's start position."""
         return self.span().start_pos().line_col()
 
+    @property
+    def text(self) -> str:
+        """The substring pointed to by this token pair."""
+        return self.input[self.start : self.end]
 
-class Pairs(Iterable[Pair]):
+    @property
+    def inner_texts(self) -> list[str]:
+        """The list of substrings pointed to by this pair's children."""
+        return [str(c) for c in self.children]
+
+
+class Pairs(Sequence[Pair]):
     """An iterable over instances of `Pair`."""
 
     __slots__ = ("_pairs",)
@@ -192,6 +207,18 @@ class Pairs(Iterable[Pair]):
 
     def __iter__(self) -> Iterator[Pair]:
         yield from self._pairs
+
+    def __len__(self) -> int:
+        return len(self._pairs)
+
+    @overload
+    def __getitem__(self, index: int) -> Pair: ...
+
+    @overload
+    def __getitem__(self, index: slice) -> Sequence[Pair]: ...
+
+    def __getitem__(self, index: int | slice) -> Pair | Sequence[Pair]:
+        return self._pairs[index]
 
     def tokens(self) -> Iterator[Token]:
         """Yield start and end tokens for each pair."""
@@ -213,3 +240,8 @@ class Pairs(Iterable[Pair]):
 
         for pair in self._pairs:
             yield from _flatten(pair)
+
+    def first(self) -> Pair:
+        """Return the single root pair."""
+        assert len(self) == 1
+        return self[0]
