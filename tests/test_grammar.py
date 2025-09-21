@@ -918,13 +918,18 @@ def test_repeat_mutate_stack(parser: Parser) -> None:
 
 
 def test_checkpoint_restore(parser: Parser) -> None:
-    # XXX: make EOI non-silent?
     pairs = parser.parse("checkpoint_restore", "a")
     assert pairs.as_list() == [
         {
             "rule": "checkpoint_restore",
             "span": {"str": "a", "start": 0, "end": 1},
-            "inner": [],
+            "inner": [
+                {
+                    "rule": "EOI",
+                    "span": {"str": "", "start": 1, "end": 1},
+                    "inner": [],
+                }
+            ],
         }
     ]
 

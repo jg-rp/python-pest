@@ -7,6 +7,7 @@ from typing import Mapping
 
 from .grammar import parse
 from .grammar.optimizer import DEFAULT_OPTIMIZER
+from .grammar.rule import BuiltInRule
 from .grammar.rules.ascii import ASCII_RULES
 from .grammar.rules.special import EOI
 from .grammar.rules.special import SOI
@@ -86,3 +87,12 @@ class Parser:
             return Pairs([result.pair for result in results if result.pair])
 
         return state.raise_failure()
+
+    def tree_view(self) -> str:
+        """Return a tree view for each non-built-in rule in this grammar."""
+        trees = [
+            rule.tree_view()
+            for rule in self.rules.values()
+            if not isinstance(rule, BuiltInRule)
+        ]
+        return "\n\n".join(trees)

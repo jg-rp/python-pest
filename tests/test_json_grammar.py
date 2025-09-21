@@ -290,6 +290,4 @@ def test_line_col_span(parser: Parser) -> None:
             span_str = str(span).replace("\n", "\\n")
             out.append(f"({line}:{col}) {span_str}\n")
 
-    # XXX: I've removed the "one past the end" token from our copy of
-    # example.line-col.txt.
     assert "".join(out).strip() == expected.strip()

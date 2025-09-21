@@ -99,7 +99,7 @@ class Position(NamedTuple):
                 break
 
         if target_line_index == -1:
-            raise ValueError("index is out of bounds for the given string")
+            return len(lines) + 1, 1
 
         # 1-based
         line_number = target_line_index + 1

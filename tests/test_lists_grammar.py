@@ -22,7 +22,8 @@ def parser(request: SubRequest) -> Parser:
 def test_item(parser: Parser) -> None:
     pairs = parser.parse("lists", "- a")
     assert pairs.as_list() == [
-        {"rule": "item", "span": {"str": "a", "start": 2, "end": 3}, "inner": []}
+        {"rule": "item", "span": {"str": "a", "start": 2, "end": 3}, "inner": []},
+        {"rule": "EOI", "span": {"str": "", "start": 3, "end": 3}, "inner": []},
     ]
 
 
@@ -31,6 +32,7 @@ def test_items(parser: Parser) -> None:
     assert pairs.as_list() == [
         {"rule": "item", "span": {"str": "a", "start": 2, "end": 3}, "inner": []},
         {"rule": "item", "span": {"str": "b", "start": 6, "end": 7}, "inner": []},
+        {"rule": "EOI", "span": {"str": "", "start": 7, "end": 7}, "inner": []},
     ]
 
 
@@ -66,6 +68,7 @@ def test_nested_item(parser: Parser) -> None:
                 }
             ],
         },
+        {"rule": "EOI", "span": {"str": "", "start": 9, "end": 9}, "inner": []},
     ]
 
 
@@ -89,6 +92,7 @@ def test_nested_items(parser: Parser) -> None:
                 },
             ],
         },
+        {"rule": "EOI", "span": {"str": "", "start": 15, "end": 15}, "inner": []},
     ]
 
 
@@ -118,6 +122,7 @@ def test_nested_two_levels(parser: Parser) -> None:
                 },
             ],
         },
+        {"rule": "EOI", "span": {"str": "", "start": 17, "end": 17}, "inner": []},
     ]
 
 
@@ -137,4 +142,5 @@ def test_nested_then_not(parser: Parser) -> None:
             ],
         },
         {"rule": "item", "span": {"str": "c", "start": 12, "end": 13}, "inner": []},
+        {"rule": "EOI", "span": {"str": "", "start": 13, "end": 13}, "inner": []},
     ]

@@ -63,7 +63,17 @@ def test_select(parser: Parser) -> None:
                 }
             ],
         },
-        {"rule": "EOF", "span": {"str": "", "start": 19, "end": 19}, "inner": []},
+        {
+            "rule": "EOF",
+            "span": {"str": "", "start": 19, "end": 19},
+            "inner": [
+                {
+                    "rule": "EOI",
+                    "span": {"str": "", "start": 19, "end": 19},
+                    "inner": [],
+                },
+            ],
+        },
     ]
 
 
@@ -92,7 +102,17 @@ def test_create_user(parser: Parser) -> None:
                 },
             ],
         },
-        {"rule": "EOF", "span": {"str": "", "start": 56, "end": 56}, "inner": []},
+        {
+            "rule": "EOF",
+            "span": {"str": "", "start": 56, "end": 56},
+            "inner": [
+                {
+                    "rule": "EOI",
+                    "span": {"str": "", "start": 56, "end": 56},
+                    "inner": [],
+                },
+            ],
+        },
     ]
 
 
@@ -444,5 +464,15 @@ def test_insert_from_select(parser: Parser) -> None:
                 }
             ],
         },
-        {"rule": "EOF", "span": {"str": "", "start": 196, "end": 196}, "inner": []},
+        {
+            "rule": "EOF",
+            "span": {"str": "", "start": 196, "end": 196},
+            "inner": [
+                {
+                    "rule": "EOI",
+                    "span": {"str": "", "start": 196, "end": 196},
+                    "inner": [],
+                },
+            ],
+        },
     ]

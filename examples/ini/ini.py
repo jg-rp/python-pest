@@ -17,7 +17,7 @@ with open("examples/ini/ini.pest") as fd:
 with open("examples/ini/example.ini", encoding="ascii") as fd:
     unparsed_file = fd.read()
 
-parser = Parser.from_grammar(grammar, optimizer=None)
+parser = Parser.from_grammar(grammar)
 
 
 # Optionally enumerate your grammar rules manually for better type checking and
@@ -40,8 +40,8 @@ current_section_name = ""
 
 for pair in file:
     match pair:
-        case Pair(Rule.SECTION, [first]):  # { name }
-            current_section_name = str(first)
+        case Pair(Rule.SECTION, [name]):  # { name }
+            current_section_name = str(name)
         case Pair(Rule.PROPERTY, [name, value]):  # { name ~ "=" ~ value }
             properties[current_section_name][str(name)] = str(value)
         case Pair(Rule.EOI):
