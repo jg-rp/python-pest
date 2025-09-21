@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Mapping
-from typing import TypeGuard
 
 from pest.grammar import Choice
 from pest.grammar import CIString
@@ -30,14 +29,6 @@ def squash_choice(expr: Expression, _rules: Mapping[str, Rule]) -> Expression:
     return _squash(exprs, LazyChoiceRegex()) or expr
 
 
-def _squashable(
-    choices: list[Expression],
-) -> TypeGuard[list[String | CIString | Choice | Range | Rule | LazyChoiceRegex]]:
-    return all(
-        isinstance(e, (String, CIString, Range, Rule, LazyChoiceRegex)) for e in choices
-    )
-
-
 def _squash(
     exprs: list[Expression],
     new_expr: LazyChoiceRegex,
@@ -51,14 +42,10 @@ def _squash(
             new_expr.update(expr)
         elif isinstance(expr, Range):
             new_expr.update(ChoiceRange(expr.start, expr.stop))
-        elif (
-            isinstance(expr, Rule)
-            and isinstance(expr.expression, Choice)
-            and _squashable(expr.expression.expressions)
-        ):
+        elif isinstance(expr, Rule) and isinstance(expr.expression, Choice):
             if not _squash(expr.expression.expressions, new_expr):
                 return None
-        elif isinstance(expr, Choice) and _squashable(expr.expressions):
+        elif isinstance(expr, Choice):
             _squash(expr.expressions, new_expr)
         elif isinstance(expr, LazyChoiceRegex):
             new_expr.update(*expr._choices)  # noqa: SLF001

@@ -16,6 +16,29 @@ from pest.pairs import Pair
 if TYPE_CHECKING:
     from pest.state import ParserState
 
+SILENT = 1 << 1  # _
+ATOMIC = 1 << 2  # @
+COMPOUND = 1 << 3  # $
+NONATOMIC = 1 << 4  # !
+
+SILENT_ATOMIC = SILENT | ATOMIC
+SILENT_COMPOUND = SILENT | COMPOUND
+SILENT_NONATOMIC = SILENT | NONATOMIC
+
+MODIFIER_SYMBOLS = {
+    SILENT: "_",
+    ATOMIC: "@",
+    COMPOUND: "$",
+    NONATOMIC: "!",
+}
+
+MODIFIER_MAP = {v: k for k, v in MODIFIER_SYMBOLS.items()}
+
+
+def modifier_to_str(flags: int) -> str:
+    """Convert a modifier bit field into a string of symbols, in defined order."""
+    return "".join(symbol for bit, symbol in MODIFIER_SYMBOLS.items() if flags & bit)
+
 
 class Rule(Expression):
     """Base class for all rules."""
@@ -26,7 +49,7 @@ class Rule(Expression):
         self,
         name: str,
         expression: Expression,
-        modifier: str | None = None,
+        modifier: int,
         doc: Iterable[str] | None = None,
     ):
         super().__init__(tag=None)
@@ -37,35 +60,31 @@ class Rule(Expression):
 
     def __str__(self) -> str:
         doc = "".join(f"///{line}\n" for line in self.doc) if self.doc else ""
-        modifier = self.modifier if self.modifier else ""
+        modifier = modifier_to_str(self.modifier)
         return f"{doc}{self.name} = {modifier}{{ {self.expression} }}"
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
-        """Attempt to match this expression against the input at `start`.
-
-        Args:
-            state: The current parser state.
-            start: The index in the input string where parsing begins.
-        """
+        """Attempt to match this expression against the input at `start`."""
         restore_atomic_depth = state.atomic_depth
 
-        if self.modifier in ("@", "$"):
+        if self.modifier & (ATOMIC | COMPOUND):
             state.atomic_depth += 1
-        elif self.modifier == "!":
+        elif self.modifier & NONATOMIC:
             state.atomic_depth = 0
 
         results = list(state.parse(self.expression, start))
 
+        # TODO: let ParserState restore atomic depth
         if not results:
             state.atomic_depth = restore_atomic_depth
             return
 
         end = results[-1].pos
 
-        if self.modifier == "_" or self.name == "SKIP":
+        if self.modifier & SILENT:
             # Yield children without an enclosing Pair
             yield from results
-        elif self.modifier == "@":
+        elif self.modifier & ATOMIC:
             if isinstance(self.expression, Rule):
                 rule: Rule | None = self.expression
             elif isinstance(self.expression, Identifier):
@@ -73,7 +92,7 @@ class Rule(Expression):
             else:
                 rule = None
 
-            if not rule or rule.modifier not in ("!", "$"):
+            if not rule or not rule.modifier & (NONATOMIC | COMPOUND):
                 # Atomic rule silences children
                 yield Success(
                     Pair(

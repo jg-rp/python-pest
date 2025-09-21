@@ -14,7 +14,7 @@ from pest.grammar.expression import Success
 from pest.grammar.expression import Terminal
 
 if TYPE_CHECKING:
-    from pest.grammar.expressions.rule import Rule
+    from pest.grammar.rule import Rule
     from pest.state import ParserState
 
 

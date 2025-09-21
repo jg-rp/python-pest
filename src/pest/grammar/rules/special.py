@@ -9,7 +9,8 @@ from typing_extensions import Self
 
 from pest.grammar.expression import Expression
 from pest.grammar.expression import Success
-from pest.grammar.expressions.rule import BuiltInRule
+from pest.grammar.rule import SILENT
+from pest.grammar.rule import BuiltInRule
 
 if TYPE_CHECKING:
     from pest.state import ParserState
@@ -19,7 +20,7 @@ class Any(BuiltInRule):
     """A built-in rule matching any single "character"."""
 
     def __init__(self) -> None:
-        super().__init__("ANY", _Any(), "_", None)
+        super().__init__("ANY", _Any(), SILENT, None)
 
     def __eq__(self, other: object) -> bool:
         return isinstance(other, Any)
@@ -54,7 +55,7 @@ class SOI(BuiltInRule):
     """A built-in rule matching the start of input."""
 
     def __init__(self) -> None:
-        super().__init__("SOI", _SOI(), "_", None)
+        super().__init__("SOI", _SOI(), SILENT, None)
 
     def __eq__(self, other: object) -> bool:
         return isinstance(other, SOI)
@@ -89,7 +90,7 @@ class EOI(BuiltInRule):
     """A built-in rule matching the end of input."""
 
     def __init__(self) -> None:
-        super().__init__("EOI", _EOI(), "_", None)
+        super().__init__("EOI", _EOI(), SILENT, None)
 
     def __eq__(self, other: object) -> bool:
         return isinstance(other, EOI)

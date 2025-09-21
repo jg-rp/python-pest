@@ -8,7 +8,7 @@ from typing import Iterator
 from typing import NamedTuple
 
 if TYPE_CHECKING:
-    from .grammar.expressions.rule import Rule
+    from .grammar.rule import Rule
 
 
 class Token:

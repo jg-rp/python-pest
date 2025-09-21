@@ -7,9 +7,10 @@ from typing import TYPE_CHECKING
 from typing_extensions import Self
 
 from pest.grammar.expressions.choice import Choice
-from pest.grammar.expressions.rule import BuiltInRule
 from pest.grammar.expressions.terminals import Range
 from pest.grammar.expressions.terminals import String
+from pest.grammar.rule import SILENT
+from pest.grammar.rule import BuiltInRule
 
 if TYPE_CHECKING:
     from pest.grammar.expression import Expression
@@ -38,7 +39,7 @@ class ASCIIRule(BuiltInRule):
             expr: Expression = Range(*char_ranges)
         else:
             expr = Choice(*[Range(*chars) for chars in char_ranges])
-        super().__init__(name, expr, "_")
+        super().__init__(name, expr, SILENT)
 
     def with_children(self, expressions: list[Expression]) -> Self:
         """Return a new instance of this expression with child expressions replaced."""
@@ -51,6 +52,6 @@ ASCII_RULES = {
         name: ASCIIRule(name, char_range) for name, char_range in ASCII_RULE_MAP.items()
     },
     "NEWLINE": BuiltInRule(
-        "NEWLINE", Choice(String("\n"), String("\r\n"), String("\r")), "_"
+        "NEWLINE", Choice(String("\n"), String("\r\n"), String("\r")), SILENT
     ),
 }

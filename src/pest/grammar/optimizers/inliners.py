@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Mapping
 
-from pest.grammar.expressions.rule import BuiltInRule
+from pest.grammar.rule import BuiltInRule
 
 if TYPE_CHECKING:
     from pest.grammar import Expression

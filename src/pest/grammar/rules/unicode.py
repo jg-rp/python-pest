@@ -7,7 +7,8 @@ from typing import TYPE_CHECKING
 from typing_extensions import Self
 
 from pest.grammar.expression import RegexExpression
-from pest.grammar.expressions.rule import BuiltInRule
+from pest.grammar.rule import SILENT
+from pest.grammar.rule import BuiltInRule
 
 if TYPE_CHECKING:
     from pest.grammar.expression import Expression
@@ -19,7 +20,7 @@ class UnicodePropertyRule(BuiltInRule):
     __slots__ = ()
 
     def __init__(self, pattern: str, name: str):
-        super().__init__(name, RegexExpression(pattern), "_")
+        super().__init__(name, RegexExpression(pattern), SILENT)
 
     def __str__(self) -> str:
         return self.name

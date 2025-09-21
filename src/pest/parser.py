@@ -16,8 +16,8 @@ from .pairs import Pairs
 from .state import ParserState
 
 if TYPE_CHECKING:
-    from .grammar.expressions import Rule
     from .grammar.optimizer import Optimizer
+    from .grammar.rule import Rule
 
 
 class Parser:

@@ -14,12 +14,12 @@ if TYPE_CHECKING:
     from pest.grammar import Expression
 
 
-def inline_whitespace(expr: Expression, rules: Mapping[str, Rule]) -> Expression:
-    """"""
-    ws = rules.get("WHITESPACE")
-    if not ws or not isinstance(ws.expression, LazyChoiceRegex):
-        return expr
+# def inline_whitespace(expr: Expression, rules: Mapping[str, Rule]) -> Expression:
+#     """"""
+#     ws = rules.get("WHITESPACE")
+#     if not ws or not isinstance(ws.expression, LazyChoiceRegex):
+#         return expr
 
-    # TODO: Silent and atomic bit mask?
-    # TODO: this is a special pass that does not fit into OptimizerStep
-    # TODO:
+# TODO: Silent and atomic bit mask?
+# TODO: this is a special pass that does not fit into OptimizerStep
+# TODO:

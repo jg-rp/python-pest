@@ -14,7 +14,7 @@ from .exceptions import PestParsingError
 from .grammar import Choice
 from .grammar import NegativePredicate
 from .grammar.expression import Success
-from .grammar.expressions.rule import Rule
+from .grammar.rule import Rule
 from .stack import Stack
 
 if TYPE_CHECKING:

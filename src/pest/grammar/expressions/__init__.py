@@ -9,8 +9,6 @@ from .postfix import RepeatOnce
 from .postfix import RepeatRange
 from .prefix import NegativePredicate
 from .prefix import PositivePredicate
-from .rule import GrammarRule
-from .rule import Rule
 from .sequence import Sequence
 from .terminals import CIString
 from .terminals import Drop
@@ -30,8 +28,6 @@ __all__ = (
     "Choice",
     "Drop",
     "Group",
-    "GrammarRule",
-    "Rule",
     "Sequence",
     "CIString",
     "Identifier",

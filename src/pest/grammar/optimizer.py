@@ -12,7 +12,10 @@ from typing import MutableMapping
 from pest.grammar import Choice
 from pest.grammar import Repeat
 from pest.grammar import Rule
-from pest.grammar.expressions.rule import BuiltInRule
+from pest.grammar.rule import COMPOUND
+from pest.grammar.rule import SILENT
+from pest.grammar.rule import SILENT_COMPOUND
+from pest.grammar.rule import BuiltInRule
 
 from .expression import Expression
 from .optimizers.inliners import inline_builtin
@@ -81,6 +84,7 @@ class Optimizer:
 
     def _optimize_skip_rule(self, rules: MutableMapping[str, Rule]) -> None:
         """Combine WHITESPACE and COMMENT into a single SKIP rule."""
+        # TODO: use me
         comment = rules.get("COMMENT")
         whitespace = rules.get("WHITESPACE")
 
@@ -88,12 +92,14 @@ class Optimizer:
             rules["SKIP"] = BuiltInRule(
                 "SKIP",
                 Repeat(Choice(whitespace.expression, comment.expression)),
-                "$",
+                SILENT_COMPOUND,  # TODO: only after inlining whitespace
             )
         elif comment:
-            rules["SKIP"] = BuiltInRule("SKIP", Repeat(comment.expression), "$")
+            rules["SKIP"] = BuiltInRule(
+                "SKIP", Repeat(comment.expression), SILENT_COMPOUND
+            )
         elif whitespace:
-            rules["SKIP"] = BuiltInRule("SKIP", Repeat(whitespace.expression), "_")
+            rules["SKIP"] = BuiltInRule("SKIP", Repeat(whitespace.expression), SILENT)
 
     def _run_once(
         self,

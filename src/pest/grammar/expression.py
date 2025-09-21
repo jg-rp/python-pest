@@ -13,9 +13,10 @@ import regex as re
 from typing_extensions import Self
 
 if TYPE_CHECKING:
-    from pest.grammar.expressions.rule import Rule
     from pest.pairs import Pair
     from pest.state import ParserState
+
+    from .rule import Rule
 
 
 class Success(NamedTuple):

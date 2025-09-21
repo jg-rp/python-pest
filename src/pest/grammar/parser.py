@@ -9,7 +9,6 @@ from .exceptions import PestGrammarSyntaxError
 from .expressions import Choice
 from .expressions import CIString
 from .expressions import Drop
-from .expressions import GrammarRule
 from .expressions import Group
 from .expressions import Identifier
 from .expressions import NegativePredicate
@@ -29,9 +28,11 @@ from .expressions import RepeatMax
 from .expressions import RepeatMin
 from .expressions import RepeatOnce
 from .expressions import RepeatRange
-from .expressions import Rule
 from .expressions import Sequence
 from .expressions import String
+from .rule import MODIFIER_MAP
+from .rule import GrammarRule
+from .rule import Rule
 from .tokens import Token
 from .tokens import TokenKind
 
@@ -131,10 +132,10 @@ class Parser:
 
         return rules
 
-    def parse_modifier(self) -> str | None:
+    def parse_modifier(self) -> int:
         if self.current().kind == TokenKind.MODIFIER:
-            return self.next().value
-        return None
+            return MODIFIER_MAP.get(self.next().value, 0)
+        return 0
 
     def parse_expression(self, precedence: int = PRECEDENCE_LOWEST) -> Expression:  # noqa: PLR0912, PLR0915
         if self.current().kind == TokenKind.CHOICE_OP:
