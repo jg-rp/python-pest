@@ -24,16 +24,16 @@ parser = Parser.from_grammar(grammar)
 # autocomplete. We might add a codegen step to generate this automatically in
 # the future.
 class Rule(StrEnum):
-    """Possible rule names for our grammar."""
+    """Rule names for our grammar."""
 
+    FILE = auto()
     SECTION = auto()
     PROPERTY = auto()
     EOI = "EOI"
 
 
-# "file" is the name of the rule to start from.
 # Raises a `PestParsingError` if `unparsed_file` fails to parse.
-file = parser.parse("file", unparsed_file).first()
+file = parser.parse(Rule.FILE, unparsed_file).first()
 
 properties: defaultdict[str, dict[str, str]] = defaultdict(dict)
 current_section_name = ""

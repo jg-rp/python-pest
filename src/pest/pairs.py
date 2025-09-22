@@ -243,5 +243,4 @@ class Pairs(Sequence[Pair]):
 
     def first(self) -> Pair:
         """Return the single root pair."""
-        assert len(self) == 1
         return self[0]
