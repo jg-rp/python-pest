@@ -57,7 +57,7 @@ class Push(Expression):
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Attempt to match this expression against the input at `start`."""
-        result = list(state.parse(self.expression, start))
+        result = list(state.parse(self.expression, start, self.tag))
         if not result:
             return
 
@@ -261,7 +261,7 @@ class Identifier(Terminal):
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Attempt to match this expression against the input at `start`."""
         # TODO: Assumes the rule exists.
-        yield from state.parse(state.parser.rules[self.value], start)
+        yield from state.parse(state.parser.rules[self.value], start, self.tag)
 
     def is_pure(self, rules: dict[str, Rule], seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""

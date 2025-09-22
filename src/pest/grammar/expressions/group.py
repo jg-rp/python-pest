@@ -41,7 +41,7 @@ class Group(Expression):
         """
         # XXX: Do we need a `Group` expression?
         # A group might have a tag.
-        yield from state.parse(self.expression, start)
+        yield from state.parse(self.expression, start, self.tag)
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""

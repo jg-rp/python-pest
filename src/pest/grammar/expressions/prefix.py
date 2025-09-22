@@ -37,7 +37,7 @@ class PositivePredicate(Expression):
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
         with state.suppress() as _state:
-            pairs = list(_state.parse(self.expression, start))
+            pairs = list(_state.parse(self.expression, start, self.tag))
 
         if pairs:
             yield Success(None, start)
@@ -74,7 +74,7 @@ class NegativePredicate(Expression):
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Try to parse all parts in sequence starting at `pos`."""
         with state.suppress(negative=True) as _state:
-            pairs = list(_state.parse(self.expression, start))
+            pairs = list(_state.parse(self.expression, start, self.tag))
 
         if not pairs:
             yield Success(None, start)

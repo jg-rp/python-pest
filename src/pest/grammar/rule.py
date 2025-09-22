@@ -72,7 +72,7 @@ class Rule(Expression):
         elif self.modifier & NONATOMIC:
             state.atomic_depth = 0
 
-        results = list(state.parse(self.expression, start))
+        results = list(state.parse(self.expression, start, self.tag))
 
         # TODO: let ParserState restore atomic depth
         if not results:

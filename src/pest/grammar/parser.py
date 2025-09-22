@@ -142,7 +142,7 @@ class Parser:
             self.next()  # Ignore leading choice operator.
 
         if self.current().kind == TokenKind.TAG:
-            tag: str | None = self.next().value
+            tag: str | None = self.next().value[1:]
             self.eat(TokenKind.ASSIGN_OP)
         else:
             tag = None

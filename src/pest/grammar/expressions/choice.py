@@ -41,7 +41,7 @@ class Choice(Expression):
         """Attempt to match this expression against the input at `start`."""
         for expr in self.expressions:
             state.snapshot()
-            result = list(state.parse(expr, start))
+            result = list(state.parse(expr, start, self.tag))
             if result:
                 state.ok()
                 yield from result

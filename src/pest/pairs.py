@@ -141,7 +141,7 @@ class Pair:
         return self.input[self.start : self.end]
 
     def __repr__(self) -> str:
-        return f"Pair(rule={self.name!r}, text={str(self)!r})"
+        return f"Pair(rule={self.name!r}, text={str(self)!r}, tag={self.tag!r})"
 
     def as_str(self) -> str:
         """Return the substring pointed to by this token pair."""
@@ -244,3 +244,14 @@ class Pairs(Sequence[Pair]):
     def first(self) -> Pair:
         """Return the single root pair."""
         return self[0]
+
+    def find_first_tagged(self, label: str) -> Pair | None:
+        """Finds the first pair that has its node tagged with `label`."""
+        for pair in self.flatten():
+            if pair.tag == label:
+                return pair
+        return None
+
+    def find_tagged(self, label: str) -> Iterator[Pair]:
+        """Iterate over pairs tagged with `label`."""
+        return (p for p in self.flatten() if p.tag == label)

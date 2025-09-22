@@ -40,7 +40,7 @@ class Optional(Expression):
                    any memoization or error-tracking structures.
             start: The index in the input string where parsing begins.
         """
-        results = list(state.parse(self.expression, start))
+        results = list(state.parse(self.expression, start, self.tag))
         if results:
             yield from results
         else:
@@ -80,7 +80,7 @@ class Repeat(Expression):
 
         while True:
             state.snapshot()
-            results = list(state.parse(self.expression, position))
+            results = list(state.parse(self.expression, position, self.tag))
 
             if not results:
                 state.restore()
@@ -126,7 +126,7 @@ class RepeatOnce(Expression):
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Attempt to match this expression against the input at `start`."""
         state.snapshot()
-        results = list(state.parse(self.expression, start))
+        results = list(state.parse(self.expression, start, self.tag))
 
         if not results:
             state.restore()
@@ -143,7 +143,7 @@ class RepeatOnce(Expression):
 
         while True:
             state.snapshot()
-            results = list(state.parse(self.expression, position))
+            results = list(state.parse(self.expression, position, self.tag))
             if not results:
                 state.restore()
                 break
@@ -191,7 +191,7 @@ class RepeatExact(Expression):
         state.snapshot()
 
         while True:
-            results = list(state.parse(self.expression, position))
+            results = list(state.parse(self.expression, position, self.tag))
 
             if not results:
                 break
@@ -246,7 +246,7 @@ class RepeatMin(Expression):
         state.snapshot()
 
         while True:
-            results = list(state.parse(self.expression, position))
+            results = list(state.parse(self.expression, position, self.tag))
             if not results:
                 break
             position = results[-1].pos
@@ -298,7 +298,7 @@ class RepeatMax(Expression):
         state.snapshot()
 
         for i in range(self.number):
-            results = list(state.parse(self.expression, position))
+            results = list(state.parse(self.expression, position, self.tag))
             if not results:
                 break
 
@@ -354,7 +354,7 @@ class RepeatRange(Expression):
         state.snapshot()
 
         while True:
-            results = list(state.parse(self.expression, position))
+            results = list(state.parse(self.expression, position, self.tag))
             if not results:
                 break
             position = results[-1].pos

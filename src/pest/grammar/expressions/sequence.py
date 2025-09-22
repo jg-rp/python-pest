@@ -40,7 +40,7 @@ class Sequence(Expression):
         state.snapshot()
 
         for i, expr in enumerate(self.expressions):
-            result = list(state.parse(expr, position))
+            result = list(state.parse(expr, position, self.tag))
             if not result:
                 state.restore()
                 return
