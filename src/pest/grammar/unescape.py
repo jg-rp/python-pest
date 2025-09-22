@@ -33,7 +33,6 @@ def _decode_escape_sequence(  # noqa: PLR0911
         raise PestGrammarSyntaxError("incomplete escape sequence", token=token) from err
 
     # TODO: match these to Rust?
-
     if ch == quote:
         return quote, index
     if ch == "\\":
@@ -50,6 +49,8 @@ def _decode_escape_sequence(  # noqa: PLR0911
         return "\r", index
     if ch == "t":
         return "\t", index
+    if ch == "x":
+        return chr(int(value[index + 1 : index + 3], 16)), index + 3
     if ch == "u":
         codepoint, index = _decode_hex_char(value, index, token)
         return chr(codepoint), index
@@ -77,8 +78,10 @@ def _decode_hex_char(value: str, index: int, token: Token) -> Tuple[int, int]:
         raise PestGrammarSyntaxError("unclosed Unicode escape sequence", token=token)
 
     hex_digit_length = closing_brace_index - index
-    if hex_digit_length not in (2, 4):
-        raise PestGrammarSyntaxError("expected \\u{00} or \\u{0000}", token=token)
+    if hex_digit_length not in (2, 4, 6):
+        raise PestGrammarSyntaxError(
+            "expected \\u{00}, \\u{0000} or \\u{000000}", token=token
+        )
 
     codepoint = _parse_hex_digits(value[index : index + hex_digit_length], token)
     index += hex_digit_length

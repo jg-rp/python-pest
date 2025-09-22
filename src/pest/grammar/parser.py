@@ -35,6 +35,7 @@ from .rule import GrammarRule
 from .rule import Rule
 from .tokens import Token
 from .tokens import TokenKind
+from .unescape import unescape_string
 
 if TYPE_CHECKING:
     from .expression import Expression
@@ -192,9 +193,16 @@ class Parser:
             self.pos += 1
             left = PopAll(tag=tag)
         elif left_kind == TokenKind.CHAR:
-            start = self.eat(TokenKind.CHAR).value[1:-1]
+            start = unescape_string(
+                self.eat(TokenKind.CHAR).value[1:-1], token, quote="'"
+            )
             self.eat(TokenKind.RANGE_OP)
-            left = Range(start, self.eat(TokenKind.CHAR).value[1:-1], tag=tag)
+            stop_token = self.eat(TokenKind.CHAR)
+            left = Range(
+                start,
+                unescape_string(stop_token.value[1:-1], token, quote="'"),
+                tag=tag,
+            )
         elif left_kind == TokenKind.POSITIVE_PREDICATE:
             self.pos += 1
             left = PositivePredicate(self.parse_expression(PRECEDENCE_PREFIX), tag=tag)

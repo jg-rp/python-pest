@@ -35,7 +35,7 @@ RE_RULE_DOC = re.compile(r"///")
 RE_TAG = re.compile(r"#[_a-zA-z][_a-zA-Z0-9]+(?=\s*=)")
 RE_WHITESPACE = re.compile(r"[ \t\n\r]+")
 RE_CHAR = re.compile(
-    r"'\\[\\\"\r\n\t\0']'|'\\x[0-9a-fA-F]{2}'|'\\u\{0-9a-fA-F]{2,6}\}'|'.'"
+    r"'\\[\\\"\r\n\t\0']'|'\\x[0-9a-fA-F]{2}'|'\\u\{[0-9a-fA-F]{2,6}\}'|'.'"
 )
 RE_LINE_COMMENT = re.compile(r"//(?!/|!).*")
 RE_BLOCK_COMMENT = re.compile(r"/\*(?:[^*/]|\*(?!/)|/(?!\*)|(?R))*\*/")
