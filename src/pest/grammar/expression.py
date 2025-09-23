@@ -8,9 +8,9 @@ from typing import TYPE_CHECKING
 from typing import Callable
 from typing import Iterator
 from typing import NamedTuple
+from typing import Self
 
 import regex as re
-from typing_extensions import Self
 
 if TYPE_CHECKING:
     from pest.pairs import Pair

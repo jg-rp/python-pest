@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from typing import Callable
+from typing import Never
 from typing import Optional
 from typing import TypeAlias
 
 import regex as re
-from typing_extensions import Never
 
 from .exceptions import PestGrammarSyntaxError
 from .tokens import Token

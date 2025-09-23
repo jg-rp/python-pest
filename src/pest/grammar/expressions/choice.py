@@ -7,10 +7,10 @@ from enum import auto
 from typing import TYPE_CHECKING
 from typing import Iterator
 from typing import NamedTuple
+from typing import Self
 from typing import TypeAlias
 
 import regex as re
-from typing_extensions import Self
 
 from pest.grammar import Expression
 from pest.grammar.expression import RegexExpression

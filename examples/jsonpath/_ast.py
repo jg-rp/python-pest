@@ -32,7 +32,7 @@ class JSONPathSelector(ABC):
 
 
 class JSONPathSegment(ABC):
-    def __init__(self, token: Pair, selectors: tuple[JSONPathSelector, ...]):
+    def __init__(self, token: Pair, selectors: list[JSONPathSelector]):
         self.token = token
         self.selectors = selectors
 
@@ -79,7 +79,11 @@ class SliceSelector(JSONPathSelector):
     """The array slice selector."""
 
     def __init__(
-        self, token: Pair, start: int | None, stop: int | None, step: int | None
+        self,
+        token: Pair,
+        start: int | None = None,
+        stop: int | None = None,
+        step: int | None = None,
     ):
         super().__init__(token)
         self.start = start

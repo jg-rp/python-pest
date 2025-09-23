@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Iterable
-from typing import Optional
-from typing import Tuple
 
 from ._ast import IndexSelector
 from ._ast import JSONPathRecursiveDescentSegment
@@ -25,8 +23,7 @@ class JSONPathQuery:
 
     def __init__(
         self,
-        *,
-        segments: Tuple[JSONPathSegment, ...],
+        segments: list[JSONPathSegment],
     ) -> None:
         self.segments = segments
 
@@ -87,7 +84,7 @@ class JSONPathQuery:
 
     apply = find
 
-    def find_one(self, value: JSONValue) -> Optional[JSONPathNode]:
+    def find_one(self, value: JSONValue) -> JSONPathNode | None:
         """Return the first node from applying this query to _value_.
 
         Arguments:

@@ -11,14 +11,14 @@ from typing import Sequence
 from typing import TypeVar
 
 from .exceptions import JSONPathTypeError
-from .function_extensions import ExpressionType
-from .function_extensions import FilterFunction
 from .node import JSONPathNodeList
 from .serialize import canonical_string
+from .types import ExpressionType
 
 if TYPE_CHECKING:
     from pest import Pair
 
+    from .function_extensions import FilterFunction
     from .query import JSONPathQuery
     from .types import JSONValue
 

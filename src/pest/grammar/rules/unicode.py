@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-
-from typing_extensions import Self
+from typing import Self
 
 from pest.grammar.expression import RegexExpression
 from pest.grammar.rule import SILENT

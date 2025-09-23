@@ -6,9 +6,8 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 from typing import Iterator
+from typing import Never
 from typing import Sequence
-
-from typing_extensions import Never
 
 from .exceptions import PestParsingError
 from .grammar import Choice

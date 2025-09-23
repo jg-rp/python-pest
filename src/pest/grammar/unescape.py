@@ -50,6 +50,7 @@ def _decode_escape_sequence(  # noqa: PLR0911
     if ch == "t":
         return "\t", index
     if ch == "x":
+        # TODO: handle incomplete \x escape sequence
         return chr(int(value[index + 1 : index + 3], 16)), index + 3
     if ch == "u":
         codepoint, index = _decode_hex_char(value, index, token)

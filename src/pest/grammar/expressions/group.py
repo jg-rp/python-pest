@@ -4,8 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Iterator
-
-from typing_extensions import Self
+from typing import Self
 
 from pest.grammar import Expression
 

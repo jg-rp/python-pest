@@ -5,24 +5,16 @@ from __future__ import annotations
 import re
 from abc import ABC
 from abc import abstractmethod
-from enum import Enum
 from typing import TYPE_CHECKING
 from typing import Any
 from typing import Sized
 
 from .filter_expression import NOTHING
 from .filter_expression import Nothing
+from .types import ExpressionType
 
 if TYPE_CHECKING:
     from .node import JSONPathNodeList
-
-
-class ExpressionType(Enum):
-    """The type of a filter function argument or return value."""
-
-    VALUE = 1
-    LOGICAL = 2
-    NODES = 3
 
 
 class FilterFunction(ABC):
