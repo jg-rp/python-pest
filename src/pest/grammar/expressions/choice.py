@@ -167,14 +167,14 @@ def build_optimized_pattern(choices: list[ChoiceChoice]) -> str:  # noqa: PLR091
                 raise ValueError(f"Unrecognized choice: {choice}")
 
     parts = []
-    if char_class_parts or ranges:
-        parts.append(_optimize_char_class(char_class_parts, ranges))
     if multi_sensitive:
         parts.extend(multi_sensitive)
     if insensitive_parts:
         parts.extend(insensitive_parts)
     if unicode_props:
         parts.extend(unicode_props)
+    if char_class_parts or ranges:
+        parts.append(_optimize_char_class(char_class_parts, ranges))
 
     if not parts:
         return ""

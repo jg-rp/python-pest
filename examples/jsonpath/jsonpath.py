@@ -32,6 +32,11 @@ from .filter_expression import PrefixExpression
 from .filter_expression import RelativeFilterQuery
 from .filter_expression import RootFilterQuery
 from .filter_expression import StringLiteral
+from .function_extensions import Count
+from .function_extensions import Length
+from .function_extensions import Match
+from .function_extensions import Search
+from .function_extensions import Value
 from .query import JSONPathQuery
 
 if TYPE_CHECKING:
@@ -40,7 +45,7 @@ if TYPE_CHECKING:
 with open("examples/jsonpath/jsonpath.pest", encoding="utf-8") as fd:
     grammar = fd.read()
 
-parser = Parser.from_grammar(grammar)
+PARSER = Parser.from_grammar(grammar)
 
 
 class Rule(StrEnum):
@@ -74,15 +79,23 @@ class Rule(StrEnum):
     LOGICAL_AND_EXPR = auto()
     REL_QUERY = auto()
     ROOT_QUERY = auto()
+    NAME_SEGMENT = auto()
+    INDEX_SEGMENT = auto()
 
 
 class JSONPathParser:
     """JSONPath query expression parser."""
 
-    FUNCTION_EXTENSIONS: dict[str, FilterFunction] = {}
+    FUNCTION_EXTENSIONS: dict[str, FilterFunction] = {
+        "count": Count(),
+        "length": Length(),
+        "match": Match(),
+        "search": Search(),
+        "value": Value(),
+    }
 
     def parse(self, query: str) -> JSONPathQuery:
-        segments = parser.parse(Rule.JSONPATH, query)
+        segments = PARSER.parse(Rule.JSONPATH, query)
         return JSONPathQuery(
             [self.parse_segment(pair) for pair in segments if pair.name != "EOI"]
         )
@@ -93,6 +106,8 @@ class JSONPathParser:
                 return ChildSegment(segment, self.parse_segment_inner(inner))
             case Pair(Rule.DESCENDANT_SEGMENT, [inner]):
                 return RecursiveDescentSegment(segment, self.parse_segment_inner(inner))
+            case Pair(Rule.NAME_SEGMENT, [inner]) | Pair(Rule.INDEX_SEGMENT, [inner]):
+                return ChildSegment(segment, [self.parse_selector(inner)])
             case _:
                 raise JSONPathSyntaxError("expected a segment", segment)
 
@@ -246,7 +261,7 @@ class JSONPathParser:
             case Pair(Rule.NUMBER, [Pair(Rule.INT), Pair(Rule.EXP)]):
                 if "-" in expression.children[-1].text:
                     return FloatLiteral(expression, float(expression.text))
-                return IntegerLiteral(expression, int(expression.text))
+                return IntegerLiteral(expression, int(float(expression.text)))
             case _:
                 raise JSONPathSyntaxError("expected a number", expression)
 
@@ -266,11 +281,11 @@ class JSONPathParser:
                 return BooleanLiteral(expression, value=False)
             case Pair(Rule.NULL):
                 return NullLiteral(expression, value=None)
-            case Pair(Rule.REL_SINGULAR_QUERY, inner):
+            case Pair(Rule.REL_QUERY, inner):
                 return RelativeFilterQuery(
                     expression, JSONPathQuery([self.parse_segment(s) for s in inner])
                 )
-            case Pair(Rule.ABS_SINGULAR_QUERY, inner):
+            case Pair(Rule.ROOT_QUERY, inner):
                 return RootFilterQuery(
                     expression, JSONPathQuery([self.parse_segment(s) for s in inner])
                 )

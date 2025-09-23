@@ -69,7 +69,7 @@ def test_mixed_choices() -> None:
     assert regex.fullmatch("5")
     assert regex.fullmatch("β")
     assert not regex.fullmatch("zzz")
-    assert pattern == r"(?:[Xx0-9]|abc|\p{Script=Greek})"
+    assert pattern == r"(?:abc|\p{Script=Greek}|[Xx0-9])"
 
 
 def test_duplicate_characters_collapsed_exact() -> None:
