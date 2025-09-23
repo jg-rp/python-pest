@@ -323,6 +323,7 @@ class FunctionExtension(Expression):
         self.name = name
         self.args = args
         self.func = func
+        # TODO: assert well typed
 
     def __str__(self) -> str:
         args = [str(arg) for arg in self.args]
