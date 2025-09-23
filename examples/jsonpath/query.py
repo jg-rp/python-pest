@@ -6,13 +6,13 @@ from typing import TYPE_CHECKING
 from typing import Iterable
 
 from ._ast import IndexSelector
-from ._ast import JSONPathRecursiveDescentSegment
 from ._ast import NameSelector
+from ._ast import RecursiveDescentSegment
 from .node import JSONPathNode
 from .node import JSONPathNodeList
 
 if TYPE_CHECKING:
-    from ._ast import JSONPathSegment
+    from ._ast import Segment
     from .types import JSONValue
 
 
@@ -23,7 +23,7 @@ class JSONPathQuery:
 
     def __init__(
         self,
-        segments: list[JSONPathSegment],
+        segments: list[Segment],
     ) -> None:
         self.segments = segments
 
@@ -107,7 +107,7 @@ class JSONPathQuery:
     def singular_query(self) -> bool:
         """Return `True` if this JSONPath expression is a singular query."""
         for segment in self.segments:
-            if isinstance(segment, JSONPathRecursiveDescentSegment):
+            if isinstance(segment, RecursiveDescentSegment):
                 return False
 
             if len(segment.selectors) == 1 and isinstance(

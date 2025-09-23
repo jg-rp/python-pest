@@ -6,7 +6,7 @@ from pest import Parser
 with open("tests/grammars/toml.pest", encoding="utf-8") as fd:
     grammar = fd.read()
 
-with open("tests/examples/example.toml", encoding="ascii") as fd:
+with open("tests/examples/example.toml", encoding="utf-8") as fd:
     data = fd.read()
 
 optimized_http_parser = Parser.from_grammar(grammar, debug=True)

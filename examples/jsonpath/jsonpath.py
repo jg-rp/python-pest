@@ -9,13 +9,13 @@ from typing import TYPE_CHECKING
 from pest import Pair
 from pest import Parser
 
+from ._ast import ChildSegment
 from ._ast import FilterSelector
 from ._ast import IndexSelector
-from ._ast import JSONPathChildSegment
-from ._ast import JSONPathRecursiveDescentSegment
-from ._ast import JSONPathSegment
-from ._ast import JSONPathSelector
 from ._ast import NameSelector
+from ._ast import RecursiveDescentSegment
+from ._ast import Segment
+from ._ast import Selector
 from ._ast import SliceSelector
 from ._ast import WildcardSelector
 from .exceptions import JSONPathSyntaxError
@@ -83,20 +83,20 @@ class JSONPathParser:
 
     def parse(self, query: str) -> JSONPathQuery:
         segments = parser.parse(Rule.JSONPATH, query)
-        return JSONPathQuery([self.parse_segment(pair) for pair in segments])
+        return JSONPathQuery(
+            [self.parse_segment(pair) for pair in segments if pair.name != "EOI"]
+        )
 
-    def parse_segment(self, segment: Pair) -> JSONPathSegment:
+    def parse_segment(self, segment: Pair) -> Segment:
         match segment:
             case Pair(Rule.CHILD_SEGMENT, [inner]):
-                return JSONPathChildSegment(segment, self.parse_segment_inner(inner))
+                return ChildSegment(segment, self.parse_segment_inner(inner))
             case Pair(Rule.DESCENDANT_SEGMENT, [inner]):
-                return JSONPathRecursiveDescentSegment(
-                    segment, self.parse_segment_inner(inner)
-                )
+                return RecursiveDescentSegment(segment, self.parse_segment_inner(inner))
             case _:
                 raise JSONPathSyntaxError("expected a segment", segment)
 
-    def parse_segment_inner(self, inner: Pair) -> list[JSONPathSelector]:
+    def parse_segment_inner(self, inner: Pair) -> list[Selector]:
         match inner:
             case Pair(Rule.BRACKETED_SELECTION, selectors):
                 return [self.parse_selector(selector) for selector in selectors]
@@ -109,7 +109,7 @@ class JSONPathParser:
                     "expected a shorthand selector or bracketed selection", inner
                 )
 
-    def parse_selector(self, selector: Pair) -> JSONPathSelector:
+    def parse_selector(self, selector: Pair) -> Selector:
         match selector:
             case Pair(Rule.DOUBLE_QUOTED):
                 # TODO: unescape

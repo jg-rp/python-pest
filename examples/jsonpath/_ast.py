@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from .node import JSONPathNode
 
 
-class JSONPathSelector(ABC):
+class Selector(ABC):
     """Base class for all JSONPath selectors."""
 
     def __init__(self, token: Pair):
@@ -31,8 +31,8 @@ class JSONPathSelector(ABC):
         """Apply this selector to `node`."""
 
 
-class JSONPathSegment(ABC):
-    def __init__(self, token: Pair, selectors: list[JSONPathSelector]):
+class Segment(ABC):
+    def __init__(self, token: Pair, selectors: list[Selector]):
         self.token = token
         self.selectors = selectors
 
@@ -41,7 +41,7 @@ class JSONPathSegment(ABC):
         """Apply this segment to each `JSONPathNode` in _nodes_."""
 
 
-class NameSelector(JSONPathSelector):
+class NameSelector(Selector):
     """The name selector, shorthand or quoted."""
 
     def __init__(self, token: Pair, name: str):
@@ -55,7 +55,7 @@ class NameSelector(JSONPathSelector):
                 yield node.new_child(node.value[self.name], self.name)
 
 
-class IndexSelector(JSONPathSelector):
+class IndexSelector(Selector):
     """The array index selector."""
 
     def __init__(self, token: Pair, index: int):
@@ -75,7 +75,7 @@ class IndexSelector(JSONPathSelector):
                 yield node.new_child(node.value[self.index], norm_index)
 
 
-class SliceSelector(JSONPathSelector):
+class SliceSelector(Selector):
     """The array slice selector."""
 
     def __init__(
@@ -100,7 +100,7 @@ class SliceSelector(JSONPathSelector):
                 yield node.new_child(element, idx)
 
 
-class WildcardSelector(JSONPathSelector):
+class WildcardSelector(Selector):
     """The wildcard selector."""
 
     def resolve(self, node: JSONPathNode) -> Iterator[JSONPathNode]:
@@ -114,7 +114,7 @@ class WildcardSelector(JSONPathSelector):
                 yield node.new_child(element, i)
 
 
-class FilterSelector(JSONPathSelector):
+class FilterSelector(Selector):
     """Filter array/list items or dict/object values with a filter expression."""
 
     def __init__(self, token: Pair, expression: FilterExpression):
@@ -152,7 +152,7 @@ class FilterSelector(JSONPathSelector):
                     raise
 
 
-class JSONPathChildSegment(JSONPathSegment):
+class ChildSegment(Segment):
     """The JSONPath child selection segment."""
 
     def resolve(self, nodes: Iterable[JSONPathNode]) -> Iterator[JSONPathNode]:
@@ -165,7 +165,7 @@ class JSONPathChildSegment(JSONPathSegment):
         return f"[{', '.join(str(itm) for itm in self.selectors)}]"
 
 
-class JSONPathRecursiveDescentSegment(JSONPathSegment):
+class RecursiveDescentSegment(Segment):
     """The JSONPath recursive descent segment."""
 
     def resolve(self, nodes: Iterable[JSONPathNode]) -> Iterator[JSONPathNode]:
