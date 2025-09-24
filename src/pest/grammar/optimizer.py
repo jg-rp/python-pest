@@ -12,7 +12,6 @@ from typing import MutableMapping
 from pest.grammar import Choice
 from pest.grammar import Repeat
 from pest.grammar import Rule
-from pest.grammar.rule import COMPOUND
 from pest.grammar.rule import SILENT
 from pest.grammar.rule import SILENT_COMPOUND
 from pest.grammar.rule import BuiltInRule
@@ -44,9 +43,9 @@ class OptimizerStep:
 
 
 DEFAULT_OPTIMIZER_PASSES = [
+    OptimizerStep("unroll", unroll, PassDirection.POSTORDER),
     OptimizerStep("skip", skip, PassDirection.PREORDER),
     OptimizerStep("inline built-in", inline_builtin, PassDirection.PREORDER),
-    OptimizerStep("unroll", unroll, PassDirection.POSTORDER),
     OptimizerStep("squash_choice", squash_choice, PassDirection.POSTORDER),
 ]
 
