@@ -149,3 +149,4 @@ convention = "google"
 "tests/test_sql_grammar.py" = ["E501"]
 "examples/jsonpath/jsonpath.py" = ["D102", "PLR0911"]
 "examples/jsonpath/compliance.py" = ["D101", "D102", "D103"]
+"examples/jsonpath/unescape.py" = ["PLR2004"]

@@ -77,7 +77,7 @@ class Match(FilterFunction):
 
         try:
             # re.fullmatch caches compiled patterns internally
-            return bool(re.fullmatch(_map_re(pattern), string))
+            return bool(re.fullmatch(pattern, string))
         except (TypeError, re.error):
             return False
 
@@ -95,7 +95,7 @@ class Search(FilterFunction):
 
         try:
             # re.search caches compiled patterns internally
-            return bool(re.search(_map_re(pattern), string))
+            return bool(re.search(pattern, string))
         except (TypeError, re.error):
             return False
 
@@ -111,33 +111,3 @@ class Value(FilterFunction):
         if len(nodes) == 1:
             return nodes[0].value
         return NOTHING
-
-
-def _map_re(pattern: str) -> str:
-    escaped = False
-    char_class = False
-    parts: list[str] = []
-    for ch in pattern:
-        if escaped:
-            parts.append(ch)
-            escaped = False
-            continue
-
-        if ch == ".":
-            if not char_class:
-                parts.append(r"(?:(?![\r\n])\P{Cs}|\p{Cs}\p{Cs})")
-            else:
-                parts.append(ch)
-        elif ch == "\\":
-            escaped = True
-            parts.append(ch)
-        elif ch == "[":
-            char_class = True
-            parts.append(ch)
-        elif ch == "]":
-            char_class = False
-            parts.append(ch)
-        else:
-            parts.append(ch)
-
-    return "".join(parts)

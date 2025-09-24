@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from abc import ABC
 from abc import abstractmethod
 from contextlib import suppress
@@ -48,6 +49,9 @@ class NameSelector(Selector):
         super().__init__(token)
         self.name = name
 
+    def __str__(self) -> str:
+        return canonical_string(self.name)
+
     def resolve(self, node: JSONPathNode) -> Iterator[JSONPathNode]:
         """Apply this selector to `node`."""
         if isinstance(node.value, dict):
@@ -61,6 +65,9 @@ class IndexSelector(Selector):
     def __init__(self, token: Pair, index: int):
         super().__init__(token)
         self.index = index
+
+    def __str__(self) -> str:
+        return str(self.index)
 
     def _normalized_index(self, obj: Sequence[object]) -> int:
         if self.index < 0 and len(obj) >= abs(self.index):
@@ -86,10 +93,13 @@ class SliceSelector(Selector):
         step: int | None = None,
     ):
         super().__init__(token)
-        self.start = start
-        self.stop = stop
-        self.step = step
         self.slice = slice(start, stop, step)
+
+    def __str__(self) -> str:
+        stop = self.slice.stop if self.slice.stop is not None else ""
+        start = self.slice.start if self.slice.start is not None else ""
+        step = self.slice.step if self.slice.step is not None else "1"
+        return f"{start}:{stop}:{step}"
 
     def resolve(self, node: JSONPathNode) -> Iterator[JSONPathNode]:
         """Apply this selector to `node`."""
@@ -102,6 +112,9 @@ class SliceSelector(Selector):
 
 class WildcardSelector(Selector):
     """The wildcard selector."""
+
+    def __str__(self) -> str:
+        return "*"
 
     def resolve(self, node: JSONPathNode) -> Iterator[JSONPathNode]:
         """Apply this selector to `node`."""
@@ -120,6 +133,9 @@ class FilterSelector(Selector):
     def __init__(self, token: Pair, expression: FilterExpression):
         super().__init__(token)
         self.expression = expression
+
+    def __str__(self) -> str:
+        return f"?{self.expression}"
 
     def resolve(self, node: JSONPathNode) -> Iterator[JSONPathNode]:
         """Apply this selector to `node`."""
@@ -189,3 +205,13 @@ class RecursiveDescentSegment(Segment):
                 if isinstance(element, (dict, list)):
                     _node = node.new_child(element, i)
                     yield from self._visit(_node, depth + 1)
+
+
+def canonical_string(value: str) -> str:
+    """Return _value_ as a canonically formatted string literal."""
+    single_quoted = (
+        json.dumps(value, ensure_ascii=False)[1:-1]
+        .replace('\\"', '"')
+        .replace("'", "\\'")
+    )
+    return f"'{single_quoted}'"

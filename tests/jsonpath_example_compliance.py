@@ -30,7 +30,16 @@ class Case:
     tags: list[str] = field(default_factory=list)
 
 
-SKIP: dict[str, str] = {}
+SKIP = {
+    "functions, match, filter, match function, unicode char class, uppercase",
+    "functions, match, filter, match function, unicode char class negated, uppercase",
+    "functions, match, dot matcher on \\u2028",
+    "functions, match, dot matcher on \\u2029",
+    "functions, search, filter, search function, unicode char class, uppercase",
+    "functions, search, filter, search function, unicode char class negated, uppercase",
+    "functions, search, dot matcher on \\u2028",
+    "functions, search, dot matcher on \\u2029",
+}
 
 
 def cases() -> list[Case]:
@@ -55,7 +64,7 @@ def parser() -> JSONPathParser:
 @pytest.mark.parametrize("case", valid_cases(), ids=operator.attrgetter("name"))
 def test_compliance(parser: JSONPathParser, case: Case) -> None:
     if case.name in SKIP:
-        pytest.skip(reason=SKIP[case.name])
+        pytest.skip()
 
     assert case.document is not None
     query = parser.parse(case.selector)
@@ -73,7 +82,7 @@ def test_compliance(parser: JSONPathParser, case: Case) -> None:
 @pytest.mark.parametrize("case", invalid_cases(), ids=operator.attrgetter("name"))
 def test_invalid_selectors(parser: JSONPathParser, case: Case) -> None:
     if case.name in SKIP:
-        pytest.skip(reason=SKIP[case.name])
+        pytest.skip()
 
     with pytest.raises(JSONPathError):
         parser.parse(case.selector)

@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from enum import StrEnum
 from enum import auto
-from typing import TYPE_CHECKING
 
 from pest import Pair
 from pest import Parser
+from pest import PestParsingError
 
 from ._ast import ChildSegment
 from ._ast import FilterSelector
@@ -18,11 +18,15 @@ from ._ast import Segment
 from ._ast import Selector
 from ._ast import SliceSelector
 from ._ast import WildcardSelector
+from .exceptions import JSONPathError
 from .exceptions import JSONPathSyntaxError
+from .exceptions import JSONPathTypeError
 from .filter_expression import BooleanLiteral
 from .filter_expression import ComparisonExpression
 from .filter_expression import Expression
 from .filter_expression import FilterExpression
+from .filter_expression import FilterExpressionLiteral
+from .filter_expression import FilterQuery
 from .filter_expression import FloatLiteral
 from .filter_expression import FunctionExtension
 from .filter_expression import IntegerLiteral
@@ -33,14 +37,14 @@ from .filter_expression import RelativeFilterQuery
 from .filter_expression import RootFilterQuery
 from .filter_expression import StringLiteral
 from .function_extensions import Count
+from .function_extensions import FilterFunction
 from .function_extensions import Length
 from .function_extensions import Match
 from .function_extensions import Search
 from .function_extensions import Value
 from .query import JSONPathQuery
-
-if TYPE_CHECKING:
-    from .function_extensions import FilterFunction
+from .types import ExpressionType
+from .unescape import unescape_string
 
 with open("examples/jsonpath/jsonpath.pest", encoding="utf-8") as fd:
     grammar = fd.read()
@@ -81,6 +85,9 @@ class Rule(StrEnum):
     ROOT_QUERY = auto()
     NAME_SEGMENT = auto()
     INDEX_SEGMENT = auto()
+    START = auto()
+    STOP = auto()
+    STEP = auto()
 
 
 class JSONPathParser:
@@ -94,8 +101,15 @@ class JSONPathParser:
         "value": Value(),
     }
 
+    MAX_INT_INDEX = (2**53) - 1
+    MIN_INT_INDEX = -(2**53) + 1
+
     def parse(self, query: str) -> JSONPathQuery:
-        segments = PARSER.parse(Rule.JSONPATH, query)
+        try:
+            segments = PARSER.parse(Rule.JSONPATH, query)
+        except PestParsingError as err:
+            raise JSONPathSyntaxError(str(err)) from err
+
         return JSONPathQuery(
             [self.parse_segment(pair) for pair in segments if pair.name != "EOI"]
         )
@@ -127,17 +141,21 @@ class JSONPathParser:
     def parse_selector(self, selector: Pair) -> Selector:
         match selector:
             case Pair(Rule.DOUBLE_QUOTED):
-                # TODO: unescape
-                return NameSelector(selector, selector.text)
+                return NameSelector(
+                    selector, unescape_string(selector.text, selector, '"')
+                )
             case Pair(Rule.SINGLE_QUOTED):
-                # TODO: unescape
-                return NameSelector(selector, selector.text.replace("\\'", "'"))
+                return NameSelector(
+                    selector, unescape_string(selector.text, selector, "'")
+                )
             case Pair(Rule.WILDCARD_SELECTOR):
                 return WildcardSelector(selector)
-            case Pair(Rule.SLICE_SELECTOR, inner):
-                return SliceSelector(selector, *(int(str(i)) for i in inner))
+            case Pair(Rule.SLICE_SELECTOR):
+                return self.parse_slice_selector(selector)
             case Pair(Rule.INDEX_SELECTOR):
-                return IndexSelector(selector, int(str(selector)))
+                return IndexSelector(
+                    selector, self._i_json_int(selector, str(selector))
+                )
             case Pair(Rule.FILTER_SELECTOR, [expression]):
                 return FilterSelector(
                     selector,
@@ -149,6 +167,24 @@ class JSONPathParser:
                 return NameSelector(selector, str(selector))
             case _:
                 raise JSONPathSyntaxError("expected a selector", selector)
+
+    def parse_slice_selector(self, selector: Pair) -> SliceSelector:
+        start: int | None = None
+        stop: int | None = None
+        step: int | None = None
+
+        for rule in selector:
+            match rule.name:
+                case Rule.START:
+                    start = self._i_json_int(rule, rule.text)
+                case Rule.STOP:
+                    stop = self._i_json_int(rule, rule.text)
+                case Rule.STEP:
+                    step = self._i_json_int(rule, rule.text)
+                case _:
+                    raise JSONPathSyntaxError("expected a slice index", selector)
+
+        return SliceSelector(selector, start, stop, step)
 
     def parse_logical_or_expression(self, expression: Pair) -> Expression:
         it = iter(expression)
@@ -205,11 +241,22 @@ class JSONPathParser:
                     expression, JSONPathQuery([self.parse_segment(s) for s in segments])
                 )
             case Pair(Rule.FUNCTION_EXPR, [name, *rest]):
+                func = self.FUNCTION_EXTENSIONS[name.text]
+
+                # TODO: only if not a function argument
+                # if func.return_type == ExpressionType.VALUE:
+                #     raise JSONPathTypeError(f"result of {name} must be compared", name)
+
                 return FunctionExtension(
                     expression,
                     name.text,
-                    [self.parse_function_argument(e) for e in rest],
-                    self.FUNCTION_EXTENSIONS[name.text],
+                    self._assert_well_typed(
+                        name,
+                        name.text,
+                        func,
+                        [self.parse_function_argument(e) for e in rest],
+                    ),
+                    func,
                 )
             case _:
                 raise JSONPathSyntaxError("expected a test expression", expression)
@@ -219,11 +266,13 @@ class JSONPathParser:
             case Pair(Rule.NUMBER):
                 return self.parse_number(expression)
             case Pair(Rule.DOUBLE_QUOTED):
-                # TODO: unescape
-                return StringLiteral(expression, expression.text)
+                return StringLiteral(
+                    expression, unescape_string(expression.text, expression, '"')
+                )
             case Pair(Rule.SINGLE_QUOTED):
-                # TODO: unescape
-                return StringLiteral(expression, expression.text.replace("\\'", "'"))
+                return StringLiteral(
+                    expression, unescape_string(expression.text, expression, "'")
+                )
             case Pair(Rule.TRUE_LITERAL):
                 return BooleanLiteral(expression, value=True)
             case Pair(Rule.FALSE_LITERAL):
@@ -239,11 +288,21 @@ class JSONPathParser:
                     expression, JSONPathQuery([self.parse_segment(s) for s in inner])
                 )
             case Pair(Rule.FUNCTION_EXPR, [name, *rest]):
+                func = self.FUNCTION_EXTENSIONS[name.text]
+
+                if func.return_type != ExpressionType.VALUE:
+                    raise JSONPathTypeError(f"result of {name} is not comparable", name)
+
                 return FunctionExtension(
                     expression,
                     name.text,
-                    [self.parse_function_argument(e) for e in rest],
-                    self.FUNCTION_EXTENSIONS[name.text],
+                    self._assert_well_typed(
+                        name,
+                        name.text,
+                        func,
+                        [self.parse_function_argument(e) for e in rest],
+                    ),
+                    func,
                 )
             case _:
                 raise JSONPathSyntaxError("expected a comparable", expression)
@@ -270,11 +329,13 @@ class JSONPathParser:
             case Pair(Rule.NUMBER):
                 return self.parse_number(expression)
             case Pair(Rule.DOUBLE_QUOTED):
-                # TODO: unescape
-                return StringLiteral(expression, expression.text)
+                return StringLiteral(
+                    expression, unescape_string(expression.text, expression, '"')
+                )
             case Pair(Rule.SINGLE_QUOTED):
-                # TODO: unescape
-                return StringLiteral(expression, expression.text.replace("\\'", "'"))
+                return StringLiteral(
+                    expression, unescape_string(expression.text, expression, "'")
+                )
             case Pair(Rule.TRUE_LITERAL):
                 return BooleanLiteral(expression, value=True)
             case Pair(Rule.FALSE_LITERAL):
@@ -290,11 +351,17 @@ class JSONPathParser:
                     expression, JSONPathQuery([self.parse_segment(s) for s in inner])
                 )
             case Pair(Rule.FUNCTION_EXPR, [name, *rest]):
+                func = self.FUNCTION_EXTENSIONS[name.text]
                 return FunctionExtension(
                     expression,
                     name.text,
-                    [self.parse_function_argument(e) for e in rest],
-                    self.FUNCTION_EXTENSIONS[name.text],
+                    self._assert_well_typed(
+                        name,
+                        name.text,
+                        func,
+                        [self.parse_function_argument(e) for e in rest],
+                    ),
+                    func,
                 )
             case Pair(Rule.LOGICAL_OR_EXPR):
                 return self.parse_logical_or_expression(expression)
@@ -302,3 +369,63 @@ class JSONPathParser:
                 return self.parse_logical_and_expression(expression)
             case _:
                 raise JSONPathSyntaxError("expected a function argument", expression)
+
+    def _i_json_int(self, token: Pair, value: str | float) -> int:
+        i = int(value)
+        if i < self.MIN_INT_INDEX or i > self.MAX_INT_INDEX:
+            raise JSONPathError("index out of range", token)
+        return i
+
+    def _assert_well_typed(
+        self, token: Pair, name: str, func: FilterFunction, args: list[Expression]
+    ) -> list[Expression]:
+        # Correct number of arguments?
+        if len(args) != len(func.arg_types):
+            plural = "" if len(func.arg_types) == 1 else "s"
+            raise JSONPathTypeError(
+                f"{name}() requires {len(func.arg_types)} argument{plural}", token
+            )
+
+        # Argument types
+        for idx, typ in enumerate(func.arg_types):
+            arg = args[idx]
+            if typ == ExpressionType.VALUE:
+                if not (
+                    isinstance(arg, FilterExpressionLiteral)
+                    or (isinstance(arg, FilterQuery) and arg.query.singular_query())
+                    or (self._function_return_type(arg) == ExpressionType.VALUE)
+                ):
+                    raise JSONPathTypeError(
+                        f"{name}() argument {idx} must be of ValueType",
+                        token=token,
+                    )
+            elif typ == ExpressionType.LOGICAL:
+                if not isinstance(
+                    arg, (FilterQuery, LogicalExpression, ComparisonExpression)
+                ):
+                    raise JSONPathTypeError(
+                        f"{name}() argument {idx} must be of LogicalType",
+                        token=token,
+                    )
+            elif typ == ExpressionType.NODES and not (
+                isinstance(arg, FilterQuery)
+                or self._function_return_type(arg) == ExpressionType.NODES
+            ):
+                raise JSONPathTypeError(
+                    f"{name}() argument {idx} must be of NodesType",
+                    token=token,
+                )
+
+        return args
+
+    def _function_return_type(self, expr: Expression) -> ExpressionType | None:
+        """Return a filter function's return type.
+
+        Returns `None` if _expr_ is not a function expression.
+        """
+        if not isinstance(expr, FunctionExtension):
+            return None
+        func = self.FUNCTION_EXTENSIONS.get(expr.name)
+        if isinstance(func, FilterFunction):
+            return func.return_type
+        return None

@@ -1,8 +1,10 @@
 from .jsonpath import JSONPathParser
 
 parser = JSONPathParser()
-query = parser.parse("$[?@.a<='c']")
-data = {"foo": {"bar": 99}}
+query = parser.parse("$[?search(@.a,@.b,@.c)]")
+data = [{"a": "ab"}]
 
-for node in query.find(data):
-    print(node.value)
+# print(query)
+
+# for node in query.find(data):
+#     print(node.value)
