@@ -30,6 +30,9 @@ class Case:
     tags: list[str] = field(default_factory=list)
 
 
+# We're skipping these because we don't want to depend on the `regex` package
+# for the sake of an example. The regex package supports Unicode properties,
+# `re` from the standard Python library does not.
 SKIP = {
     "functions, match, filter, match function, unicode char class, uppercase",
     "functions, match, filter, match function, unicode char class negated, uppercase",

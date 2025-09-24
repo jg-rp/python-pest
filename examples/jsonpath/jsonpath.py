@@ -160,7 +160,10 @@ class JSONPathParser:
                 return FilterSelector(
                     selector,
                     FilterExpression(
-                        selector, self.parse_logical_or_expression(expression)
+                        selector,
+                        self.parse_logical_or_expression(
+                            expression, function_argument=False
+                        ),
                     ),
                 )
             case Pair(Rule.MEMBER_NAME_SHORTHAND):
@@ -186,19 +189,36 @@ class JSONPathParser:
 
         return SliceSelector(selector, start, stop, step)
 
-    def parse_logical_or_expression(self, expression: Pair) -> Expression:
+    def parse_logical_or_expression(
+        self, expression: Pair, *, function_argument: bool
+    ) -> Expression:
         it = iter(expression)
-        or_expr: Expression = self.parse_logical_and_expression(next(it))
+        or_expr: Expression = self.parse_logical_and_expression(
+            next(it), function_argument=function_argument
+        )
         for expr in it:
-            right = self.parse_logical_and_expression(expr)
+            right = self.parse_logical_and_expression(
+                expr, function_argument=function_argument
+            )
             or_expr = LogicalExpression(expr, or_expr, "||", right)
         return or_expr
 
-    def parse_logical_and_expression(self, expression: Pair) -> Expression:
+    def parse_logical_and_expression(
+        self, expression: Pair, *, function_argument: bool
+    ) -> Expression:
         it = iter(expression)
         and_expr: Expression = self.parse_basic_expression(next(it))
+
+        if not function_argument:
+            # If this expression a function that returns a value type and
+            # is not a function argument, it must be part of a comparison
+            # expression.
+            self._assert_compared(and_expr)
+
         for expr in it:
             right = self.parse_basic_expression(expr)
+            if not function_argument:
+                self._assert_compared(right)
             and_expr = LogicalExpression(expr, and_expr, "&&", right)
         return and_expr
 
@@ -208,10 +228,12 @@ class JSONPathParser:
                 return PrefixExpression(
                     not_expr,
                     "!",
-                    self.parse_logical_or_expression(or_expr),
+                    self.parse_logical_or_expression(or_expr, function_argument=False),
                 )
             case Pair(Rule.PAREN_EXPR, [or_expr]):
-                return self.parse_logical_or_expression(or_expr)
+                return self.parse_logical_or_expression(
+                    or_expr, function_argument=False
+                )
             case Pair(Rule.COMPARISON_EXPR, [left, op, right]):
                 return ComparisonExpression(
                     expression,
@@ -242,10 +264,6 @@ class JSONPathParser:
                 )
             case Pair(Rule.FUNCTION_EXPR, [name, *rest]):
                 func = self.FUNCTION_EXTENSIONS[name.text]
-
-                # TODO: only if not a function argument
-                # if func.return_type == ExpressionType.VALUE:
-                #     raise JSONPathTypeError(f"result of {name} must be compared", name)
 
                 return FunctionExtension(
                     expression,
@@ -364,9 +382,13 @@ class JSONPathParser:
                     func,
                 )
             case Pair(Rule.LOGICAL_OR_EXPR):
-                return self.parse_logical_or_expression(expression)
+                return self.parse_logical_or_expression(
+                    expression, function_argument=True
+                )
             case Pair(Rule.LOGICAL_AND_EXPR):
-                return self.parse_logical_and_expression(expression)
+                return self.parse_logical_and_expression(
+                    expression, function_argument=True
+                )
             case _:
                 raise JSONPathSyntaxError("expected a function argument", expression)
 
@@ -429,3 +451,11 @@ class JSONPathParser:
         if isinstance(func, FilterFunction):
             return func.return_type
         return None
+
+    def _assert_compared(self, expr: Expression) -> Expression:
+        if (
+            isinstance(expr, FunctionExtension)
+            and expr.func.return_type == ExpressionType.VALUE
+        ):
+            raise JSONPathTypeError(f"result of {expr.name} must be compared", expr)
+        return expr
