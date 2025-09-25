@@ -64,18 +64,18 @@ class Rule(Expression):
 
     def parse(self, state: ParserState, start: int) -> Iterator[Success]:
         """Attempt to match this expression against the input at `start`."""
-        restore_atomic_depth = state.atomic_depth
+        state.atomic_depth.checkpoint()
 
         if self.modifier & (ATOMIC | COMPOUND):
             state.atomic_depth += 1
         elif self.modifier & NONATOMIC:
-            state.atomic_depth = 0
+            state.atomic_depth.zero()
 
         results = list(state.parse(self.expression, start, self.tag))
 
         # TODO: let ParserState restore atomic depth
         if not results:
-            state.atomic_depth = restore_atomic_depth
+            state.atomic_depth.restore()
             return
 
         end = results[-1].pos
@@ -129,7 +129,7 @@ class Rule(Expression):
             )
 
         # Restore atomic depth to what it was before this rule
-        state.atomic_depth = restore_atomic_depth
+        state.atomic_depth.restore()
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""

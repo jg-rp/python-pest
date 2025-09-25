@@ -9,6 +9,7 @@ from typing import Iterator
 from typing import Never
 from typing import Sequence
 
+from .checkpoint_int import CheckpointInt
 from .exceptions import PestParsingError
 from .grammar import Choice
 from .grammar import NegativePredicate
@@ -42,13 +43,13 @@ class ParserState:
     __slots__ = (
         "parser",
         "input",
-        "_atomic_depth",
+        "atomic_depth",
         "stack",
         "cache",
         "rule_stack",
         "attempts",
         "furthest_failure",
-        "_neg_pred_depth",
+        "neg_pred_depth",
         "skip",
         "tag_stack",
     )
@@ -56,9 +57,8 @@ class ParserState:
     def __init__(self, parser: Parser, input_: str, start_rule: Rule) -> None:
         self.parser = parser
         self.input = input_
-        # TODO: a snapshotting int class?
-        self._atomic_depth: list[int] = [0]  # A stack so we can restore state.
-        self._neg_pred_depth: list[int] = [0]  # A stack so we can restore state.
+        self.atomic_depth = CheckpointInt()
+        self.neg_pred_depth = CheckpointInt()
         self.tag_stack: list[str | None] = []
 
         self.stack: Stack[str] = Stack()  # User stack
@@ -70,25 +70,9 @@ class ParserState:
 
         self.skip = parser.rules.get("SKIP")
 
-    @property
-    def atomic_depth(self) -> int:
-        """The current atomic rule state."""
-        return self._atomic_depth[-1]
-
-    @atomic_depth.setter
-    def atomic_depth(self, value: int) -> None:
-        """Set the current atomic depth."""
-        self._atomic_depth[-1] = value
-
-    @property
-    def neg_pred_depth(self) -> int:
-        """The current negative predicate depth."""
-        return self._neg_pred_depth[-1]
-
-    @neg_pred_depth.setter
-    def neg_pred_depth(self, value: int) -> None:
-        """Set the current negative predicate depth."""
-        self._neg_pred_depth[-1] = value
+    # TODO: context managers
+    # with state.parse
+    # with state.parse_rule
 
     def parse(
         self, expr: Expression, pos: int, tag: str | None = None
@@ -297,27 +281,27 @@ class ParserState:
     def snapshot(self) -> None:
         """Mark the current state as a checkpoint."""
         self.stack.snapshot()
-        self._atomic_depth.append(self.atomic_depth)
-        self._neg_pred_depth.append(self.neg_pred_depth)
+        self.atomic_depth.checkpoint()
+        self.neg_pred_depth.checkpoint()
 
     def ok(self) -> None:
         """Discard the last checkpoint after a successful match."""
         self.stack.drop_snapshot()
-        self.atomic_depth = self._atomic_depth.pop()
-        self.neg_pred_depth = self._neg_pred_depth.pop()
+        self.atomic_depth.drop()
+        self.neg_pred_depth.drop()
 
     def restore(self) -> None:
         """Restore the state to the most recent checkpoint."""
         self.stack.restore()
-        self._atomic_depth.pop()
-        self._neg_pred_depth.pop()
+        self.atomic_depth.restore()
+        self.neg_pred_depth.restore()
 
     @contextmanager
     def suppress(self, *, negative: bool = False) -> Iterator[ParserState]:
         """A context manager that resets parser state on exit."""
         self.stack.snapshot()
         # TODO: rule stack too?
-        atomic_depth = self.atomic_depth
+        self.atomic_depth.checkpoint()
         if negative:
             self.neg_pred_depth += 1
 
@@ -325,5 +309,5 @@ class ParserState:
 
         if negative:
             self.neg_pred_depth -= 1
-        self.atomic_depth = atomic_depth
+        self.atomic_depth.restore()
         self.stack.restore()

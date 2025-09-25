@@ -8,6 +8,7 @@ from enum import auto
 from typing import Callable
 from typing import Mapping
 from typing import MutableMapping
+from typing import TypeAlias
 
 from pest.grammar import Choice
 from pest.grammar import Repeat
@@ -22,7 +23,8 @@ from .optimizers.skippers import skip
 from .optimizers.squash_choice import squash_choice
 from .optimizers.unroller import unroll
 
-OptimizerPass = Callable[[Expression, Mapping[str, Rule]], Expression]
+OptimizerPass: TypeAlias = Callable[[Expression, Mapping[str, Rule]], Expression]
+OptimizerPassPredicate: TypeAlias = Callable[[Mapping[str, Rule]], bool]
 
 
 class PassDirection(Enum):
@@ -34,12 +36,26 @@ class PassDirection(Enum):
 
 @dataclass
 class OptimizerStep:
-    """An optimizer pass with associated traversal direction."""
+    """An optimizer pass with associated traversal direction.
+
+    Arguments:
+        name: A label for the optimizer step used in the log.
+        func: A callable that implements the optimizer pass.
+        direction: Perform optimization passes from bottom to top (post order)
+            or top to bottom (pre order).
+        fixed_point: If True`, repeat the pass until it fails to perform any
+            optimizations.
+        predicate: If not `None`, the predicate is called with the rules to
+            be optimized as its only argument. The step will be skipped if the
+            predicate returns `False`.
+
+    """
 
     name: str
     func: Callable[[Expression, Mapping[str, Rule]], Expression]
     direction: PassDirection
     fixed_point: bool = False
+    predicate: OptimizerPassPredicate | None = None
 
 
 DEFAULT_OPTIMIZER_PASSES = [
@@ -69,6 +85,9 @@ class Optimizer:
             self.log.clear()
 
         for step in self.passes:
+            if step.predicate and not step.predicate(rules):
+                continue
+
             for name, rule in rules.items():
                 # TODO: some passes should only be applied to atomic rules
                 expr = rule.expression
