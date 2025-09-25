@@ -9,25 +9,27 @@ with open("tests/grammars/toml.pest", encoding="utf-8") as fd:
 with open("tests/examples/example.toml", encoding="utf-8") as fd:
     data = fd.read()
 
-optimized_http_parser = Parser.from_grammar(grammar, debug=True)
+unoptimized_toml_parser = Parser.from_grammar(grammar, optimizer=None, debug=True)
+# print(unoptimized_toml_parser.tree_view())
+
+optimized_toml_parser = Parser.from_grammar(grammar, debug=True)
 
 if DEFAULT_OPTIMIZER.log:
     print(f"{len(DEFAULT_OPTIMIZER.log)} optimized expressions:")
     for entry in DEFAULT_OPTIMIZER.log:
         print(f"  {entry}")
+    # print("")
+    # print(optimized_toml_parser.tree_view())
 else:
     print("Zero optimizations applied!")
 
 
-unoptimized_http_parser = Parser.from_grammar(grammar, optimizer=None, debug=True)
-
-
 def run_optimized() -> None:
-    optimized_http_parser.parse("toml", data)
+    optimized_toml_parser.parse("toml", data)
 
 
 def run_unoptimized() -> None:
-    unoptimized_http_parser.parse("toml", data)
+    unoptimized_toml_parser.parse("toml", data)
 
 
 n_runs = 10

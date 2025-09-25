@@ -8,14 +8,15 @@ from typing import NamedTuple
 from typing import Sequence
 from typing import Union
 
+from pest import Parser
+
 sys.path.append(os.getcwd())
 
 from examples.jsonpath import compile  # noqa: A004
 from examples.jsonpath import find
-from examples.jsonpath.jsonpath import PARSER
 from examples.jsonpath.jsonpath import JSONPathParser
 
-JP_PARSER = JSONPathParser()
+PARSER = JSONPathParser()
 
 
 class CTSCase(NamedTuple):
@@ -36,6 +37,9 @@ def valid_queries() -> Sequence[CTSCase]:
 
 QUERIES = valid_queries()
 
+with open("examples/jsonpath/jsonpath.pest", encoding="utf-8") as fd:
+    PEST = Parser.from_grammar(fd.read())
+
 COMPILE_AND_FIND_STMT = """\
 for path, data in QUERIES:
     list(find(path, data))"""
@@ -46,7 +50,7 @@ for path, data in QUERIES:
 
 JUST_PARSE_STMT = """\
 for path, _ in QUERIES:
-    PARSER.parse("jsonpath", path)"""
+    PEST.parse("jsonpath", path)"""
 
 JUST_COMPILE_STMT = """\
 for path, _ in QUERIES:
@@ -72,7 +76,7 @@ def benchmark(number: int = 10, best_of: int = 3) -> None:
         COMPILE_AND_FIND_STMT,
         globals={
             "QUERIES": QUERIES,
-            "PARSER": JP_PARSER,
+            "PARSER": PARSER,
             "find": find,
             "compile": compile,
         },
@@ -86,7 +90,7 @@ def benchmark(number: int = 10, best_of: int = 3) -> None:
         COMPILE_AND_FIND_VALUES_STMT,
         globals={
             "QUERIES": QUERIES,
-            "PARSER": JP_PARSER,
+            "PARSER": PARSER,
             "find": find,
             "compile": compile,
         },
@@ -100,9 +104,7 @@ def benchmark(number: int = 10, best_of: int = 3) -> None:
         JUST_PARSE_STMT,
         globals={
             "QUERIES": QUERIES,
-            "PARSER": PARSER,
-            "find": find,
-            "compile": compile,
+            "PEST": PEST,
         },
         number=number,
         repeat=best_of,
@@ -114,8 +116,7 @@ def benchmark(number: int = 10, best_of: int = 3) -> None:
         JUST_COMPILE_STMT,
         globals={
             "QUERIES": QUERIES,
-            "PARSER": JP_PARSER,
-            "find": find,
+            "PARSER": PARSER,
             "compile": compile,
         },
         number=number,
@@ -129,7 +130,7 @@ def benchmark(number: int = 10, best_of: int = 3) -> None:
         setup=JUST_FIND_SETUP,
         globals={
             "QUERIES": QUERIES,
-            "PARSER": JP_PARSER,
+            "PARSER": PARSER,
             "find": find,
             "compile": compile,
         },
@@ -144,7 +145,7 @@ def benchmark(number: int = 10, best_of: int = 3) -> None:
         setup=JUST_FIND_SETUP,
         globals={
             "QUERIES": QUERIES,
-            "PARSER": JP_PARSER,
+            "PARSER": PARSER,
             "find": find,
             "compile": compile,
         },

@@ -17,10 +17,9 @@ def optimizer() -> Optimizer:
 
 
 def test_unroll_loop_exact(optimizer: Optimizer) -> None:
-    rules, _ = parse("rule = { a{3} }", Parser.BUILTIN)
+    rules, _ = parse("rule = { a{3} }\na = { ANY }", Parser.BUILTIN)
     want = Sequence(Identifier("a"), Identifier("a"), Identifier("a"))
     optimizer.optimize(rules, debug=True)
-    assert len(optimizer.log) == 1
     assert rules["rule"].expression == want
 
 

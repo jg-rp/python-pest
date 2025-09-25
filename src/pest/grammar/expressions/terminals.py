@@ -245,7 +245,10 @@ class Drop(Terminal):
         return False
 
 
-class Identifier(Terminal):
+# TODO: Identifier is not a terminal
+
+
+class Identifier(Expression):
     """A terminal pointing to rule, possibly a built-in rule."""
 
     __slots__ = ("value",)
@@ -265,6 +268,15 @@ class Identifier(Terminal):
         """Attempt to match this expression against the input at `start`."""
         # TODO: Assumes the rule exists.
         return state.parse(state.parser.rules[self.value], start, self.tag)
+
+    def children(self) -> list[Expression]:
+        """Return this expression's children."""
+        return []
+
+    def with_children(self, expressions: list[Expression]) -> Self:
+        """Return a new instance of this expression with child expressions replaced."""
+        assert not expressions
+        return self
 
     def is_pure(self, rules: dict[str, Rule], seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
