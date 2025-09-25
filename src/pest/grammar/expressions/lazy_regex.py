@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Iterator
 from typing import Self
 
 import regex as re
@@ -86,7 +85,7 @@ class LazyRegexExpression(Terminal):
             parts.append(s)
         return "".join(parts)
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
+    def parse(self, state: ParserState, start: int) -> list[Match] | None:
         """Attempt to match this expression against the input at `start`.
 
         Args:
@@ -95,7 +94,8 @@ class LazyRegexExpression(Terminal):
             start: The index in the input string where parsing begins.
         """
         if match := self.pattern.match(state.input, start):
-            yield Match(None, match.end())
+            return [Match(None, match.end())]
+        return None
 
     def children(self) -> list[Expression]:
         """Return this expressions children."""

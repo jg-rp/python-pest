@@ -163,10 +163,10 @@ class Parser:
             self.eat(TokenKind.RPAREN)
         elif left_kind == TokenKind.IDENTIFIER:
             name = self.next().value
-            # if rule := self.builtins.get(name):
-            #     left = rule
-            # else:
-            left = Identifier(name, tag=tag)
+            if rule := self.builtins.get(name):
+                left = rule
+            else:
+                left = Identifier(name, tag=tag)
         elif left_kind == TokenKind.PUSH_LITERAL:
             self.pos += 1
             self.eat(TokenKind.LPAREN)

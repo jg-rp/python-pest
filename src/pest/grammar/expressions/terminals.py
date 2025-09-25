@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from contextlib import suppress
 from typing import TYPE_CHECKING
-from typing import Iterator
 from typing import Self
 
 import regex as re
@@ -30,10 +29,10 @@ class PushLiteral(Terminal):
     def __str__(self) -> str:
         return f'{self.tag_str()}PUSH("{self.value}")'
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
+    def parse(self, state: ParserState, start: int) -> list[Match] | None:
         """Attempt to match this expression against the input at `start`."""
         state.push(self.value)
-        yield Match(None, start)
+        return [Match(None, start)]
 
     def is_pure(self, _rules: dict[str, Rule], _seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
@@ -55,14 +54,14 @@ class Push(Expression):
     def __str__(self) -> str:
         return f"{self.tag_str()}PUSH( {self.expression} )"
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
+    def parse(self, state: ParserState, start: int) -> list[Match] | None:
         """Attempt to match this expression against the input at `start`."""
-        result = list(state.parse(self.expression, start, self.tag))
+        result = state.parse(self.expression, start, self.tag)
         if not result:
-            return
+            return None
 
         state.push(state.input[start : result[-1].pos])
-        yield from result
+        return result
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""
@@ -100,7 +99,7 @@ class PeekSlice(Terminal):
         stop = self.stop if self.stop else ""
         return f"{self.tag_str()}PEEK[{start}..{stop}]"
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
+    def parse(self, state: ParserState, start: int) -> list[Match] | None:
         """Attempt to match this expression against the input at `start`."""
         position = start
 
@@ -108,11 +107,11 @@ class PeekSlice(Terminal):
             if state.input.startswith(literal, position):
                 position += len(literal)
             else:
-                return
+                return None
 
         # TODO: If the end lies before or at the start, the expression matches
         # (as does a PEEK_ALL on an empty stack).
-        yield Match(None, position)
+        return [Match(None, position)]
 
     def is_pure(self, _rules: dict[str, Rule], _seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
@@ -127,12 +126,13 @@ class Peek(Terminal):
     def __str__(self) -> str:
         return f"{self.tag_str()}PEEK"
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
+    def parse(self, state: ParserState, start: int) -> list[Match] | None:
         """Attempt to match this expression against the input at `start`."""
         with suppress(IndexError):
             value = state.user_stack.peek()
             if state.input.startswith(value, start):
-                yield Match(None, start + len(value))
+                return [Match(None, start + len(value))]
+        return None
 
     def is_pure(self, _rules: dict[str, Rule], _seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
@@ -147,7 +147,7 @@ class PeekAll(Terminal):
     def __str__(self) -> str:
         return f"{self.tag_str()}PEEK_ALL"
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
+    def parse(self, state: ParserState, start: int) -> list[Match] | None:
         """Attempt to match this expression against the input at `start`."""
         position = start
         stack_size = len(state.user_stack)
@@ -155,7 +155,7 @@ class PeekAll(Terminal):
         for i, literal in enumerate(reversed(state.user_stack)):
             # XXX: can `literal` be empty?
             if not state.input.startswith(literal, position):
-                return
+                return None
 
             position += len(literal)
 
@@ -164,7 +164,7 @@ class PeekAll(Terminal):
                 if implicit_result:
                     position = implicit_result[-1].pos
 
-        yield Match(None, position)
+        return [Match(None, position)]
 
     def is_pure(self, _rules: dict[str, Rule], _seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
@@ -179,13 +179,14 @@ class Pop(Terminal):
     def __str__(self) -> str:
         return f"{self.tag_str()}POP"
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
+    def parse(self, state: ParserState, start: int) -> list[Match] | None:
         """Attempt to match this expression against the input at `start`."""
         with suppress(IndexError):
             value = state.user_stack.peek()
             if state.input.startswith(value, start):
                 state.user_stack.pop()
-                yield Match(None, start + len(value))
+                return [Match(None, start + len(value))]
+        return None
 
     def is_pure(self, _rules: dict[str, Rule], _seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
@@ -200,7 +201,7 @@ class PopAll(Terminal):
     def __str__(self) -> str:
         return f"{self.tag_str()}POP_ALL"
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
+    def parse(self, state: ParserState, start: int) -> list[Match] | None:
         """Attempt to match this expression against the input at `start`."""
         position = start
         state.snapshot()
@@ -209,7 +210,7 @@ class PopAll(Terminal):
             literal = state.user_stack.pop()
             if not state.input.startswith(literal, position):
                 state.restore()
-                return
+                return None
 
             position += len(literal)
 
@@ -217,7 +218,7 @@ class PopAll(Terminal):
             if implicit_result := list(state.parse_implicit_rules(position)):
                 position = implicit_result[-1].pos
 
-        yield Match(None, position)
+        return [Match(None, position)]
 
     def is_pure(self, _rules: dict[str, Rule], _seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
@@ -232,11 +233,12 @@ class Drop(Terminal):
     def __str__(self) -> str:
         return f"{self.tag_str()}DROP"
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
+    def parse(self, state: ParserState, start: int) -> list[Match] | None:
         """Attempt to match this expression against the input at `start`."""
         if not state.user_stack.empty():
             state.user_stack.pop()
-            yield Match(None, start)
+            return [Match(None, start)]
+        return None
 
     def is_pure(self, _rules: dict[str, Rule], _seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
@@ -259,10 +261,10 @@ class Identifier(Terminal):
     def __eq__(self, other: object) -> bool:
         return isinstance(other, Identifier) and other.value == self.value
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
+    def parse(self, state: ParserState, start: int) -> list[Match] | None:
         """Attempt to match this expression against the input at `start`."""
         # TODO: Assumes the rule exists.
-        yield from state.parse_rule(state.parser.rules[self.value], start, self.tag)
+        return state.parse(state.parser.rules[self.value], start, self.tag)
 
     def is_pure(self, rules: dict[str, Rule], seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
@@ -292,10 +294,11 @@ class String(Terminal):
     def __eq__(self, other: object) -> bool:
         return isinstance(other, String) and self.value == other.value
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
+    def parse(self, state: ParserState, start: int) -> list[Match] | None:
         """Attempt to match this expression against the input at `start`."""
         if state.input.startswith(self.value, start):
-            yield Match(None, start + len(self.value))
+            return [Match(None, start + len(self.value))]
+        return None
 
 
 class CIString(Terminal):
@@ -319,10 +322,11 @@ class CIString(Terminal):
     def __eq__(self, other: object) -> bool:
         return isinstance(other, CIString) and self.value == other.value
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
+    def parse(self, state: ParserState, start: int) -> list[Match] | None:
         """Attempt to match this expression against the input at `start`."""
         if self._re.match(state.input, start):
-            yield Match(None, start + len(self.value))
+            return [Match(None, start + len(self.value))]
+        return None
 
 
 class Range(Terminal):
@@ -340,10 +344,11 @@ class Range(Terminal):
     def __str__(self) -> str:
         return f"{self.tag_str()}'{self.start}'..'{self.stop}'"
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
+    def parse(self, state: ParserState, start: int) -> list[Match] | None:
         """Attempt to match this expression against the input at `start`."""
         if match := self._re.match(state.input, start):
-            yield Match(None, match.end())
+            return [Match(None, match.end())]
+        return None
 
 
 class SkipUntil(Terminal):
@@ -367,7 +372,7 @@ class SkipUntil(Terminal):
     def __eq__(self, other: object) -> bool:
         return isinstance(other, SkipUntil) and other.subs == self.subs
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
+    def parse(self, state: ParserState, start: int) -> list[Match] | None:
         """Attempt to match this expression against the input at `start`.
 
         The match consumes characters until the earliest occurrence of any of
@@ -387,6 +392,5 @@ class SkipUntil(Terminal):
                 best_index = pos
 
         if best_index is not None:
-            yield Match(None, best_index)
-        else:
-            yield Match(None, len(s))
+            return [Match(None, best_index)]
+        return [Match(None, len(s))]

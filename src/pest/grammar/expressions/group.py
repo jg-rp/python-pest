@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Iterator
 from typing import Self
 
 from pest.grammar import Expression
@@ -31,7 +30,7 @@ class Group(Expression):
     def __eq__(self, other: object) -> bool:
         return isinstance(other, Group) and self.expression == other.expression
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
+    def parse(self, state: ParserState, start: int) -> list[Match] | None:
         """Try to parse all parts in sequence starting at `pos`.
 
         Returns:
@@ -40,7 +39,7 @@ class Group(Expression):
         """
         # XXX: Do we need a `Group` expression?
         # A group might have a tag.
-        yield from state.parse(self.expression, start, self.tag)
+        return state.parse(self.expression, start, self.tag)
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""

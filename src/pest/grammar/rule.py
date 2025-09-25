@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from typing import Iterable
-from typing import Iterator
 from typing import Self
 
 from pest.grammar import Expression
@@ -62,7 +61,7 @@ class Rule(Expression):
         modifier = modifier_to_str(self.modifier)
         return f"{doc}{self.name} = {modifier}{{ {self.expression} }}"
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
+    def parse(self, state: ParserState, start: int) -> list[Match] | None:
         """Attempt to match this expression against the input at `start`."""
         state.atomic_depth.snapshot()
 
@@ -71,19 +70,22 @@ class Rule(Expression):
         elif self.modifier & NONATOMIC:
             state.atomic_depth.zero()
 
-        results = list(state.parse(self.expression, start, self.tag))
+        results = state.parse(self.expression, start, self.tag)
+
+        # Restore atomic depth to what it was before this rule
+        state.atomic_depth.restore()
 
         # TODO: let ParserState restore atomic depth
         if not results:
-            state.atomic_depth.restore()
-            return
+            return None
 
         end = results[-1].pos
 
         if self.modifier & SILENT:
             # Yield children without an enclosing Pair
-            yield from results
-        elif self.modifier & ATOMIC:
+            return results
+
+        if self.modifier & ATOMIC:
             if isinstance(self.expression, Rule):
                 rule: Rule | None = self.expression
             elif isinstance(self.expression, Identifier):
@@ -93,20 +95,23 @@ class Rule(Expression):
 
             if not rule or not rule.modifier & (NONATOMIC | COMPOUND):
                 # Atomic rule silences children
-                yield Match(
-                    Pair(
-                        input_=state.input,
-                        rule=self,
-                        start=start,
-                        end=end,
-                        children=[],
-                    ),
-                    pos=end,
-                )
-            else:
-                # Non-atomic child rule.
-                # XXX: What about children's children?
-                yield Match(
+                return [
+                    Match(
+                        Pair(
+                            input_=state.input,
+                            rule=self,
+                            start=start,
+                            end=end,
+                            children=[],
+                        ),
+                        pos=end,
+                    )
+                ]
+
+            # Non-atomic child rule.
+            # XXX: What about children's children?
+            return [
+                Match(
                     Pair(
                         input_=state.input,
                         rule=self,
@@ -116,8 +121,10 @@ class Rule(Expression):
                     ),
                     pos=end,
                 )
-        else:
-            yield Match(
+            ]
+
+        return [
+            Match(
                 Pair(
                     input_=state.input,
                     rule=self,
@@ -127,9 +134,7 @@ class Rule(Expression):
                 ),
                 pos=end,
             )
-
-        # Restore atomic depth to what it was before this rule
-        state.atomic_depth.restore()
+        ]
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""

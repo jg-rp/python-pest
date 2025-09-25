@@ -5,7 +5,6 @@ from __future__ import annotations
 from enum import Enum
 from enum import auto
 from typing import TYPE_CHECKING
-from typing import Iterator
 from typing import NamedTuple
 from typing import Self
 from typing import TypeAlias
@@ -13,8 +12,8 @@ from typing import TypeAlias
 import regex as re
 
 from pest.grammar import Expression
-from pest.grammar.expression import RegexExpression
 from pest.grammar.expression import Match
+from pest.grammar.expression import RegexExpression
 from pest.grammar.rules.unicode import UnicodePropertyRule
 
 if TYPE_CHECKING:
@@ -37,17 +36,17 @@ class Choice(Expression):
         choice = " | ".join(str(expr) for expr in self.expressions)
         return f"{self.tag_str()}{choice}"
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
+    def parse(self, state: ParserState, start: int) -> list[Match] | None:
         """Attempt to match this expression against the input at `start`."""
         for expr in self.expressions:
             state.snapshot()
-            result = list(state.parse(expr, start, self.tag))
+            result = state.parse(expr, start, self.tag)
             if result:
                 state.ok()
-                yield from result
-                break
-            else:
-                state.restore()
+                return result
+
+            state.restore()
+        return None
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""
@@ -109,10 +108,11 @@ class LazyChoiceRegex(Expression):
             self._compiled = re.compile(self.build_optimized_pattern(), re.VERSION1)
         return self._compiled
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
+    def parse(self, state: ParserState, start: int) -> list[Match] | None:
         """Attempt to match this expression against the input at `start`."""
         if match := self.pattern.match(state.input, start):
-            yield Match(None, match.end())
+            return [Match(None, match.end())]
+        return None
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""

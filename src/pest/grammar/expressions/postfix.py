@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Iterator
 from typing import Self
 
 from pest.grammar import Expression
@@ -31,7 +30,7 @@ class Optional(Expression):
     def __eq__(self, other: object) -> bool:
         return isinstance(other, Optional) and self.expression == other.expression
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
+    def parse(self, state: ParserState, start: int) -> list[Match] | None:
         """Attempt to match this expression against the input at `start`.
 
         Args:
@@ -39,11 +38,10 @@ class Optional(Expression):
                    any memoization or error-tracking structures.
             start: The index in the input string where parsing begins.
         """
-        results = list(state.parse(self.expression, start, self.tag))
-        if results:
-            yield from results
-        else:
-            yield Match(None, start)
+        matches = state.parse(self.expression, start, self.tag)
+        if matches:
+            return matches
+        return [Match(None, start)]
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""
@@ -72,14 +70,15 @@ class Repeat(Expression):
     def __eq__(self, other: object) -> bool:
         return isinstance(other, Repeat) and self.expression == other.expression
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
+    def parse(self, state: ParserState, start: int) -> list[Match] | None:
         """Attempt to match this expression against the input at `start`."""
         position = start
         matched = False
+        matches = []
 
         while True:
             state.snapshot()
-            results = list(state.parse(self.expression, position, self.tag))
+            results = state.parse(self.expression, position, self.tag)
 
             if not results:
                 state.restore()
@@ -88,15 +87,16 @@ class Repeat(Expression):
             matched = True
             position = results[-1].pos
             state.ok()
-            yield from results
+            matches.extend(results)
 
-            for success in state.parse_implicit_rules(position):
-                position = success.pos
-                yield success
+            for match in state.parse_implicit_rules(position):
+                position = match.pos
+                matches.append(match)
 
         # Always succeed.
         if not matched:
-            yield Match(None, position)
+            return [Match(None, position)]
+        return matches
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""
@@ -122,37 +122,37 @@ class RepeatOnce(Expression):
     def __str__(self) -> str:
         return f"{self.tag_str()}{self.expression}+"
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
+    def parse(self, state: ParserState, start: int) -> list[Match] | None:
         """Attempt to match this expression against the input at `start`."""
         state.snapshot()
-        results = list(state.parse(self.expression, start, self.tag))
+        matches = state.parse(self.expression, start, self.tag)
 
-        if not results:
+        if not matches:
             state.restore()
-            return
+            return None
 
         state.ok()
-        yield from results
-
-        position = results[-1].pos
+        position = matches[-1].pos
 
         for success in state.parse_implicit_rules(position):
             position = success.pos
-            yield success
+            matches.append(success)
 
         while True:
             state.snapshot()
-            results = list(state.parse(self.expression, position, self.tag))
+            results = state.parse(self.expression, position, self.tag)
             if not results:
                 state.restore()
                 break
             position = results[-1].pos
             state.ok()
-            yield from results
+            matches.extend(results)
 
             for success in state.parse_implicit_rules(position):
                 position = success.pos
-                yield success
+                matches.append(success)
+
+        return matches
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""
@@ -182,32 +182,33 @@ class RepeatExact(Expression):
     def __str__(self) -> str:
         return f"{self.expression}{{{self.number}}}"
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
+    def parse(self, state: ParserState, start: int) -> list[Match] | None:
         """Attempt to match this expression against the input at `start`."""
-        successes: list[Match] = []
+        matches: list[Match] = []
         match_count = 0
         position = start
         state.snapshot()
 
         while True:
-            results = list(state.parse(self.expression, position, self.tag))
+            results = state.parse(self.expression, position, self.tag)
 
             if not results:
                 break
 
             position = results[-1].pos
-            successes.extend(results)
+            matches.extend(results)
             match_count += 1
 
             for success in state.parse_implicit_rules(position):
                 position = success.pos
-                successes.append(success)
+                matches.append(success)
 
         if match_count == self.number:
             state.ok()
-            yield from successes
-        else:
-            state.restore()
+            return matches
+
+        state.restore()
+        return None
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""
@@ -237,30 +238,31 @@ class RepeatMin(Expression):
     def __str__(self) -> str:
         return f"{self.expression}{{{self.number},}}"
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
+    def parse(self, state: ParserState, start: int) -> list[Match] | None:
         """Attempt to match this expression against the input at `start`."""
-        successes: list[Match] = []
+        matches: list[Match] = []
         match_count = 0
         position = start
         state.snapshot()
 
         while True:
-            results = list(state.parse(self.expression, position, self.tag))
+            results = state.parse(self.expression, position, self.tag)
             if not results:
                 break
             position = results[-1].pos
-            successes.extend(results)
+            matches.extend(results)
             match_count += 1
 
             for success in state.parse_implicit_rules(position):
                 position = success.pos
-                successes.append(success)
+                matches.append(success)
 
         if match_count >= self.number:
             state.ok()
-            yield from successes
-        else:
-            state.restore()
+            return matches
+
+        state.restore()
+        return None
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""
@@ -290,30 +292,31 @@ class RepeatMax(Expression):
     def __str__(self) -> str:
         return f"{self.expression}{{,{self.number}}}"
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
+    def parse(self, state: ParserState, start: int) -> list[Match] | None:
         """Attempt to match this expression against the input at `start`."""
-        successes: list[Match] = []
+        matches: list[Match] = []
         position = start
         state.snapshot()
 
         for i in range(self.number):
-            results = list(state.parse(self.expression, position, self.tag))
+            results = state.parse(self.expression, position, self.tag)
             if not results:
                 break
 
             position = results[-1].pos
-            successes.extend(results)
+            matches.extend(results)
 
             if i < self.number - 1:
                 for success in state.parse_implicit_rules(position):
                     position = success.pos
-                    successes.append(success)
+                    matches.append(success)
 
-        if successes:
+        if matches:
             state.ok()
-            yield from successes
-        else:
-            state.restore()
+            return matches
+
+        state.restore()
+        return None
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""
@@ -345,30 +348,31 @@ class RepeatRange(Expression):
     def __str__(self) -> str:
         return f"{self.expression}{{{self.min}, {self.max}}}"
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
+    def parse(self, state: ParserState, start: int) -> list[Match] | None:
         """Attempt to match this expression against the input at `start`."""
-        successes: list[Match] = []
+        matches: list[Match] = []
         match_count = 0
         position = start
         state.snapshot()
 
         while True:
-            results = list(state.parse(self.expression, position, self.tag))
+            results = state.parse(self.expression, position, self.tag)
             if not results:
                 break
             position = results[-1].pos
-            successes.extend(results)
+            matches.extend(results)
             match_count += 1
 
             for success in state.parse_implicit_rules(position):
                 position = success.pos
-                successes.append(success)
+                matches.append(success)
 
         if match_count >= self.min and match_count <= self.max:
             state.ok()
-            yield from successes
-        else:
-            state.restore()
+            return matches
+
+        state.restore()
+        return None
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""

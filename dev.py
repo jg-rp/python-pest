@@ -37,6 +37,7 @@ for entry in optimizer.log:
     print(entry)
 print(rules["rule"].tree_view())
 
+
 # try:
 #     pairs = parser.parse(rule, "x")
 # except PestParsingError as err:

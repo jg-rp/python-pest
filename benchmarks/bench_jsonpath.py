@@ -108,7 +108,7 @@ def benchmark(number: int = 10, best_of: int = 3) -> None:
         repeat=best_of,
     )
 
-    print("just parse".ljust(30), f"{min(results):.3f}")
+    print("just pest parse".ljust(30), f"{min(results):.3f}")
 
     results = timeit.repeat(
         JUST_COMPILE_STMT,

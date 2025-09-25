@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Iterator
 from typing import Self
 
 from pest.grammar import Expression
@@ -32,17 +31,17 @@ class Sequence(Expression):
     def __eq__(self, other: object) -> bool:
         return isinstance(other, Sequence) and other.expressions == self.expressions
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
+    def parse(self, state: ParserState, start: int) -> list[Match] | None:
         """Try to parse left followed by right starting at `start`."""
         position = start
         results: list[Match] = []
         state.snapshot()
 
         for i, expr in enumerate(self.expressions):
-            result = list(state.parse(expr, position, self.tag))
+            result = state.parse(expr, position, self.tag)
             if not result:
                 state.restore()
-                return
+                return None
 
             position = result[-1].pos
             results.extend(result)
@@ -55,7 +54,7 @@ class Sequence(Expression):
                     results.extend(implicit_result)
 
         state.ok()
-        yield from results
+        return results
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""

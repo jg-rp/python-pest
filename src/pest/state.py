@@ -38,7 +38,9 @@ class ParserState:
         "tag_stack",
     )
 
-    def __init__(self, parser: Parser, input_: str) -> None:
+    def __init__(
+        self, parser: Parser, input_: str, start_rule: Rule, start_pos: int = 0
+    ) -> None:
         self.parser = parser
         self.input = input_
 
@@ -48,52 +50,42 @@ class ParserState:
 
         self.user_stack: Stack[str] = Stack()
 
-        self.attempts: list[tuple[int, Rule]] = []
+        self.attempts: list[tuple[int, Rule]] = [(start_pos, start_rule)]
         self.furthest_failure: tuple[int, Rule] | None = None
 
-    def parse_rule(
-        self, rule: Rule, pos: int, tag: str | None = None
-    ) -> Iterator[Match]:
-        """Parse a rule in the current state."""
+    def parse(
+        self, expr: Expression, pos: int, tag: str | None = None
+    ) -> list[Match] | None:
+        """Parse an expression in the current state."""
         if tag:
             self.tag_stack.append(tag)
 
-        self.attempts.append((pos, rule))
+        if not isinstance(expr, Rule):
+            matches = expr.parse(self, pos)
+            if tag and self.tag_stack:
+                self.tag_stack.pop()
+            return matches
 
-        matches = list(rule.parse(self, pos))
+        self.attempts.append((pos, expr))
+        matches = expr.parse(self, pos)
 
         if not matches and (
             self.furthest_failure is None or pos < self.furthest_failure[0]
         ):
-            self.furthest_failure = (pos, rule)
+            self.furthest_failure = (pos, expr)
 
-        elif self.tag_stack:
+        elif matches and self.tag_stack:
             # Tag results with last tag on the tag stack.
             rule_tag = self.tag_stack.pop()
             for match in matches:
                 if match.pair:
                     match.pair.tag = rule_tag
 
-        yield from matches
-
         self.attempts.pop()
-
         if tag and self.tag_stack:
             self.tag_stack.pop()
 
-    def parse(
-        self, expr: Expression, pos: int, tag: str | None = None
-    ) -> Iterator[Match]:
-        """Parse an expression in the current state."""
-        assert not isinstance(expr, Rule), expr.name
-
-        if tag:
-            self.tag_stack.append(tag)
-
-        yield from expr.parse(self, pos)
-
-        if tag and self.tag_stack:
-            self.tag_stack.pop()
+        return matches
 
     def raise_failure(self) -> Never:
         """Return a PestParsingError populated with context info."""
@@ -145,20 +137,16 @@ class ParserState:
             matched = False
 
             if whitespace_rule:
-                for result in self.parse_rule(whitespace_rule, new_pos):
+                for result in self.parse(whitespace_rule, new_pos) or []:
                     matched = True
                     new_pos = result.pos
                     if result.pair and self.atomic_depth == 0:
                         yield result
 
-            # XXX: bit of a hack
-            # We're relying on knowing the name of the current rule so we don't
-            # recurse indefinitely when parsing COMMENT, which will often
-            # include a sequence with implicit whitespace.
             if comment_rule and (
                 not self.attempts or self.attempts[-1][1].name != "COMMENT"
             ):
-                for result in self.parse_rule(comment_rule, new_pos):
+                for result in self.parse(comment_rule, new_pos) or []:
                     matched = True
                     new_pos = result.pos
                     if result.pair and self.atomic_depth == 0:

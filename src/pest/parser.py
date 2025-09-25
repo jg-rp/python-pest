@@ -79,13 +79,14 @@ class Parser:
 
     def parse(self, start_rule: str, input_: str, *, start_pos: int = 0) -> Pairs:
         """Parse `input_` starting from `rule`."""
-        state = ParserState(self, input_)
-        results = list(state.parse_rule(self.rules[start_rule], start_pos))
+        rule = self.rules[start_rule]
+        state = ParserState(self, input_, rule, start_pos)
+        results = rule.parse(state, start_pos)
 
-        if results:
-            return Pairs([result.pair for result in results if result.pair])
+        if not results:
+            state.raise_failure()
 
-        return state.raise_failure()
+        return Pairs([result.pair for result in results if result.pair])
 
     def tree_view(self) -> str:
         """Return a tree view for each non-built-in rule in this grammar."""

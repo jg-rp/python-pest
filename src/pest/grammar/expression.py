@@ -6,7 +6,6 @@ from abc import ABC
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 from typing import Callable
-from typing import Iterator
 from typing import NamedTuple
 from typing import Self
 
@@ -46,7 +45,7 @@ class Expression(ABC):
         self._pure: bool | None = None
 
     @abstractmethod
-    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
+    def parse(self, state: ParserState, start: int) -> list[Match] | None:
         """Attempt to match this expression against the input at `start`.
 
         Yield instances of `Success` for each parsed node.
@@ -145,7 +144,8 @@ class RegexExpression(Terminal):
     def __str__(self) -> str:
         return f"/{self.pattern}/"
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
+    def parse(self, state: ParserState, start: int) -> list[Match] | None:
         """Attempt to match this expression against the input at `start`."""
         if match := self.regex.match(state.input, start):
-            yield Match(None, match.end())
+            return [Match(None, match.end())]
+        return None

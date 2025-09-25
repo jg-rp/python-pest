@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Iterator
 from typing import Self
 
 from pest.grammar.expression import Expression
@@ -35,10 +34,11 @@ class _Any(Expression):
     def __str__(self) -> str:
         return "ANY"
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
+    def parse(self, state: ParserState, start: int) -> list[Match] | None:
         """Attempt to match this expression against the input at `start`."""
         if start < len(state.input):
-            yield Match(None, start + 1)
+            return [Match(None, start + 1)]
+        return None
 
     def children(self) -> list[Expression]:
         """Return this expressions children."""
@@ -70,10 +70,11 @@ class _SOI(Expression):
     def __str__(self) -> str:
         return "SOI"
 
-    def parse(self, _state: ParserState, start: int) -> Iterator[Match]:
+    def parse(self, _state: ParserState, start: int) -> list[Match] | None:
         """Attempt to match this expression against the input at `start`."""
         if start == 0:
-            yield Match(None, 0)
+            return [Match(None, 0)]
+        return None
 
     def children(self) -> list[Expression]:
         """Return this expressions children."""
@@ -105,10 +106,11 @@ class _EOI(Expression):
     def __str__(self) -> str:
         return "EOI"
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
+    def parse(self, state: ParserState, start: int) -> list[Match] | None:
         """Attempt to match this expression against the input at `start`."""
         if start == len(state.input):
-            yield Match(None, start)
+            return [Match(None, start)]
+        return None
 
     def children(self) -> list[Expression]:
         """Return this expressions children."""
