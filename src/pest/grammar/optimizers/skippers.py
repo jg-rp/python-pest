@@ -56,12 +56,10 @@ def skip(expr: Expression, rules: Mapping[str, Rule]) -> Expression:
                     new_expr = _skip(inner.expression, rules, [])
                     if new_expr:
                         return new_expr
-
-                case (NegativePredicate(expression=inner), Any()):
+                case (NegativePredicate(expression=inner), Any() | Identifier("ANY")):
                     new_expr = _skip(inner, rules, [])
                     if new_expr:
                         return new_expr
-
         case _:
             return expr
 

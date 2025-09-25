@@ -8,7 +8,7 @@ from typing import Iterator
 from typing import Self
 
 from pest.grammar import Expression
-from pest.grammar.expression import Success
+from pest.grammar.expression import Match
 from pest.grammar.expressions.terminals import Identifier
 from pest.pairs import Pair
 
@@ -62,9 +62,9 @@ class Rule(Expression):
         modifier = modifier_to_str(self.modifier)
         return f"{doc}{self.name} = {modifier}{{ {self.expression} }}"
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
+    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
         """Attempt to match this expression against the input at `start`."""
-        state.atomic_depth.checkpoint()
+        state.atomic_depth.snapshot()
 
         if self.modifier & (ATOMIC | COMPOUND):
             state.atomic_depth += 1
@@ -93,7 +93,7 @@ class Rule(Expression):
 
             if not rule or not rule.modifier & (NONATOMIC | COMPOUND):
                 # Atomic rule silences children
-                yield Success(
+                yield Match(
                     Pair(
                         input_=state.input,
                         rule=self,
@@ -106,7 +106,7 @@ class Rule(Expression):
             else:
                 # Non-atomic child rule.
                 # XXX: What about children's children?
-                yield Success(
+                yield Match(
                     Pair(
                         input_=state.input,
                         rule=self,
@@ -117,7 +117,7 @@ class Rule(Expression):
                     pos=end,
                 )
         else:
-            yield Success(
+            yield Match(
                 Pair(
                     input_=state.input,
                     rule=self,

@@ -5,14 +5,14 @@ from __future__ import annotations
 from typing_extensions import Self
 
 
-class CheckpointInt:
+class SnapshottingInt:
     """An integer that supports checkpoint and restore operations."""
 
     def __init__(self, value: int = 0) -> None:
         self._value: int = value
         self._checkpoints: list[int] = []
 
-    def checkpoint(self) -> None:
+    def snapshot(self) -> None:
         """Save the current value onto the checkpoint stack."""
         self._checkpoints.append(self._value)
 
@@ -45,31 +45,31 @@ class CheckpointInt:
     def __str__(self) -> str:
         return str(self._value)
 
-    def __add__(self, other: int | CheckpointInt) -> Self:
+    def __add__(self, other: int | SnapshottingInt) -> Self:
         self._value += int(other)
         return self
 
-    def __sub__(self, other: int | CheckpointInt) -> Self:
+    def __sub__(self, other: int | SnapshottingInt) -> Self:
         self._value -= int(other)
         return self
 
-    def __mul__(self, other: int | CheckpointInt) -> Self:
+    def __mul__(self, other: int | SnapshottingInt) -> Self:
         self._value *= int(other)
         return self
 
-    def __floordiv__(self, other: int | CheckpointInt) -> Self:
+    def __floordiv__(self, other: int | SnapshottingInt) -> Self:
         self._value //= int(other)
         return self
 
-    def __truediv__(self, other: int | CheckpointInt) -> Self:
+    def __truediv__(self, other: int | SnapshottingInt) -> Self:
         self._value = int(self._value / int(other))
         return self
 
-    def __mod__(self, other: int | CheckpointInt) -> Self:
+    def __mod__(self, other: int | SnapshottingInt) -> Self:
         self._value %= int(other)
         return self
 
-    def __pow__(self, other: int | CheckpointInt) -> Self:
+    def __pow__(self, other: int | SnapshottingInt) -> Self:
         self._value **= int(other)
         return self
 

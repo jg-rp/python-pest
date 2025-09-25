@@ -7,7 +7,7 @@ from typing import Iterator
 from typing import Self
 
 from pest.grammar import Expression
-from pest.grammar.expression import Success
+from pest.grammar.expression import Match
 
 if TYPE_CHECKING:
     from pest.state import ParserState
@@ -31,7 +31,7 @@ class Optional(Expression):
     def __eq__(self, other: object) -> bool:
         return isinstance(other, Optional) and self.expression == other.expression
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
+    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
         """Attempt to match this expression against the input at `start`.
 
         Args:
@@ -43,7 +43,7 @@ class Optional(Expression):
         if results:
             yield from results
         else:
-            yield Success(None, start)
+            yield Match(None, start)
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""
@@ -72,7 +72,7 @@ class Repeat(Expression):
     def __eq__(self, other: object) -> bool:
         return isinstance(other, Repeat) and self.expression == other.expression
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
+    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
         """Attempt to match this expression against the input at `start`."""
         position = start
         matched = False
@@ -96,7 +96,7 @@ class Repeat(Expression):
 
         # Always succeed.
         if not matched:
-            yield Success(None, position)
+            yield Match(None, position)
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""
@@ -122,7 +122,7 @@ class RepeatOnce(Expression):
     def __str__(self) -> str:
         return f"{self.tag_str()}{self.expression}+"
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
+    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
         """Attempt to match this expression against the input at `start`."""
         state.snapshot()
         results = list(state.parse(self.expression, start, self.tag))
@@ -182,9 +182,9 @@ class RepeatExact(Expression):
     def __str__(self) -> str:
         return f"{self.expression}{{{self.number}}}"
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
+    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
         """Attempt to match this expression against the input at `start`."""
-        successes: list[Success] = []
+        successes: list[Match] = []
         match_count = 0
         position = start
         state.snapshot()
@@ -237,9 +237,9 @@ class RepeatMin(Expression):
     def __str__(self) -> str:
         return f"{self.expression}{{{self.number},}}"
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
+    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
         """Attempt to match this expression against the input at `start`."""
-        successes: list[Success] = []
+        successes: list[Match] = []
         match_count = 0
         position = start
         state.snapshot()
@@ -290,9 +290,9 @@ class RepeatMax(Expression):
     def __str__(self) -> str:
         return f"{self.expression}{{,{self.number}}}"
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
+    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
         """Attempt to match this expression against the input at `start`."""
-        successes: list[Success] = []
+        successes: list[Match] = []
         position = start
         state.snapshot()
 
@@ -345,9 +345,9 @@ class RepeatRange(Expression):
     def __str__(self) -> str:
         return f"{self.expression}{{{self.min}, {self.max}}}"
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
+    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
         """Attempt to match this expression against the input at `start`."""
-        successes: list[Success] = []
+        successes: list[Match] = []
         match_count = 0
         position = start
         state.snapshot()

@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from .rule import Rule
 
 
-class Success(NamedTuple):
+class Match(NamedTuple):
     """A successful parse of an expression."""
 
     pair: Pair | None
@@ -46,7 +46,7 @@ class Expression(ABC):
         self._pure: bool | None = None
 
     @abstractmethod
-    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
+    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
         """Attempt to match this expression against the input at `start`.
 
         Yield instances of `Success` for each parsed node.
@@ -145,7 +145,7 @@ class RegexExpression(Terminal):
     def __str__(self) -> str:
         return f"/{self.pattern}/"
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
+    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
         """Attempt to match this expression against the input at `start`."""
         if match := self.regex.match(state.input, start):
-            yield Success(None, match.end())
+            yield Match(None, match.end())

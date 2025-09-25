@@ -7,7 +7,7 @@ from typing import Iterator
 from typing import Self
 
 from pest.grammar.expression import Expression
-from pest.grammar.expression import Success
+from pest.grammar.expression import Match
 from pest.grammar.rule import SILENT
 from pest.grammar.rule import BuiltInRule
 
@@ -35,10 +35,10 @@ class _Any(Expression):
     def __str__(self) -> str:
         return "ANY"
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
+    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
         """Attempt to match this expression against the input at `start`."""
         if start < len(state.input):
-            yield Success(None, start + 1)
+            yield Match(None, start + 1)
 
     def children(self) -> list[Expression]:
         """Return this expressions children."""
@@ -70,10 +70,10 @@ class _SOI(Expression):
     def __str__(self) -> str:
         return "SOI"
 
-    def parse(self, _state: ParserState, start: int) -> Iterator[Success]:
+    def parse(self, _state: ParserState, start: int) -> Iterator[Match]:
         """Attempt to match this expression against the input at `start`."""
         if start == 0:
-            yield Success(None, 0)
+            yield Match(None, 0)
 
     def children(self) -> list[Expression]:
         """Return this expressions children."""
@@ -105,10 +105,10 @@ class _EOI(Expression):
     def __str__(self) -> str:
         return "EOI"
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
+    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
         """Attempt to match this expression against the input at `start`."""
         if start == len(state.input):
-            yield Success(None, start)
+            yield Match(None, start)
 
     def children(self) -> list[Expression]:
         """Return this expressions children."""

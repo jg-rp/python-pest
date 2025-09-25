@@ -61,7 +61,7 @@ class OptimizerStep:
 DEFAULT_OPTIMIZER_PASSES = [
     OptimizerStep("unroll", unroll, PassDirection.POSTORDER),
     OptimizerStep("skip", skip, PassDirection.PREORDER),
-    OptimizerStep("inline built-in", inline_builtin, PassDirection.PREORDER),
+    # OptimizerStep("inline built-in", inline_builtin, PassDirection.PREORDER),
     OptimizerStep("squash_choice", squash_choice, PassDirection.POSTORDER),
 ]
 

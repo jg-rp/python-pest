@@ -7,7 +7,7 @@ from typing import Iterator
 from typing import Self
 
 from pest.grammar import Expression
-from pest.grammar.expression import Success
+from pest.grammar.expression import Match
 
 if TYPE_CHECKING:
     from pest.state import ParserState
@@ -33,13 +33,13 @@ class PositivePredicate(Expression):
             isinstance(other, PositivePredicate) and self.expression == other.expression
         )
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
+    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
         """Try to parse all parts in sequence starting at `pos`."""
         with state.suppress() as _state:
             pairs = list(_state.parse(self.expression, start, self.tag))
 
         if pairs:
-            yield Success(None, start)
+            yield Match(None, start)
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""
@@ -70,13 +70,13 @@ class NegativePredicate(Expression):
             isinstance(other, NegativePredicate) and self.expression == other.expression
         )
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
+    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
         """Try to parse all parts in sequence starting at `pos`."""
         with state.suppress(negative=True) as _state:
             pairs = list(_state.parse(self.expression, start, self.tag))
 
         if not pairs:
-            yield Success(None, start)
+            yield Match(None, start)
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""

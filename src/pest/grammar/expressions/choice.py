@@ -14,7 +14,7 @@ import regex as re
 
 from pest.grammar import Expression
 from pest.grammar.expression import RegexExpression
-from pest.grammar.expression import Success
+from pest.grammar.expression import Match
 from pest.grammar.rules.unicode import UnicodePropertyRule
 
 if TYPE_CHECKING:
@@ -37,7 +37,7 @@ class Choice(Expression):
         choice = " | ".join(str(expr) for expr in self.expressions)
         return f"{self.tag_str()}{choice}"
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
+    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
         """Attempt to match this expression against the input at `start`."""
         for expr in self.expressions:
             state.snapshot()
@@ -109,10 +109,10 @@ class LazyChoiceRegex(Expression):
             self._compiled = re.compile(self.build_optimized_pattern(), re.VERSION1)
         return self._compiled
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
+    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
         """Attempt to match this expression against the input at `start`."""
         if match := self.pattern.match(state.input, start):
-            yield Success(None, match.end())
+            yield Match(None, match.end())
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""

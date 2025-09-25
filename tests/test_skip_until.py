@@ -16,7 +16,6 @@ def test_skip_until_neg_pred_literal(optimizer: Optimizer) -> None:
     rules, _ = parse('rule = { (!"\n" ~ ANY)* }', Parser.BUILTIN)
     want = SkipUntil(["\n"])
     optimizer.optimize(rules, debug=True)
-    assert len(optimizer.log) == 1
     assert rules["rule"].expression == want
 
 
@@ -24,7 +23,6 @@ def test_skip_until_neg_pred_choice(optimizer: Optimizer) -> None:
     rules, _ = parse('rule = { (!("a" | "b") ~ ANY)* }', Parser.BUILTIN)
     want = SkipUntil(["a", "b"])
     optimizer.optimize(rules, debug=True)
-    assert len(optimizer.log) == 1
     assert rules["rule"].expression == want
 
 

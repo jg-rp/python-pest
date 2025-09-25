@@ -9,7 +9,7 @@ from typing import Self
 from pest.grammar import Expression
 
 if TYPE_CHECKING:
-    from pest.grammar.expression import Success
+    from pest.grammar.expression import Match
     from pest.state import ParserState
 
 
@@ -32,10 +32,10 @@ class Sequence(Expression):
     def __eq__(self, other: object) -> bool:
         return isinstance(other, Sequence) and other.expressions == self.expressions
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
+    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
         """Try to parse left followed by right starting at `start`."""
         position = start
-        results: list[Success] = []
+        results: list[Match] = []
         state.snapshot()
 
         for i, expr in enumerate(self.expressions):

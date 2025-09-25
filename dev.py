@@ -6,19 +6,9 @@ from pest import Parser
 from pest import PestParsingError
 from pest.grammar import parse
 
-# with open("tests/grammars/lists.pest", encoding="utf-8") as fd:
-#     grammar = fd.read()
+with open("tests/grammars/reporting.pest", encoding="utf-8") as fd:
+    grammar = fd.read()
 
-grammar = """\
-expr = {
-  SOI ~
-  #prefix=(STAR)? ~ #suffix=DOT?
-  ~ EOI
-}
-
-STAR={ FOO }
-FOO={"*"}
-DOT={"."}"""
 
 # rules, _ = parse(grammar, Parser.BUILTIN)
 
@@ -36,8 +26,17 @@ DOT={"."}"""
 # print(optimized[rule].tree_view())
 
 
-parser = Parser.from_grammar(grammar, optimizer=None)
-print(parser.tree_view())
+# parser = Parser.from_grammar(grammar)
+# print(parser.tree_view())
+
+optimizer = Optimizer(DEFAULT_OPTIMIZER_PASSES)
+rules, _ = parse('rule = { (!"\n" ~ ANY)* }', Parser.BUILTIN)
+print(rules["rule"].tree_view())
+optimizer.optimize(rules)
+for entry in optimizer.log:
+    print(entry)
+print(rules["rule"].tree_view())
+
 # try:
 #     pairs = parser.parse(rule, "x")
 # except PestParsingError as err:
@@ -58,15 +57,9 @@ print(parser.tree_view())
 # print(parser.tree_view())
 
 
-pairs = parser.parse("expr", "*")
+# pairs = parser.parse("choices", "x")
 
 # print(json.dumps(pairs.as_list(), indent=2))
-
-print(repr(pairs.find_first_tagged("prefix")))
-print(repr(pairs.find_first_tagged("suffix")))
-
-for p in pairs.flatten():
-    print(repr(p))
 
 
 # TODO: https://github.com/pest-parser/pest/issues/982

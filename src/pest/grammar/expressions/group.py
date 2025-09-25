@@ -9,7 +9,7 @@ from typing import Self
 from pest.grammar import Expression
 
 if TYPE_CHECKING:
-    from pest.grammar.expression import Success
+    from pest.grammar.expression import Match
     from pest.state import ParserState
 
 
@@ -31,7 +31,7 @@ class Group(Expression):
     def __eq__(self, other: object) -> bool:
         return isinstance(other, Group) and self.expression == other.expression
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
+    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
         """Try to parse all parts in sequence starting at `pos`.
 
         Returns:

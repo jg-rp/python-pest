@@ -9,7 +9,7 @@ from typing import Self
 import regex as re
 
 from pest.grammar.expression import Expression
-from pest.grammar.expression import Success
+from pest.grammar.expression import Match
 from pest.grammar.expression import Terminal
 
 if TYPE_CHECKING:
@@ -86,7 +86,7 @@ class LazyRegexExpression(Terminal):
             parts.append(s)
         return "".join(parts)
 
-    def parse(self, state: ParserState, start: int) -> Iterator[Success]:
+    def parse(self, state: ParserState, start: int) -> Iterator[Match]:
         """Attempt to match this expression against the input at `start`.
 
         Args:
@@ -95,7 +95,7 @@ class LazyRegexExpression(Terminal):
             start: The index in the input string where parsing begins.
         """
         if match := self.pattern.match(state.input, start):
-            yield Success(None, match.end())
+            yield Match(None, match.end())
 
     def children(self) -> list[Expression]:
         """Return this expressions children."""
