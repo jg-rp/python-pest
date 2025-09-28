@@ -13,6 +13,7 @@ from pest.grammar.expression import Match
 from pest.grammar.expression import Terminal
 
 if TYPE_CHECKING:
+    from pest.grammar.codegen.builder import Builder
     from pest.grammar.rule import Rule
     from pest.state import ParserState
 
@@ -311,6 +312,16 @@ class String(Terminal):
         if state.input.startswith(self.value, start):
             return [Match(None, start + len(self.value))]
         return None
+
+    def generate(self, gen: Builder, _pairs_var: str) -> None:
+        """Emit Python source code that implements this grammar expression."""
+        lit_repr = repr(self.value)
+        gen.writeln(f"if state.input.startswith({lit_repr}, state.pos):")
+        with gen.block():
+            gen.writeln(f"state.pos += {len(self.value)}")
+        gen.writeln("else:")
+        with gen.block():
+            gen.writeln(f"raise ParseError({lit_repr})")
 
 
 class CIString(Terminal):

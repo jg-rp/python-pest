@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from pest.pairs import Pair
     from pest.state import ParserState
 
+    from .codegen.builder import Builder
     from .rule import Rule
 
 
@@ -48,14 +49,34 @@ class Expression(ABC):
     def parse(self, state: ParserState, start: int) -> list[Match] | None:
         """Attempt to match this expression against the input at `start`.
 
-        Yield instances of `Success` for each parsed node.
-        Yield nothing if parsing fails.
+        Return instances of `Match` for each parsed node.
+        Return `None` or an empty list if parsing fails.
 
         Args:
             state: The current parser state, including input text and
                    any memoization or error-tracking structures.
             start: The index in the input string where parsing begins.
         """
+
+    # TODO: @abstractmethod
+    def generate(self, gen: Builder, pairs_var: str) -> None:
+        """Emit Python source code that implements this grammar expression.
+
+        This method is the *code generation backend* for the expression tree.
+        Instead of interpreting nodes at parse time, each expression contributes
+        its control flow and matching logic as concrete Python statements, written
+        into the provided ``Builder``.
+
+        Args:
+            gen: Code builder that accumulates the generated source.
+            pairs_var: Name of the list variable to which new `Pair` instances
+                    should be appended.
+
+        Raises:
+            PestParserError: Generated code may raise this at runtime when the
+            expression fails to match.
+        """
+        raise NotImplementedError(self.__class__.__name__)
 
     @abstractmethod
     def children(self) -> list[Expression]:
@@ -142,7 +163,7 @@ class RegexExpression(Terminal):
         self.regex = re.compile(pattern)
 
     def __str__(self) -> str:
-        return f"/{self.pattern}/"
+        return f"`{self.pattern}`"
 
     def parse(self, state: ParserState, start: int) -> list[Match] | None:
         """Attempt to match this expression against the input at `start`."""

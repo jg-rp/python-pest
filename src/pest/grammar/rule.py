@@ -12,6 +12,7 @@ from pest.grammar.expressions.terminals import Identifier
 from pest.pairs import Pair
 
 if TYPE_CHECKING:
+    from pest.grammar.codegen.builder import Builder
     from pest.state import ParserState
 
 SILENT = 1 << 1  # _
@@ -135,6 +136,15 @@ class Rule(Expression):
                 pos=end,
             )
         ]
+
+    def generate(self, gen: Builder, _pairs_var: str) -> None:
+        """Emit Python source code that implements this grammar expression."""
+        gen.writeln(f"def parse_{self.name}(state: State) -> Pairs:")
+        with gen.block():
+            pairs_var = "pairs"
+            gen.writeln(f"{pairs_var}: list[Pair] = []")
+            self.expression.generate(gen, pairs_var)
+            gen.writeln(f"return Pairs({pairs_var})")
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""

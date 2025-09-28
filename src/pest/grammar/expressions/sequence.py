@@ -8,6 +8,7 @@ from typing import Self
 from pest.grammar import Expression
 
 if TYPE_CHECKING:
+    from pest.grammar.codegen.builder import Builder
     from pest.grammar.expression import Match
     from pest.state import ParserState
 
@@ -55,6 +56,11 @@ class Sequence(Expression):
 
         state.ok()
         return results
+
+    def generate(self, gen: Builder, pairs_var: str) -> None:
+        """Emit Python source code that implements this grammar expression."""
+        for child in self.expressions:
+            child.generate(gen, pairs_var)
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""

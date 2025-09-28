@@ -1,67 +1,18 @@
-import json
-
-from pest import DEFAULT_OPTIMIZER_PASSES
-from pest import Optimizer
 from pest import Parser
-from pest import PestParsingError
-from pest.grammar import parse
+from pest.grammar.codegen.builder import Builder
+from pest.grammar.expression import Expression
+from pest.grammar.rule import Rule
 
-with open("tests/grammars/reporting.pest", encoding="utf-8") as fd:
-    grammar = fd.read()
+# TODO: LazyChoiceRegex.generate
+rules = Parser.from_grammar('thing = { "a" | "b" }').rules
 
-
-# rules, _ = parse(grammar, Parser.BUILTIN)
-
-# rule = "COMMENT"
-# print(rules[rule].tree_view())
-
-# optimizer = Optimizer(DEFAULT_OPTIMIZER_PASSES)
-# optimized = optimizer.optimize(rules, debug=True)
-
-# print("")
-# for entry in optimizer.log:
-#     print(entry)
-
-# print("")
-# print(optimized[rule].tree_view())
+# def parse_<rule>(state: ParserState) -> Pairs:
 
 
-# parser = Parser.from_grammar(grammar)
-# print(parser.tree_view())
-
-optimizer = Optimizer(DEFAULT_OPTIMIZER_PASSES)
-rules, _ = parse('rule = { (!"\n" ~ ANY)* }', Parser.BUILTIN)
-print(rules["rule"].tree_view())
-optimizer.optimize(rules)
-for entry in optimizer.log:
-    print(entry)
-print(rules["rule"].tree_view())
+def generate_rule(rule: Rule) -> str:
+    gen = Builder()
+    rule.generate(gen, "")
+    return gen.render()
 
 
-# try:
-#     pairs = parser.parse(rule, "x")
-# except PestParsingError as err:
-#     print(f"positives: {err.positives}")
-#     print(f"negatives: {err.negatives}")
-#     raise
-# print(json.dumps(pairs.as_list(), indent=2))
-
-
-# with open("examples/ini/ini.pest") as fd:
-#     grammar = fd.read()
-
-# with open("examples/ini/example.ini", encoding="ascii") as fd:
-#     unparsed_file = fd.read()
-
-# parser = Parser.from_grammar(grammar, optimizer=None)
-
-# print(parser.tree_view())
-
-
-# pairs = parser.parse("choices", "x")
-
-# print(json.dumps(pairs.as_list(), indent=2))
-
-
-# TODO: https://github.com/pest-parser/pest/issues/982
-# TODO: https://github.com/pest-parser/pest/issues/396
+print(generate_rule(rules["thing"]))

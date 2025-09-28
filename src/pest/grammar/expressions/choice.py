@@ -17,6 +17,7 @@ from pest.grammar.expression import RegexExpression
 from pest.grammar.rules.unicode import UnicodePropertyRule
 
 if TYPE_CHECKING:
+    from pest.grammar.codegen.builder import Builder
     from pest.state import ParserState
 
 
@@ -47,6 +48,34 @@ class Choice(Expression):
 
             state.restore()
         return None
+
+    def generate(self, gen: Builder, pairs_var: str) -> None:
+        """Emit Python code for a choice expression."""
+        tmp_pairs = gen.new_temp("children")
+        matched = gen.new_temp("matched")
+
+        gen.writeln(f"{tmp_pairs}: list[Pair] = []")
+        gen.writeln(f"{matched} = False")
+
+        for branch in self.expressions:
+            cp = gen.new_temp("cp")
+            gen.writeln(f"if not {matched}:")
+            with gen.block():
+                gen.writeln(f"{cp} = state.checkpoint()")
+                gen.writeln("try:")
+                with gen.block():
+                    branch.generate(gen, tmp_pairs)
+                    gen.writeln(f"{matched} = True")
+                gen.writeln("except ParseError:")
+                with gen.block():
+                    gen.writeln(f"state.restore({cp})")
+                    gen.writeln(f"{tmp_pairs}.clear()")
+
+        gen.writeln(f"if not {matched}:")
+        with gen.block():
+            gen.writeln('raise ParseError("no choice matched")')
+
+        gen.writeln(f"{pairs_var}.extend({tmp_pairs})")
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""

@@ -9,6 +9,8 @@ with open("tests/grammars/http.pest", encoding="utf-8") as fd:
 with open("benchmarks/requests.http", encoding="ascii") as fd:
     data = fd.read()
 
+unoptimized_http_parser = Parser.from_grammar(grammar, optimizer=None, debug=True)
+print(unoptimized_http_parser.tree_view())
 
 optimized_http_parser = Parser.from_grammar(grammar, debug=True)
 
@@ -16,11 +18,9 @@ if DEFAULT_OPTIMIZER.log:
     print(f"{len(DEFAULT_OPTIMIZER.log)} optimized expressions:")
     for entry in DEFAULT_OPTIMIZER.log:
         print(f"  {entry}")
+    print("\n", optimized_http_parser.tree_view())
 else:
     print("Zero optimizations applied!")
-
-
-unoptimized_http_parser = Parser.from_grammar(grammar, optimizer=None, debug=True)
 
 
 def run_optimized() -> None:
