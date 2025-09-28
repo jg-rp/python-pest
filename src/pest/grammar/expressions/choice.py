@@ -143,6 +143,18 @@ class LazyChoiceRegex(Expression):
             return [Match(None, match.end())]
         return None
 
+    def generate(self, gen: Builder, _pairs_var: str) -> None:
+        """Emit Python code for an optimized regex choice expression."""
+        pattern = self.build_optimized_pattern()
+        re_var = gen.constant("RE", f"re.compile({pattern!r}, re.VERSION1)")
+
+        gen.writeln(f"if match := {re_var}.match(state.text, state.pos):")
+        with gen.block():
+            gen.writeln("state.pos = match.end()")
+        gen.writeln("else:")
+        with gen.block():
+            gen.writeln(f'raise ParseError("expected {pattern}")')
+
     def children(self) -> list[Expression]:
         """Return this expression's children."""
         return []

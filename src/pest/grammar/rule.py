@@ -139,7 +139,7 @@ class Rule(Expression):
 
     def generate(self, gen: Builder, _pairs_var: str) -> None:
         """Emit Python source code that implements this grammar expression."""
-        gen.writeln(f"def parse_{self.name}(state: State) -> Pairs:")
+        gen.writeln("def inner(state: State) -> Pairs:")
         with gen.block():
             pairs_var = "pairs"
             gen.writeln(f"{pairs_var}: list[Pair] = []")
