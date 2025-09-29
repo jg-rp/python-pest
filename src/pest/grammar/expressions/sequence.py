@@ -58,10 +58,15 @@ class Sequence(Expression):
         return results
 
     def generate(self, gen: Builder, pairs_var: str) -> None:
-        """Emit Python source code that implements this grammar expression."""
-        gen.writeln("# Sequence: expression ~ expression")
-        for child in self.expressions:
+        """Emit Python code for a sequence expression (A ~ B ~ ...)."""
+        gen.writeln("# Sequence")
+        for i, child in enumerate(self.expressions):
             child.generate(gen, pairs_var)
+
+            # Insert implicit whitespace/comments, except after the last child
+            if i < len(self.expressions) - 1:
+                gen.writeln("# Implicit whitespace/comments between sequence elements")
+                gen.writeln(f"parse_trivia(state, {pairs_var})")
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""

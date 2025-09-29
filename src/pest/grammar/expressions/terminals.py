@@ -252,6 +252,19 @@ class Pop(Terminal):
                 return [Match(None, start + len(value))]
         return None
 
+    def generate(self, gen: Builder, _pairs_var: str) -> None:
+        """Emit Python code for a PEEK expression."""
+        gen.writeln("# Pop: POP")
+        peeked = gen.new_temp("peek")
+        gen.writeln(f"{peeked} = state.peek()")
+        gen.writeln(f"if state.input.startswith({peeked}, state.pos):")
+        with gen.block():
+            gen.writeln("state.pop()")
+            gen.writeln(f"state.pos += len({peeked})")
+        gen.writeln("else:")
+        with gen.block():
+            gen.writeln(f"raise ParseError('expected {{{peeked}!r}}')")
+
     def is_pure(self, _rules: dict[str, Rule], _seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
         return False
@@ -284,6 +297,23 @@ class PopAll(Terminal):
 
         return [Match(None, position)]
 
+    def generate(self, gen: Builder, _pairs_var: str) -> None:
+        """Emit Python code for a POP_ALL expression."""
+        gen.writeln("# PopAll: POP_ALL")
+        pos = gen.new_temp("pos")
+        gen.writeln(f"{pos} = state.pos")
+        peeked = gen.new_temp("peek")
+        gen.writeln(f"for {peeked} in state.peek_slice():")
+        with gen.block():
+            gen.writeln(f"if state.startswith({peeked}, {pos}):")
+            with gen.block():
+                gen.writeln(f"{pos} += len({peeked})")
+            gen.writeln("else:")
+            with gen.block():
+                gen.writeln(f"raise ParseError('expected {{{peeked}!r}}')")
+        gen.writeln("state.user_stack.clear()")
+        gen.writeln(f"state.pos = {pos}")
+
     def is_pure(self, _rules: dict[str, Rule], _seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
         return False
@@ -303,6 +333,16 @@ class Drop(Terminal):
             state.user_stack.pop()
             return [Match(None, start)]
         return None
+
+    def generate(self, gen: Builder, _pairs_var: str) -> None:
+        """Emit Python code for a Drop expression."""
+        gen.writeln("# Drop: DROP")
+        gen.writeln("if not state.user_stack.empty():")
+        with gen.block():
+            gen.writeln("state.pop()")
+        gen.writeln("else:")
+        with gen.block():
+            gen.writeln("raise ParseError('drop from empty stack')")
 
     def is_pure(self, _rules: dict[str, Rule], _seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
@@ -418,6 +458,19 @@ class CIString(Terminal):
             return [Match(None, start + len(self.value))]
         return None
 
+    def generate(self, gen: Builder, _pairs_var: str) -> None:
+        """Emit Python code for a case insensitive string literal."""
+        gen.writeln('# CIString: ^"literal"')
+        pattern = re.escape(self.value)
+        re_var = gen.constant("RE", f"re.compile({pattern!r}, re.I)")
+
+        gen.writeln(f"if match := {re_var}.match(state.text, state.pos):")
+        with gen.block():
+            gen.writeln("state.pos = match.end()")
+        gen.writeln("else:")
+        with gen.block():
+            gen.writeln(f'raise ParseError("expected {pattern}")')
+
 
 class Range(Terminal):
     """A terminal range of characters."""
@@ -428,7 +481,6 @@ class Range(Terminal):
         super().__init__(tag)
         self.start = start
         self.stop = stop
-        # TODO: unescape start and stop?
         self._re = re.compile(rf"[{re.escape(self.start)}-{re.escape(self.stop)}]")
 
     def __str__(self) -> str:
@@ -439,6 +491,19 @@ class Range(Terminal):
         if match := self._re.match(state.input, start):
             return [Match(None, match.end())]
         return None
+
+    def generate(self, gen: Builder, _pairs_var: str) -> None:
+        """Emit Python code for a character range."""
+        gen.writeln("# Range: start..stop")
+        pattern = re.escape(rf"[{re.escape(self.start)}-{re.escape(self.stop)}]")
+        re_var = gen.constant("RE", f"re.compile({pattern!r}, re.I)")
+
+        gen.writeln(f"if match := {re_var}.match(state.text, state.pos):")
+        with gen.block():
+            gen.writeln("state.pos = match.end()")
+        gen.writeln("else:")
+        with gen.block():
+            gen.writeln(f'raise ParseError("expected {pattern}")')
 
 
 class SkipUntil(Terminal):

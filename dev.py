@@ -2,10 +2,12 @@ from pest import Parser
 from pest.grammar.codegen.builder import Builder
 from pest.grammar.rule import Rule
 
-rules = Parser.from_grammar('thing = { ("a" | "b")? ~ !"c" ~ "d" }').rules
+with open("tests/grammars/toml.pest", encoding="utf-8") as fd:
+    grammar = fd.read()
 
-# TODO: check implementation of NegativePredicate.generate
-# TODO: emit comment to delimit generated code
+# rules = Parser.from_grammar('thing = { ("a" | "b")? ~ !"c" ~ "d" }').rules
+rules = Parser.from_grammar(grammar, optimizer=None).rules
+
 # TODO: generate for terminals and stack ops
 # TODO: generate implicit whitespace
 # TODO: Attach rule tags in generated code
@@ -38,4 +40,4 @@ def generate_rule(rule: Rule) -> str:
     return gen.render()
 
 
-print(generate_rule(rules["thing"]))
+print(generate_rule(rules["toml"]))

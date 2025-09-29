@@ -118,17 +118,15 @@ class Repeat(Expression):
         """Emit Python code for repeat zero or more times."""
         gen.writeln("# Repeat: match as many occurrences as we can")
         tmp_pairs = gen.new_temp("children")
-        count_var = gen.new_temp("count")
         gen.writeln(f"{tmp_pairs}: list[Pair] = []")
 
-        gen.writeln(f"{count_var} = 0")
         gen.writeln("while True:")
         with gen.block():
             gen.writeln("state.checkpoint()")
             gen.writeln("try:")
             with gen.block():
                 self.expression.generate(gen, tmp_pairs)
-                gen.writeln(f"{count_var} += 1")
+                gen.writeln(f"parse_trivia(state, {tmp_pairs})")
                 gen.writeln("state.ok()")
             gen.writeln("except ParseError:")
             with gen.block():
@@ -210,6 +208,7 @@ class RepeatOnce(Expression):
                 self.expression.generate(gen, tmp_pairs)
                 gen.writeln(f"{count_var} += 1")
                 gen.writeln("state.ok()")
+                gen.writeln(f"parse_trivia(state, {tmp_pairs})")
             gen.writeln("except ParseError:")
             with gen.block():
                 gen.writeln("state.restore()")
@@ -301,6 +300,7 @@ class RepeatExact(Expression):
                 gen.writeln(f"if {count_var} >= {self.number}:")
                 with gen.block():
                     gen.writeln("break")
+                gen.writeln(f"parse_trivia(state, {tmp_pairs})")
             gen.writeln("except ParseError:")
             with gen.block():
                 gen.writeln("state.restore()")
@@ -389,6 +389,7 @@ class RepeatMin(Expression):
                 self.expression.generate(gen, tmp_pairs)
                 gen.writeln(f"{count_var} += 1")
                 gen.writeln("state.ok()")
+                gen.writeln(f"parse_trivia(state, {tmp_pairs})")
             gen.writeln("except ParseError:")
             with gen.block():
                 gen.writeln("state.restore()")
@@ -479,6 +480,7 @@ class RepeatMax(Expression):
                 gen.writeln(f"if {count_var} >= {self.number}:")
                 with gen.block():
                     gen.writeln("break")
+                gen.writeln(f"parse_trivia(state, {tmp_pairs})")
             gen.writeln("except ParseError:")
             with gen.block():
                 gen.writeln("state.restore()")
@@ -566,6 +568,7 @@ class RepeatMinMax(Expression):
                 gen.writeln(f"if {count_var} >= {self.max}:")
                 with gen.block():
                     gen.writeln("break")
+                gen.writeln(f"parse_trivia(state, {tmp_pairs})")
             gen.writeln("except ParseError:")
             with gen.block():
                 gen.writeln("state.restore()")
