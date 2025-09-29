@@ -208,6 +208,28 @@ class PeekAll(Terminal):
 
         return [Match(None, position)]
 
+    def generate(self, gen: Builder, _pairs_var: str) -> None:
+        """Emit Python code for a PEEK_ALL expression."""
+        gen.writeln("# PeekAll: PEEK_ALL")
+        pos_var = gen.new_temp("pos")
+        gen.writeln(f"{pos_var} = state.pos")
+        # TODO: new_temp for i and literal?
+        gen.writeln("for _i, _literal in enumerate(reversed(state.user_stack)):")
+        with gen.block():
+            gen.writeln(f"if state.input.startswith(_literal, {pos_var}):")
+            with gen.block():
+                gen.writeln(f"{pos_var} += len(_literal)")
+                gen.writeln("if _i < len(state.user_stack):")
+                with gen.block():
+                    # TODO: new_temp for match?
+                    gen.writeln(f"for _match in state.parse_implicit_rules({pos_var}):")
+                    with gen.block():
+                        gen.writeln(f"{pos_var} = _match.pos")
+            gen.writeln("else:")
+            with gen.block():
+                gen.writeln("raise ParseError('expected {{{{_literal!r}}}}')")
+        gen.writeln(f"state.pos = {pos_var}")
+
     def is_pure(self, _rules: dict[str, Rule], _seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
         return False
