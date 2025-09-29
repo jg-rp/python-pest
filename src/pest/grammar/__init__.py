@@ -10,7 +10,7 @@ from .expressions.postfix import RepeatExact
 from .expressions.postfix import RepeatMax
 from .expressions.postfix import RepeatMin
 from .expressions.postfix import RepeatOnce
-from .expressions.postfix import RepeatRange
+from .expressions.postfix import RepeatMinMax
 from .expressions.prefix import NegativePredicate
 from .expressions.sequence import Sequence
 from .expressions.terminals import CIString
@@ -48,7 +48,7 @@ __all__ = (
     "RepeatMax",
     "RepeatMin",
     "RepeatOnce",
-    "RepeatRange",
+    "RepeatMinMax",
     "RepeatExact",
     "Optional",
     "RegexExpression",

@@ -31,7 +31,7 @@ from pest.grammar import RepeatExact
 from pest.grammar import RepeatMax
 from pest.grammar import RepeatMin
 from pest.grammar import RepeatOnce
-from pest.grammar import RepeatRange
+from pest.grammar import RepeatMinMax
 from pest.grammar import Rule
 from pest.grammar import Sequence
 
@@ -52,7 +52,7 @@ def unroll(expr: Expression, _rules: Mapping[str, Rule]) -> Expression:  # noqa:
             return Sequence(*chain(repeat(inner, num), [Repeat(inner)]))
         case RepeatMax(expression=inner, number=num):
             return Sequence(*repeat(Optional(inner), num))
-        case RepeatRange(expression=inner, min=min_, max=max_):
+        case RepeatMinMax(expression=inner, min=min_, max=max_):
             return Sequence(
                 *chain(repeat(inner, min_), repeat(Optional(inner), max_ - min_))
             )

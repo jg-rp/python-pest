@@ -8,6 +8,7 @@ from typing import Self
 from pest.grammar import Expression
 
 if TYPE_CHECKING:
+    from pest.grammar.codegen.builder import Builder
     from pest.grammar.expression import Match
     from pest.state import ParserState
 
@@ -40,6 +41,10 @@ class Group(Expression):
         # XXX: Do we need a `Group` expression?
         # A group might have a tag.
         return state.parse(self.expression, start, self.tag)
+
+    def generate(self, gen: Builder, pairs_var: str) -> None:
+        """Emit Python source code that implements this grammar expression."""
+        self.expression.generate(gen, pairs_var)
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""

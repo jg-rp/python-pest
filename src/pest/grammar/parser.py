@@ -27,7 +27,7 @@ from .expressions import RepeatExact
 from .expressions import RepeatMax
 from .expressions import RepeatMin
 from .expressions import RepeatOnce
-from .expressions import RepeatRange
+from .expressions import RepeatMinMax
 from .expressions import Sequence
 from .expressions import String
 from .rule import MODIFIER_MAP
@@ -286,7 +286,7 @@ class Parser:
 
             stop = self.eat(TokenKind.NUMBER)
             self.eat(TokenKind.RBRACE)
-            return RepeatRange(expr, int(number.value), int(stop.value))
+            return RepeatMinMax(expr, int(number.value), int(stop.value))
 
         if kind == TokenKind.COMMA:
             number = self.eat(TokenKind.NUMBER)

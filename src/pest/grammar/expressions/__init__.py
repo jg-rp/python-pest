@@ -6,7 +6,7 @@ from .postfix import RepeatExact
 from .postfix import RepeatMax
 from .postfix import RepeatMin
 from .postfix import RepeatOnce
-from .postfix import RepeatRange
+from .postfix import RepeatMinMax
 from .prefix import NegativePredicate
 from .prefix import PositivePredicate
 from .sequence import Sequence
@@ -49,5 +49,5 @@ __all__ = (
     "RepeatMax",
     "RepeatMin",
     "RepeatOnce",
-    "RepeatRange",
+    "RepeatMinMax",
 )

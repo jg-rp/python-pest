@@ -9,6 +9,7 @@ from pest.grammar import Expression
 from pest.grammar.expression import Match
 
 if TYPE_CHECKING:
+    from pest.grammar.codegen.builder import Builder
     from pest.state import ParserState
 
 
@@ -42,6 +43,21 @@ class Optional(Expression):
         if matches:
             return matches
         return [Match(None, start)]
+
+    def generate(self, gen: Builder, pairs_var: str) -> None:
+        """Emit Python source code that implements this grammar expression."""
+        tmp_pairs = gen.new_temp("children")
+        gen.writeln(f"{tmp_pairs}: list[Pair] = []")
+        cp = gen.new_temp("cp")
+        gen.writeln(f"{cp} = state.checkpoint()")
+        gen.writeln("try:")
+        with gen.block():
+            self.expression.generate(gen, tmp_pairs)
+            gen.writeln(f"{pairs_var}.extend({tmp_pairs})")
+        gen.writeln("except ParseError:")
+        with gen.block():
+            gen.writeln(f"state.restore({cp})")
+            gen.writeln(f"{tmp_pairs}.clear()")
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""
@@ -97,6 +113,30 @@ class Repeat(Expression):
         if not matched:
             return [Match(None, position)]
         return matches
+
+    def generate(self, gen: Builder, pairs_var: str) -> None:
+        """Emit Python code for repeat zero or more times."""
+        gen.writeln("# Repeat: match as many occurrences as we can")
+        tmp_pairs = gen.new_temp("children")
+        count_var = gen.new_temp("count")
+        gen.writeln(f"{tmp_pairs}: list[Pair] = []")
+
+        gen.writeln(f"{count_var} = 0")
+        gen.writeln("while True:")
+        with gen.block():
+            cp = gen.new_temp("cp")
+            gen.writeln(f"{cp} = state.checkpoint()")
+            gen.writeln("try:")
+            with gen.block():
+                self.expression.generate(gen, tmp_pairs)
+                gen.writeln(f"{count_var} += 1")
+            gen.writeln("except ParseError:")
+            with gen.block():
+                gen.writeln(f"state.restore({cp})")
+                gen.writeln("break")
+
+        # Append successful children to the parent pair list
+        gen.writeln(f"{pairs_var}.extend({tmp_pairs})")
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""
@@ -154,6 +194,35 @@ class RepeatOnce(Expression):
 
         return matches
 
+    def generate(self, gen: Builder, pairs_var: str) -> None:
+        """Emit Python code for repeat one or more times."""
+        gen.writeln("# RepeatOnce: attempt to match at least one occurrence")
+        tmp_pairs = gen.new_temp("children")
+        count_var = gen.new_temp("count")
+        gen.writeln(f"{tmp_pairs}: list[Pair] = []")
+
+        gen.writeln(f"{count_var} = 0")
+        gen.writeln("while True:")
+        with gen.block():
+            cp = gen.new_temp("cp")
+            gen.writeln(f"{cp} = state.checkpoint()")
+            gen.writeln("try:")
+            with gen.block():
+                self.expression.generate(gen, tmp_pairs)
+                gen.writeln(f"{count_var} += 1")
+            gen.writeln("except ParseError:")
+            with gen.block():
+                gen.writeln(f"state.restore({cp})")
+                gen.writeln("break")
+
+        # After the loop, validate minimum
+        gen.writeln(f"if {count_var} < 1:")
+        with gen.block():
+            gen.writeln("raise ParseError(f'Expected at least one matches')")
+
+        # Append successful children to the parent pair list
+        gen.writeln(f"{pairs_var}.extend({tmp_pairs})")
+
     def children(self) -> list[Expression]:
         """Return this expression's children."""
         return [self.expression]
@@ -210,6 +279,44 @@ class RepeatExact(Expression):
         state.restore()
         return None
 
+    def generate(self, gen: Builder, pairs_var: str) -> None:
+        """Emit Python code for a bounded repetition expression (E{num})."""
+        gen.writeln(
+            f"# RepeatExact: attempt to match exactly {self.number} occurrences"
+        )
+        tmp_pairs = gen.new_temp("children")
+        count_var = gen.new_temp("count")
+        gen.writeln(f"{tmp_pairs}: list[Pair] = []")
+
+        gen.writeln(f"{count_var} = 0")
+        gen.writeln("while True:")
+        with gen.block():
+            cp = gen.new_temp("cp")
+            gen.writeln(f"{cp} = state.checkpoint()")
+            gen.writeln("try:")
+            with gen.block():
+                self.expression.generate(gen, tmp_pairs)
+                gen.writeln(f"{count_var} += 1")
+                # Stop if we've already reached the maximum
+                gen.writeln(f"if {count_var} >= {self.number}:")
+                with gen.block():
+                    gen.writeln("break")
+            gen.writeln("except ParseError:")
+            with gen.block():
+                gen.writeln(f"state.restore({cp})")
+                gen.writeln("break")
+
+        # After the loop, validate minimum
+        gen.writeln(f"if {count_var} < {self.number}:")
+        with gen.block():
+            gen.writeln(
+                f"raise ParseError("
+                f"f'Expected {self.number} matches, got {{{count_var}}}')"
+            )
+
+        # Append successful children to the parent pair list
+        gen.writeln(f"{pairs_var}.extend({tmp_pairs})")
+
     def children(self) -> list[Expression]:
         """Return this expression's children."""
         return [self.expression]
@@ -263,6 +370,40 @@ class RepeatMin(Expression):
 
         state.restore()
         return None
+
+    def generate(self, gen: Builder, pairs_var: str) -> None:
+        """Emit Python code for a bounded repetition expression (E{min,})."""
+        gen.writeln(
+            f"# RepeatMi: attempt to match between at least {self.number} occurrences"
+        )
+        tmp_pairs = gen.new_temp("children")
+        count_var = gen.new_temp("count")
+        gen.writeln(f"{tmp_pairs}: list[Pair] = []")
+
+        gen.writeln(f"{count_var} = 0")
+        gen.writeln("while True:")
+        with gen.block():
+            cp = gen.new_temp("cp")
+            gen.writeln(f"{cp} = state.checkpoint()")
+            gen.writeln("try:")
+            with gen.block():
+                self.expression.generate(gen, tmp_pairs)
+                gen.writeln(f"{count_var} += 1")
+            gen.writeln("except ParseError:")
+            with gen.block():
+                gen.writeln(f"state.restore({cp})")
+                gen.writeln("break")
+
+        # After the loop, validate minimum
+        gen.writeln(f"if {count_var} < {self.number}:")
+        with gen.block():
+            gen.writeln(
+                f"raise ParseError("
+                f"f'Expected at least {self.number} matches, got {{{count_var}}}')"
+            )
+
+        # Append successful children to the parent pair list
+        gen.writeln(f"{pairs_var}.extend({tmp_pairs})")
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""
@@ -318,6 +459,34 @@ class RepeatMax(Expression):
         state.restore()
         return None
 
+    def generate(self, gen: Builder, pairs_var: str) -> None:
+        """Emit Python code for a bounded repetition expression (E{,max})."""
+        gen.writeln(f"# RepeatMax: attempt to match up to {self.number} occurrences")
+        tmp_pairs = gen.new_temp("children")
+        count_var = gen.new_temp("count")
+        gen.writeln(f"{tmp_pairs}: list[Pair] = []")
+
+        gen.writeln(f"{count_var} = 0")
+        gen.writeln("while True:")
+        with gen.block():
+            cp = gen.new_temp("cp")
+            gen.writeln(f"{cp} = state.checkpoint()")
+            gen.writeln("try:")
+            with gen.block():
+                self.expression.generate(gen, tmp_pairs)
+                gen.writeln(f"{count_var} += 1")
+                # Stop if we've already reached the maximum
+                gen.writeln(f"if {count_var} >= {self.number}:")
+                with gen.block():
+                    gen.writeln("break")
+            gen.writeln("except ParseError:")
+            with gen.block():
+                gen.writeln(f"state.restore({cp})")
+                gen.writeln("break")
+
+        # Append successful children to the parent pair list
+        gen.writeln(f"{pairs_var}.extend({tmp_pairs})")
+
     def children(self) -> list[Expression]:
         """Return this expression's children."""
         return [self.expression]
@@ -327,7 +496,7 @@ class RepeatMax(Expression):
         return self.__class__(expressions[0], self.number)
 
 
-class RepeatRange(Expression):
+class RepeatMinMax(Expression):
     """A pest grammar expression repeated a specified range of times.
 
     This corresponds to the `{n,m}` postfix expression in pest.
@@ -373,6 +542,45 @@ class RepeatRange(Expression):
 
         state.restore()
         return None
+
+    def generate(self, gen: Builder, pairs_var: str) -> None:
+        """Emit Python code for a bounded repetition expression (E{min,max})."""
+        gen.writeln(
+            "# RepeatMinMax: attempt to match between "
+            f"{self.min} and {self.max} occurrences"
+        )
+        tmp_pairs = gen.new_temp("children")
+        count_var = gen.new_temp("count")
+        gen.writeln(f"{tmp_pairs}: list[Pair] = []")
+
+        gen.writeln(f"{count_var} = 0")
+        gen.writeln("while True:")
+        with gen.block():
+            cp = gen.new_temp("cp")
+            gen.writeln(f"{cp} = state.checkpoint()")
+            gen.writeln("try:")
+            with gen.block():
+                self.expression.generate(gen, tmp_pairs)
+                gen.writeln(f"{count_var} += 1")
+                # Stop if we've already reached the maximum
+                gen.writeln(f"if {count_var} >= {self.max}:")
+                with gen.block():
+                    gen.writeln("break")
+            gen.writeln("except ParseError:")
+            with gen.block():
+                gen.writeln(f"state.restore({cp})")
+                gen.writeln("break")
+
+        # After the loop, validate minimum
+        gen.writeln(f"if {count_var} < {self.min}:")
+        with gen.block():
+            gen.writeln(
+                f"raise ParseError("
+                f"f'Expected at least {self.min} matches, got {{{count_var}}}')"
+            )
+
+        # Append successful children to the parent pair list
+        gen.writeln(f"{pairs_var}.extend({tmp_pairs})")
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""

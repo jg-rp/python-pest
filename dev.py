@@ -1,9 +1,12 @@
 from pest import Parser
 from pest.grammar.codegen.builder import Builder
-from pest.grammar.expression import Expression
 from pest.grammar.rule import Rule
 
-rules = Parser.from_grammar('thing = { "a" | "b" }').rules
+rules = Parser.from_grammar('thing = { ("a" | "b")? ~ !"c" ~ "d" }').rules
+
+# TODO: check implementation of NegativePredicate.generate
+# TODO: emit comment to delimit generated code
+# TODO: generate for terminals and stack ops
 
 
 def generate_rule(rule: Rule) -> str:
@@ -15,14 +18,16 @@ def generate_rule(rule: Rule) -> str:
 
     gen.writeln(f"def _{func_name}() -> Callable[[State], Pairs]:")
     with gen.block():
-        # Emit per-rule constants
-        for line in inner_gen.render_constants():
-            gen.writeln(line)
         if inner_gen.rule_constants:
+            # Emit rule-scoped constants
+            for name, expr in inner_gen.rule_constants:
+                gen.writeln(f"{name} = {expr}")
             gen.writeln("")
 
         for line in inner_gen.lines:
             gen.lines.append("    " * gen.indent + line)
+        gen.writeln("")
+        gen.writeln("return inner")
         gen.writeln("")
 
     # Instantiate closure.
