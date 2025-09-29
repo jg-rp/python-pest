@@ -62,18 +62,22 @@ class Builder:
         """
         return "\n".join(self.lines)
 
-    def constant(self, prefix: str, line: str, *, rule_scope: bool = True) -> str:
-        """Register a new constant and return its name."""
+    def constant(self, prefix: str, expr: str, *, rule_scope: bool = True) -> str:
+        """Register a new constant and return its name.
+
+        Args:
+            prefix: Prefix for the constant variable name.
+            expr: The expression or value to assign to the constant.
+            rule_scope: If True, the constant is scoped to the rule; otherwise, it is
+                module-scoped.
+
+        Returns:
+            The name of the newly registered constant.
+        """
         self.counter += 1
         name = f"{prefix}{self.counter}"
         if rule_scope:
-            self.rule_constants.append((name, line))
+            self.rule_constants.append((name, expr))
         else:
-            self.module_constants.append((name, line))
+            self.module_constants.append((name, expr))
         return name
-
-    def render_constants(self, *, rule_scope: bool = True) -> list[str]:
-        """"""
-        if rule_scope:
-            return [f"{name} = {line}" for name, line in self.rule_constants]
-        return [f"{name} = {line}" for name, line in self.module_constants]

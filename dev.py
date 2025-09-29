@@ -7,6 +7,7 @@ rules = Parser.from_grammar('thing = { ("a" | "b")? ~ !"c" ~ "d" }').rules
 # TODO: check implementation of NegativePredicate.generate
 # TODO: emit comment to delimit generated code
 # TODO: generate for terminals and stack ops
+# TODO: Attach rule tags in generated code
 
 
 def generate_rule(rule: Rule) -> str:

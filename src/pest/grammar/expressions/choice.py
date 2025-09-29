@@ -51,6 +51,7 @@ class Choice(Expression):
 
     def generate(self, gen: Builder, pairs_var: str) -> None:
         """Emit Python code for a choice expression."""
+        gen.writeln("# Choice: expression | expression")
         tmp_pairs = gen.new_temp("children")
         matched = gen.new_temp("matched")
 
@@ -145,6 +146,7 @@ class LazyChoiceRegex(Expression):
 
     def generate(self, gen: Builder, _pairs_var: str) -> None:
         """Emit Python code for an optimized regex choice expression."""
+        gen.writeln("# ChoiceRegex:")
         pattern = self.build_optimized_pattern()
         re_var = gen.constant("RE", f"re.compile({pattern!r}, re.VERSION1)")
 

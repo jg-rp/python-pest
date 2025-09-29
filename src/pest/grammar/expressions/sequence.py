@@ -59,6 +59,7 @@ class Sequence(Expression):
 
     def generate(self, gen: Builder, pairs_var: str) -> None:
         """Emit Python source code that implements this grammar expression."""
+        gen.writeln("# Sequence: expression ~ expression")
         for child in self.expressions:
             child.generate(gen, pairs_var)
 

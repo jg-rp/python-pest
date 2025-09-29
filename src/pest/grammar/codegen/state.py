@@ -4,12 +4,16 @@ class ParserState:
         self.pos = 0
         self.user_stack: list[str] = []  # PUSH/POP/PEEK/DROP
         self.modifier_stack: list[int] = []  # bit fields
+        # TODO: rule stack
 
     def checkpoint(self) -> tuple[int, int, int]:
         """Save restore point: position, user stack size, modifier stack size."""
+        # XXX: This is broken
+        # TODO: use our snapshotting `Stack`
         return self.pos, len(self.user_stack), len(self.modifier_stack)
 
     def restore(self, checkpoint: tuple[int, int, int]) -> None:
+        # XXX: This is broken
         pos, stack_len, mod_len = checkpoint
         self.pos = pos
         del self.user_stack[stack_len:]
