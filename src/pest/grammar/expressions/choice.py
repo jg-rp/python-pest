@@ -59,17 +59,17 @@ class Choice(Expression):
         gen.writeln(f"{matched} = False")
 
         for branch in self.expressions:
-            cp = gen.new_temp("cp")
             gen.writeln(f"if not {matched}:")
             with gen.block():
-                gen.writeln(f"{cp} = state.checkpoint()")
+                gen.writeln("state.checkpoint()")
                 gen.writeln("try:")
                 with gen.block():
                     branch.generate(gen, tmp_pairs)
                     gen.writeln(f"{matched} = True")
+                    gen.writeln("state.ok()")
                 gen.writeln("except ParseError:")
                 with gen.block():
-                    gen.writeln(f"state.restore({cp})")
+                    gen.writeln("state.restore()")
                     gen.writeln(f"{tmp_pairs}.clear()")
 
         gen.writeln(f"if not {matched}:")

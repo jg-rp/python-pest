@@ -47,17 +47,16 @@ class PositivePredicate(Expression):
         gen.writeln("# PositivePredicate: &expression")
         tmp_pairs = gen.new_temp("children")
         gen.writeln(f"{tmp_pairs}: list[Pair] = []")
-        cp = gen.new_temp("cp")
-        gen.writeln(f"{cp} = state.checkpoint()")
+        gen.writeln("state.checkpoint()")
         gen.writeln("try:")
         with gen.block():
             self.expression.generate(gen, tmp_pairs)
             # Always restore, even on success
-            gen.writeln(f"state.restore({cp})")
+            gen.writeln("state.restore()")
             gen.writeln(f"{tmp_pairs}.clear()  # discard lookahead children")
         gen.writeln("except ParseError:")
         with gen.block():
-            gen.writeln(f"state.restore({cp})")
+            gen.writeln("state.restore()")
             gen.writeln("raise")
 
     def children(self) -> list[Expression]:
@@ -104,20 +103,19 @@ class NegativePredicate(Expression):
         gen.writeln("# NegativePredicate: !expression")
         tmp_pairs = gen.new_temp("children")
         gen.writeln(f"{tmp_pairs}: list[Pair] = []")
-        cp = gen.new_temp("cp")
-        gen.writeln(f"{cp} = state.checkpoint()")
+        gen.writeln("state.checkpoint()")
         gen.writeln("try:")
         with gen.block():
             self.expression.generate(gen, tmp_pairs)
         gen.writeln("except ParseError:")
         with gen.block():
             # Inner failed, so the negative predicate succeeds.
-            gen.writeln(f"state.restore({cp})")
+            gen.writeln("state.restore()")
             gen.writeln(f"{tmp_pairs}.clear()  # discard lookahead children")
         gen.writeln("else:")
         with gen.block():
             # Inner matched, so the negative predicate fails.
-            gen.writeln(f"state.restore({cp})")
+            gen.writeln("state.restore()")
             gen.writeln(f"raise ParseError(f'unexpected {self.expression}')")
 
     def children(self) -> list[Expression]:

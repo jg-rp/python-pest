@@ -35,6 +35,11 @@ class PushLiteral(Terminal):
         state.push(self.value)
         return [Match(None, start)]
 
+    def generate(self, gen: Builder, _pairs_var: str) -> None:
+        """Emit Python code for a PUSH expression."""
+        gen.writeln('# PushLiteral: PUSH("literal")')
+        gen.writeln(f"state.push({self.value!r})")
+
     def is_pure(self, _rules: dict[str, Rule], _seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
         return False
@@ -63,6 +68,14 @@ class Push(Expression):
 
         state.push(state.input[start : result[-1].pos])
         return result
+
+    def generate(self, gen: Builder, pairs_var: str) -> None:
+        """Emit Python code for a PUSH expression."""
+        gen.writeln("# Push: PUSH(expression)")
+        start_var = gen.new_temp("start")
+        gen.writeln(f"{start_var} = state.pos")
+        self.expression.generate(gen, pairs_var)
+        gen.writeln(f"state.push(state.input[{start_var} : {pairs_var}[-1].pos])")
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""
@@ -114,6 +127,22 @@ class PeekSlice(Terminal):
         # (as does a PEEK_ALL on an empty stack).
         return [Match(None, position)]
 
+    def generate(self, gen: Builder, _pairs_var: str) -> None:
+        """Emit Python code for a PEEK expression."""
+        gen.writeln("# PeekSlice: PEEK[stat..end]")
+        pos = gen.new_temp("pos")
+        gen.writeln(f"{pos} = state.pos")
+        peeked = gen.new_temp("peek")
+        gen.writeln(f"for {peeked} in state.peek_slice({self.start, self.stop}):")
+        with gen.block():
+            gen.writeln(f"if state.startswith({peeked}, {pos}):")
+            with gen.block():
+                gen.writeln(f"{pos} += len({peeked})")
+            gen.writeln("else:")
+            with gen.block():
+                gen.writeln(f"raise ParseError('expected {{{peeked}!r}}')")
+        gen.writeln(f"state.pos = {pos}")
+
     def is_pure(self, _rules: dict[str, Rule], _seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
         return False
@@ -134,6 +163,18 @@ class Peek(Terminal):
             if state.input.startswith(value, start):
                 return [Match(None, start + len(value))]
         return None
+
+    def generate(self, gen: Builder, _pairs_var: str) -> None:
+        """Emit Python code for a PEEK expression."""
+        gen.writeln("# Peek: PEEK")
+        peeked = gen.new_temp("peek")
+        gen.writeln(f"{peeked} = state.peek()")
+        gen.writeln(f"if state.input.startswith({peeked}, state.pos):")
+        with gen.block():
+            gen.writeln(f"state.pos += len({peeked})")
+        gen.writeln("else:")
+        with gen.block():
+            gen.writeln(f"raise ParseError('expected {{{peeked}!r}}')")
 
     def is_pure(self, _rules: dict[str, Rule], _seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
@@ -269,6 +310,10 @@ class Identifier(Expression):
         """Attempt to match this expression against the input at `start`."""
         # TODO: Assumes the rule exists.
         return state.parse(state.parser.rules[self.value], start, self.tag)
+
+    def generate(self, gen: Builder, pairs_var: str) -> None:
+        """Emit Python code for calling another rule."""
+        gen.writeln(f"{pairs_var}.extend(parse_{self.value}(state))")
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""

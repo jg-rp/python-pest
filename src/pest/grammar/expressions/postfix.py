@@ -48,15 +48,15 @@ class Optional(Expression):
         """Emit Python source code that implements this grammar expression."""
         tmp_pairs = gen.new_temp("children")
         gen.writeln(f"{tmp_pairs}: list[Pair] = []")
-        cp = gen.new_temp("cp")
-        gen.writeln(f"{cp} = state.checkpoint()")
+        gen.writeln("state.checkpoint()")
         gen.writeln("try:")
         with gen.block():
             self.expression.generate(gen, tmp_pairs)
             gen.writeln(f"{pairs_var}.extend({tmp_pairs})")
+            gen.writeln("state.ok()")
         gen.writeln("except ParseError:")
         with gen.block():
-            gen.writeln(f"state.restore({cp})")
+            gen.writeln("state.restore()")
             gen.writeln(f"{tmp_pairs}.clear()")
 
     def children(self) -> list[Expression]:
@@ -124,15 +124,15 @@ class Repeat(Expression):
         gen.writeln(f"{count_var} = 0")
         gen.writeln("while True:")
         with gen.block():
-            cp = gen.new_temp("cp")
-            gen.writeln(f"{cp} = state.checkpoint()")
+            gen.writeln("state.checkpoint()")
             gen.writeln("try:")
             with gen.block():
                 self.expression.generate(gen, tmp_pairs)
                 gen.writeln(f"{count_var} += 1")
+                gen.writeln("state.ok()")
             gen.writeln("except ParseError:")
             with gen.block():
-                gen.writeln(f"state.restore({cp})")
+                gen.writeln("state.restore()")
                 gen.writeln("break")
 
         # Append successful children to the parent pair list
@@ -204,15 +204,15 @@ class RepeatOnce(Expression):
         gen.writeln(f"{count_var} = 0")
         gen.writeln("while True:")
         with gen.block():
-            cp = gen.new_temp("cp")
-            gen.writeln(f"{cp} = state.checkpoint()")
+            gen.writeln("state.checkpoint()")
             gen.writeln("try:")
             with gen.block():
                 self.expression.generate(gen, tmp_pairs)
                 gen.writeln(f"{count_var} += 1")
+                gen.writeln("state.ok()")
             gen.writeln("except ParseError:")
             with gen.block():
-                gen.writeln(f"state.restore({cp})")
+                gen.writeln("state.restore()")
                 gen.writeln("break")
 
         # After the loop, validate minimum
@@ -291,19 +291,19 @@ class RepeatExact(Expression):
         gen.writeln(f"{count_var} = 0")
         gen.writeln("while True:")
         with gen.block():
-            cp = gen.new_temp("cp")
-            gen.writeln(f"{cp} = state.checkpoint()")
+            gen.writeln("state.checkpoint()")
             gen.writeln("try:")
             with gen.block():
                 self.expression.generate(gen, tmp_pairs)
                 gen.writeln(f"{count_var} += 1")
+                gen.writeln("state.ok()")
                 # Stop if we've already reached the maximum
                 gen.writeln(f"if {count_var} >= {self.number}:")
                 with gen.block():
                     gen.writeln("break")
             gen.writeln("except ParseError:")
             with gen.block():
-                gen.writeln(f"state.restore({cp})")
+                gen.writeln("state.restore()")
                 gen.writeln("break")
 
         # After the loop, validate minimum
@@ -383,15 +383,15 @@ class RepeatMin(Expression):
         gen.writeln(f"{count_var} = 0")
         gen.writeln("while True:")
         with gen.block():
-            cp = gen.new_temp("cp")
-            gen.writeln(f"{cp} = state.checkpoint()")
+            gen.writeln("state.checkpoint()")
             gen.writeln("try:")
             with gen.block():
                 self.expression.generate(gen, tmp_pairs)
                 gen.writeln(f"{count_var} += 1")
+                gen.writeln("state.ok()")
             gen.writeln("except ParseError:")
             with gen.block():
-                gen.writeln(f"state.restore({cp})")
+                gen.writeln("state.restore()")
                 gen.writeln("break")
 
         # After the loop, validate minimum
@@ -469,19 +469,19 @@ class RepeatMax(Expression):
         gen.writeln(f"{count_var} = 0")
         gen.writeln("while True:")
         with gen.block():
-            cp = gen.new_temp("cp")
-            gen.writeln(f"{cp} = state.checkpoint()")
+            gen.writeln("state.checkpoint()")
             gen.writeln("try:")
             with gen.block():
                 self.expression.generate(gen, tmp_pairs)
                 gen.writeln(f"{count_var} += 1")
+                gen.writeln("state.ok()")
                 # Stop if we've already reached the maximum
                 gen.writeln(f"if {count_var} >= {self.number}:")
                 with gen.block():
                     gen.writeln("break")
             gen.writeln("except ParseError:")
             with gen.block():
-                gen.writeln(f"state.restore({cp})")
+                gen.writeln("state.restore()")
                 gen.writeln("break")
 
         # Append successful children to the parent pair list
@@ -556,19 +556,19 @@ class RepeatMinMax(Expression):
         gen.writeln(f"{count_var} = 0")
         gen.writeln("while True:")
         with gen.block():
-            cp = gen.new_temp("cp")
-            gen.writeln(f"{cp} = state.checkpoint()")
+            gen.writeln("state.checkpoint()")
             gen.writeln("try:")
             with gen.block():
                 self.expression.generate(gen, tmp_pairs)
                 gen.writeln(f"{count_var} += 1")
+                gen.writeln("state.ok()")
                 # Stop if we've already reached the maximum
                 gen.writeln(f"if {count_var} >= {self.max}:")
                 with gen.block():
                     gen.writeln("break")
             gen.writeln("except ParseError:")
             with gen.block():
-                gen.writeln(f"state.restore({cp})")
+                gen.writeln("state.restore()")
                 gen.writeln("break")
 
         # After the loop, validate minimum
