@@ -148,6 +148,7 @@ class Rule(Expression):
             gen.writeln(f"{pairs_var}: list[Pair] = []")
             self.expression.generate(gen, pairs_var)
             gen.writeln("state.rule_stack.pop()")
+            # TODO: handle silent, atomic, etc
             gen.writeln(f"return Pairs({pairs_var})")
 
     def children(self) -> list[Expression]:
