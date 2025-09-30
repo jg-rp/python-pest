@@ -22,7 +22,6 @@ from .optimizers.inliners import inline_builtin
 from .optimizers.inliners import inline_silent_rules
 from .optimizers.skippers import skip
 from .optimizers.squash_choice import squash_choice
-from .optimizers.squashers import search
 from .optimizers.unroller import unroll
 
 OptimizerPass: TypeAlias = Callable[[Expression, Mapping[str, Rule]], Expression]
@@ -66,7 +65,7 @@ DEFAULT_OPTIMIZER_PASSES = [
     OptimizerStep("inline built-in", inline_builtin, PassDirection.PREORDER),
     OptimizerStep("squash_choice", squash_choice, PassDirection.POSTORDER),
     OptimizerStep("inline silent", inline_silent_rules, PassDirection.POSTORDER),
-    OptimizerStep("search", search, PassDirection.PREORDER),
+    # OptimizerStep("search", search, PassDirection.PREORDER),
 ]
 
 

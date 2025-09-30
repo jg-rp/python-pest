@@ -549,3 +549,26 @@ class SkipUntil(Terminal):
         if best_index is not None:
             return [Match(None, best_index)]
         return [Match(None, len(s))]
+
+    def generate(self, gen: Builder, _pairs_var: str) -> None:
+        """Emit Python code for an optimized rep/neg-pred/any expression."""
+        gen.writeln("# SkipUntil:")
+        subs_var = gen.constant("SUBS", str(self.subs))
+        sub_var = gen.new_temp("sub")
+        index_var = gen.new_temp("idx")
+        input_var = gen.new_temp("s")
+        pos_var = gen.new_temp("pos")
+
+        gen.writeln(f"for {sub_var} in {subs_var}:")
+        with gen.block():
+            gen.writeln(f"{pos_var} = {input_var}.find({sub_var}, state.pos)")
+            gen.writeln(
+                f"if {pos_var} != -1 and ({index_var} is None "
+                f"or {pos_var} < {index_var}):"
+            )
+            with gen.block():
+                gen.writeln(f"{index_var} = {pos_var}")
+
+        gen.writeln(f"if {index_var} is not None:")
+        with gen.block():
+            gen.writeln(f"state.pos = {index_var}")

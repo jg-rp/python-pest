@@ -141,9 +141,13 @@ class Rule(Expression):
         """Emit Python source code that implements this grammar expression."""
         gen.writeln("def inner(state: State) -> Pairs:")
         with gen.block():
+            gen.writeln(f'"""Parse {self.name}."""')
+            # `rule_frame` is defined in the closure by `generate_rule`.
+            gen.writeln("state.rule_stack.append(rule_frame)")
             pairs_var = "pairs"
             gen.writeln(f"{pairs_var}: list[Pair] = []")
             self.expression.generate(gen, pairs_var)
+            gen.writeln("state.rule_stack.pop()")
             gen.writeln(f"return Pairs({pairs_var})")
 
     def children(self) -> list[Expression]:
@@ -164,3 +168,7 @@ class BuiltInRule(Rule):
 
     def __str__(self) -> str:
         return self.name
+
+    def generate(self, gen: Builder, pairs_var: str) -> None:
+        """Emit Python source code that implements this grammar expression."""
+        self.expression.generate(gen, pairs_var)

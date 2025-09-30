@@ -58,7 +58,7 @@ class Expression(ABC):
             start: The index in the input string where parsing begins.
         """
 
-    # TODO: @abstractmethod
+    @abstractmethod
     def generate(self, gen: Builder, pairs_var: str) -> None:
         """Emit Python source code that implements this grammar expression.
 
@@ -170,3 +170,15 @@ class RegexExpression(Terminal):
         if match := self.regex.match(state.input, start):
             return [Match(None, match.end())]
         return None
+
+    def generate(self, gen: Builder, _pairs_var: str) -> None:
+        """Emit Python code for a regex expression."""
+        gen.writeln("# ChoiceRegex:")
+        re_var = gen.constant("RE", f"re.compile({self.pattern!r}, re.VERSION1)")
+
+        gen.writeln(f"if match := {re_var}.match(state.text, state.pos):")
+        with gen.block():
+            gen.writeln("state.pos = match.end()")
+        gen.writeln("else:")
+        with gen.block():
+            gen.writeln(f'raise ParseError("expected {self.pattern!r}")')

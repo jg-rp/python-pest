@@ -6,6 +6,8 @@ mechanisms for tracking user values and modifiers, as well as checkpointing and
 restoration for backtracking and error recovery.
 """
 
+from __future__ import annotations
+
 from typing import Sequence
 
 from pest.stack import Stack
@@ -29,8 +31,7 @@ class ParserState:
         self.text = text
         self.pos = 0
         self.user_stack = Stack[str]()  # PUSH/POP/PEEK/DROP
-        self.modifier_stack = Stack[int]()  # bit fields
-        # TODO: rule stack
+        self.rule_stack = Stack[RuleFrame]()
 
     def checkpoint(self) -> None:
         """Take a snapshot of the current state for potential backtracking.
@@ -38,23 +39,25 @@ class ParserState:
         Saves the current state of all stacks, allowing restoration if parsing fails.
         """
         self.user_stack.snapshot()
-        self.modifier_stack.snapshot()
+        self.rule_stack.snapshot()
 
     def ok(self) -> None:
         """Commit to the current state after a successful parse.
 
-        Discards the last checkpoint, making the changes since the last checkpoint permanent.
+        Discards the last checkpoint, making the changes since the last checkpoint
+        permanent.
         """
         self.user_stack.drop_snapshot()
-        self.modifier_stack.drop_snapshot()
+        self.rule_stack.drop_snapshot()
 
     def restore(self) -> None:
         """Restore the state to the most recent checkpoint.
 
-        Reverts all stacks to their state at the last checkpoint, undoing any changes since then.
+        Reverts all stacks to their state at the last checkpoint, undoing any changes
+        since then.
         """
         self.user_stack.restore()
-        self.modifier_stack.restore()
+        self.rule_stack.restore()
 
     def push(self, value: str) -> None:
         """Push a value onto the user stack.
@@ -95,3 +98,13 @@ class ParserState:
         if start is None and end is None:
             return self.user_stack[:]
         return self.user_stack[slice(start, end)]
+
+
+class RuleFrame:
+    """Rule meta data for the generated rule stack."""
+
+    __slots__ = ("name", "modifier")
+
+    def __init__(self, name: str, modifier: int):
+        self.name = name
+        self.modifier = modifier

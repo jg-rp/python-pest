@@ -11,6 +11,7 @@ from pest.grammar.rule import SILENT
 from pest.grammar.rule import BuiltInRule
 
 if TYPE_CHECKING:
+    from pest.grammar.codegen.builder import Builder
     from pest.state import ParserState
 
 
@@ -39,6 +40,15 @@ class _Any(Expression):
         if start < len(state.input):
             return [Match(None, start + 1)]
         return None
+
+    def generate(self, gen: Builder, _pairs_var: str) -> None:
+        """Emit Python source code that implements this grammar expression."""
+        gen.writeln("if state.pos < len(state.input):")
+        with gen.block():
+            gen.writeln("state.pos += 1")
+        gen.writeln("else:")
+        with gen.block():
+            gen.writeln("raise ParseError('unexpected end of input')")
 
     def children(self) -> list[Expression]:
         """Return this expressions children."""
@@ -76,6 +86,12 @@ class _SOI(Expression):
             return [Match(None, 0)]
         return None
 
+    def generate(self, gen: Builder, _pairs_var: str) -> None:
+        """Emit Python source code that implements this grammar expression."""
+        gen.writeln("if state.pos != 0:")
+        with gen.block():
+            gen.writeln("raise ParseError('expected start of input')")
+
     def children(self) -> list[Expression]:
         """Return this expressions children."""
         return []
@@ -111,6 +127,12 @@ class _EOI(Expression):
         if start == len(state.input):
             return [Match(None, start)]
         return None
+
+    def generate(self, gen: Builder, _pairs_var: str) -> None:
+        """Emit Python source code that implements this grammar expression."""
+        gen.writeln("if state.pos != len(state.input):")
+        with gen.block():
+            gen.writeln("raise ParseError('expected end of input')")
 
     def children(self) -> list[Expression]:
         """Return this expressions children."""

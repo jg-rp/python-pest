@@ -1,28 +1,23 @@
-from pest import Parser
 from pest.grammar.codegen.builder import Builder
 from pest.grammar.rule import Rule
 
-with open("tests/grammars/toml.pest", encoding="utf-8") as fd:
-    grammar = fd.read()
+# TODO: finish me
+PRELUDE = """\
+from typing import Callable
 
-# rules = Parser.from_grammar('thing = { ("a" | "b")? ~ !"c" ~ "d" }').rules
-rules = Parser.from_grammar(grammar).rules
+from pest.grammar.codegen.state import State
+from pest.pairs import Pair
+"""
 
-# TODO: generate implicit whitespace
-# TODO: Attach rule tags in generated code
-# TODO: generate_module
-#    - generate parse_trivia(state, paris)
-#    - Prelude
-#       - imports
-#           - Callable
-#           - ParseError
-#           - State
-#           - Pair
-#       - RuleFrame
-#       - modifier bit masks
+
+def generate_module(rules: dict[str, Rule]) -> str:
+    """"""
+    # TODO:
+    raise NotImplementedError
 
 
 def generate_rule(rule: Rule) -> str:
+    """"""
     inner_gen = Builder()
     rule.generate(inner_gen, "")
 
@@ -59,6 +54,3 @@ def generate_parse_trivia(rules: dict[str, Rule]) -> str:
     """
     # TODO
     raise NotImplementedError
-
-
-print(generate_rule(rules["toml"]))
