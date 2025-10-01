@@ -90,7 +90,7 @@ class Repeat(Expression):
         """Attempt to match this expression against the input at `start`."""
         position = start
         matched = False
-        matches = []
+        matches: list[Match] = []
 
         while True:
             state.snapshot()

@@ -1,6 +1,5 @@
 from pest import Parser
 from pest.grammar.codegen.generate import generate_module
-from pest.grammar.codegen.state import State
 
 with open("tests/grammars/http.pest", encoding="utf-8") as fd:
     grammar = fd.read()
@@ -18,6 +17,7 @@ print(generate_module(g.rules))
 
 # print(g.tree_view())
 
+# from pest.grammar.codegen.state import State
 # from tmp import parse_header
 
 # t = "Connection: keep-alive\n"

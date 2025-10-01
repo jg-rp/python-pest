@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Iterable
 from typing import Self
 
 from pest.grammar import Expression
@@ -12,6 +11,8 @@ from pest.grammar.expressions.terminals import Identifier
 from pest.pairs import Pair
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from pest.grammar.codegen.builder import Builder
     from pest.state import ParserState
 
@@ -137,7 +138,7 @@ class Rule(Expression):
             )
         ]
 
-    def generate(self, gen: Builder, _pairs_var: str) -> None:
+    def generate(self, gen: Builder, pairs_var: str) -> None:
         """Emit Python source code that implements this grammar expression."""
         gen.writeln("def inner(state: State) -> Pairs:")
         with gen.block():

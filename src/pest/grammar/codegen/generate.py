@@ -3,7 +3,9 @@ from pest.grammar.rule import BuiltInRule
 from pest.grammar.rule import Rule
 
 PRELUDE = """\
-from typing import Callable
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import regex as re
 
@@ -19,6 +21,9 @@ from pest.grammar.rule import SILENT_COMPOUND
 from pest.grammar.rule import SILENT_NONATOMIC
 from pest.pairs import Pair
 from pest.pairs import Pairs
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 # ruff: noqa: D103 N802 N816 N806 PLR0912 PLR0915
 """
