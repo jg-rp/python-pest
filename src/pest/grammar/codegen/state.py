@@ -8,9 +8,12 @@ restoration for backtracking and error recovery.
 
 from __future__ import annotations
 
-from typing import Sequence
+from typing import TYPE_CHECKING
 
 from pest.stack import Stack
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 class State:

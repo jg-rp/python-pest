@@ -143,15 +143,40 @@ class Rule(Expression):
         gen.writeln("def inner(state: State) -> Pairs:")
         with gen.block():
             gen.writeln(f'"""Parse {self.name}."""')
+            start_pos = gen.new_temp("pos")
+            gen.writeln(f"{start_pos} = state.pos")
             # `rule_frame` is defined in the closure by `generate_rule`.
             gen.writeln("state.rule_stack.push(rule_frame)")
             pairs_var = "pairs"
             gen.writeln(f"{pairs_var}: list[Pair] = []")
             self.expression.generate(gen, pairs_var)
             gen.writeln("state.rule_stack.pop()")
-            # TODO: Create a pair for this rule!!
-            # TODO: handle silent, atomic, etc
-            gen.writeln(f"return Pairs({pairs_var})")
+
+            if self.modifier & SILENT:
+                gen.writeln(f"# Silent rule {self.name}")
+                gen.writeln(f"return Pairs({pairs_var})")
+            elif self.modifier & ATOMIC:
+                gen.writeln(f"# Atomic rule {self.name}")
+                if isinstance(self.expression, Rule) and self.expression.modifier & (
+                    NONATOMIC | COMPOUND
+                ):
+                    gen.writeln(
+                        "return Pairs(["
+                        f"Pair(state.input, {start_pos}, state.pos, rule_frame, {pairs_var},)"
+                        "])"
+                    )
+                else:
+                    gen.writeln(
+                        "return Pairs(["
+                        f"Pair(state.input, {start_pos}, state.pos, rule_frame, [],)])"
+                    )
+            else:
+                gen.writeln(
+                    "return Pairs(["
+                    "Pair(state.input, "
+                    f"{start_pos}, state.pos, rule_frame, {pairs_var},)"
+                    "])"
+                )
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""

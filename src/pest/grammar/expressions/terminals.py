@@ -35,12 +35,12 @@ class PushLiteral(Terminal):
         state.push(self.value)
         return [Match(None, start)]
 
-    def generate(self, gen: Builder, _pairs_var: str) -> None:
+    def generate(self, gen: Builder, pairs_var: str) -> None:
         """Emit Python code for a PUSH expression."""
         gen.writeln('# PushLiteral: PUSH("literal")')
         gen.writeln(f"state.push({self.value!r})")
 
-    def is_pure(self, _rules: dict[str, Rule], _seen: set[str] | None = None) -> bool:
+    def is_pure(self, rules: dict[str, Rule], seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
         return False
 
@@ -85,7 +85,7 @@ class Push(Expression):
         """Return a new instance of this expression with child expressions replaced."""
         return self.__class__(expressions[0], self.tag)
 
-    def is_pure(self, _rules: dict[str, Rule], _seen: set[str] | None = None) -> bool:
+    def is_pure(self, rules: dict[str, Rule], seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
         return False
 
@@ -127,7 +127,7 @@ class PeekSlice(Terminal):
         # (as does a PEEK_ALL on an empty stack).
         return [Match(None, position)]
 
-    def generate(self, gen: Builder, _pairs_var: str) -> None:
+    def generate(self, gen: Builder, pairs_var: str) -> None:
         """Emit Python code for a PEEK expression."""
         gen.writeln("# PeekSlice: PEEK[stat..end]")
         pos = gen.new_temp("pos")
@@ -143,7 +143,7 @@ class PeekSlice(Terminal):
                 gen.writeln(f"raise ParseError('expected {{{peeked}!r}}')")
         gen.writeln(f"state.pos = {pos}")
 
-    def is_pure(self, _rules: dict[str, Rule], _seen: set[str] | None = None) -> bool:
+    def is_pure(self, rules: dict[str, Rule], seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
         return False
 
@@ -164,7 +164,7 @@ class Peek(Terminal):
                 return [Match(None, start + len(value))]
         return None
 
-    def generate(self, gen: Builder, _pairs_var: str) -> None:
+    def generate(self, gen: Builder, pairs_var: str) -> None:
         """Emit Python code for a PEEK expression."""
         gen.writeln("# Peek: PEEK")
         peeked = gen.new_temp("peek")
@@ -176,7 +176,7 @@ class Peek(Terminal):
         with gen.block():
             gen.writeln(f"raise ParseError('expected {{{peeked}!r}}')")
 
-    def is_pure(self, _rules: dict[str, Rule], _seen: set[str] | None = None) -> bool:
+    def is_pure(self, rules: dict[str, Rule], seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
         return False
 
@@ -208,7 +208,7 @@ class PeekAll(Terminal):
 
         return [Match(None, position)]
 
-    def generate(self, gen: Builder, _pairs_var: str) -> None:
+    def generate(self, gen: Builder, pairs_var: str) -> None:
         """Emit Python code for a PEEK_ALL expression."""
         gen.writeln("# PeekAll: PEEK_ALL")
         pos_var = gen.new_temp("pos")
@@ -230,7 +230,7 @@ class PeekAll(Terminal):
                 gen.writeln("raise ParseError('expected {{{{_literal!r}}}}')")
         gen.writeln(f"state.pos = {pos_var}")
 
-    def is_pure(self, _rules: dict[str, Rule], _seen: set[str] | None = None) -> bool:
+    def is_pure(self, rules: dict[str, Rule], seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
         return False
 
@@ -252,7 +252,7 @@ class Pop(Terminal):
                 return [Match(None, start + len(value))]
         return None
 
-    def generate(self, gen: Builder, _pairs_var: str) -> None:
+    def generate(self, gen: Builder, pairs_var: str) -> None:
         """Emit Python code for a PEEK expression."""
         gen.writeln("# Pop: POP")
         peeked = gen.new_temp("peek")
@@ -265,7 +265,7 @@ class Pop(Terminal):
         with gen.block():
             gen.writeln(f"raise ParseError('expected {{{peeked}!r}}')")
 
-    def is_pure(self, _rules: dict[str, Rule], _seen: set[str] | None = None) -> bool:
+    def is_pure(self, rules: dict[str, Rule], seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
         return False
 
@@ -297,7 +297,7 @@ class PopAll(Terminal):
 
         return [Match(None, position)]
 
-    def generate(self, gen: Builder, _pairs_var: str) -> None:
+    def generate(self, gen: Builder, pairs_var: str) -> None:
         """Emit Python code for a POP_ALL expression."""
         gen.writeln("# PopAll: POP_ALL")
         pos = gen.new_temp("pos")
@@ -314,7 +314,7 @@ class PopAll(Terminal):
         gen.writeln("state.user_stack.clear()")
         gen.writeln(f"state.pos = {pos}")
 
-    def is_pure(self, _rules: dict[str, Rule], _seen: set[str] | None = None) -> bool:
+    def is_pure(self, rules: dict[str, Rule], seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
         return False
 
@@ -334,7 +334,7 @@ class Drop(Terminal):
             return [Match(None, start)]
         return None
 
-    def generate(self, gen: Builder, _pairs_var: str) -> None:
+    def generate(self, gen: Builder, pairs_var: str) -> None:
         """Emit Python code for a Drop expression."""
         gen.writeln("# Drop: DROP")
         gen.writeln("if not state.user_stack.empty():")
@@ -344,7 +344,7 @@ class Drop(Terminal):
         with gen.block():
             gen.writeln("raise ParseError('drop from empty stack')")
 
-    def is_pure(self, _rules: dict[str, Rule], _seen: set[str] | None = None) -> bool:
+    def is_pure(self, rules: dict[str, Rule], seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
         return False
 
@@ -420,7 +420,7 @@ class String(Terminal):
             return [Match(None, start + len(self.value))]
         return None
 
-    def generate(self, gen: Builder, _pairs_var: str) -> None:
+    def generate(self, gen: Builder, pairs_var: str) -> None:
         """Emit Python source code that implements this grammar expression."""
         lit_repr = repr(self.value)
         gen.writeln(f"if state.input.startswith({lit_repr}, state.pos):")
@@ -458,7 +458,7 @@ class CIString(Terminal):
             return [Match(None, start + len(self.value))]
         return None
 
-    def generate(self, gen: Builder, _pairs_var: str) -> None:
+    def generate(self, gen: Builder, pairs_var: str) -> None:
         """Emit Python code for a case insensitive string literal."""
         gen.writeln('# CIString: ^"literal"')
         pattern = re.escape(self.value)
@@ -492,10 +492,10 @@ class Range(Terminal):
             return [Match(None, match.end())]
         return None
 
-    def generate(self, gen: Builder, _pairs_var: str) -> None:
+    def generate(self, gen: Builder, pairs_var: str) -> None:
         """Emit Python code for a character range."""
         gen.writeln("# Range: start..stop")
-        pattern = re.escape(rf"[{re.escape(self.start)}-{re.escape(self.stop)}]")
+        pattern = rf"[{re.escape(self.start)}-{re.escape(self.stop)}]"
         re_var = gen.constant("RE", f"re.compile({pattern!r}, re.I)")
 
         gen.writeln(f"if match := {re_var}.match(state.input, state.pos):")
@@ -550,7 +550,7 @@ class SkipUntil(Terminal):
             return [Match(None, best_index)]
         return [Match(None, len(s))]
 
-    def generate(self, gen: Builder, _pairs_var: str) -> None:
+    def generate(self, gen: Builder, pairs_var: str) -> None:
         """Emit Python code for an optimized rep/neg-pred/any expression."""
         gen.writeln("# SkipUntil:")
         subs_var = gen.constant("SUBS", str(self.subs))

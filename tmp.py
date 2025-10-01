@@ -7,13 +7,6 @@ import regex as re
 from pest.grammar.codegen.state import ParseError
 from pest.grammar.codegen.state import RuleFrame
 from pest.grammar.codegen.state import State
-from pest.grammar.rule import ATOMIC
-from pest.grammar.rule import COMPOUND
-from pest.grammar.rule import NONATOMIC
-from pest.grammar.rule import SILENT
-from pest.grammar.rule import SILENT_ATOMIC
-from pest.grammar.rule import SILENT_COMPOUND
-from pest.grammar.rule import SILENT_NONATOMIC
 from pest.pairs import Pair
 from pest.pairs import Pairs
 
@@ -23,11 +16,12 @@ if TYPE_CHECKING:
 # ruff: noqa: D103 N802 N816 N806 PLR0912 PLR0915
 
 
-def _parse_http() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame("http", 0)
+def _parse_toml() -> Callable[[State], Pairs]:
+    rule_frame = RuleFrame("toml", 0)
 
     def inner(state: State) -> Pairs:
-        """Parse http."""
+        """Parse toml."""
+        pos1 = state.pos
         state.rule_stack.push(rule_frame)
         pairs: list[Pair] = []
         # Sequence
@@ -36,73 +30,240 @@ def _parse_http() -> Callable[[State], Pairs]:
         # Implicit whitespace/comments between sequence elements
         parse_trivia(state, pairs)
         # Repeat: match as many occurrences as we can
-        children1: list[Pair] = []
+        children2: list[Pair] = []
         while True:
             state.checkpoint()
             try:
                 # Choice: expression | expression
-                children2: list[Pair] = []
-                matched3 = False
-                if not matched3:
+                children3: list[Pair] = []
+                matched4 = False
+                if not matched4:
                     state.checkpoint()
                     try:
-                        children2.extend(parse_delimiter(state))
-                        matched3 = True
+                        children3.extend(parse_table(state))
+                        matched4 = True
                         state.ok()
                     except ParseError:
                         state.restore()
-                        children2.clear()
-                if not matched3:
+                        children3.clear()
+                if not matched4:
                     state.checkpoint()
                     try:
-                        children2.extend(parse_request(state))
-                        matched3 = True
+                        children3.extend(parse_array_table(state))
+                        matched4 = True
                         state.ok()
                     except ParseError:
                         state.restore()
-                        children2.clear()
-                if not matched3:
+                        children3.clear()
+                if not matched4:
+                    state.checkpoint()
+                    try:
+                        children3.extend(parse_pair(state))
+                        matched4 = True
+                        state.ok()
+                    except ParseError:
+                        state.restore()
+                        children3.clear()
+                if not matched4:
                     raise ParseError("no choice matched")
-                children1.extend(children2)
-                parse_trivia(state, children1)
+                children2.extend(children3)
+                parse_trivia(state, children2)
                 state.ok()
             except ParseError:
                 state.restore()
                 break
-        pairs.extend(children1)
+        pairs.extend(children2)
         # Implicit whitespace/comments between sequence elements
         parse_trivia(state, pairs)
         if state.pos != len(state.input):
             raise ParseError("expected end of input")
         state.rule_stack.pop()
-        return Pairs(pairs)
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
 
     return inner
 
 
-parse_http = _parse_http()
+parse_toml = _parse_toml()
 
 
-def _parse_request() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame("request", 0)
+def _parse_table() -> Callable[[State], Pairs]:
+    rule_frame = RuleFrame("table", 0)
 
     def inner(state: State) -> Pairs:
-        """Parse request."""
+        """Parse table."""
+        pos1 = state.pos
         state.rule_stack.push(rule_frame)
         pairs: list[Pair] = []
         # Sequence
-        pairs.extend(parse_request_line(state))
+        if state.input.startswith("[", state.pos):
+            state.pos += 1
+        else:
+            raise ParseError("[")
         # Implicit whitespace/comments between sequence elements
         parse_trivia(state, pairs)
-        children1: list[Pair] = []
-        state.checkpoint()
-        try:
-            children1.extend(parse_headers(state))
-            pairs.extend(children1)
-            state.ok()
-        except ParseError:
-            state.restore()
-            children1.clear()
+        pairs.extend(parse_key(state))
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        # Repeat: match as many occurrences as we can
+        children2: list[Pair] = []
+        while True:
+            state.checkpoint()
+            try:
+                # Sequence
+                if state.input.startswith(".", state.pos):
+                    state.pos += 1
+                else:
+                    raise ParseError(".")
+                # Implicit whitespace/comments between sequence elements
+                parse_trivia(state, children2)
+                children2.extend(parse_key(state))
+                parse_trivia(state, children2)
+                state.ok()
+            except ParseError:
+                state.restore()
+                break
+        pairs.extend(children2)
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        if state.input.startswith("]", state.pos):
+            state.pos += 1
+        else:
+            raise ParseError("]")
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        # Repeat: match as many occurrences as we can
+        children3: list[Pair] = []
+        while True:
+            state.checkpoint()
+            try:
+                children3.extend(parse_pair(state))
+                parse_trivia(state, children3)
+                state.ok()
+            except ParseError:
+                state.restore()
+                break
+        pairs.extend(children3)
+        state.rule_stack.pop()
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
+    return inner
+
+
+parse_table = _parse_table()
+
+
+def _parse_array_table() -> Callable[[State], Pairs]:
+    rule_frame = RuleFrame("array_table", 0)
+
+    def inner(state: State) -> Pairs:
+        """Parse array_table."""
+        pos1 = state.pos
+        state.rule_stack.push(rule_frame)
+        pairs: list[Pair] = []
+        # Sequence
+        if state.input.startswith("[[", state.pos):
+            state.pos += 2
+        else:
+            raise ParseError("[[")
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        pairs.extend(parse_key(state))
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        # Repeat: match as many occurrences as we can
+        children2: list[Pair] = []
+        while True:
+            state.checkpoint()
+            try:
+                # Sequence
+                if state.input.startswith(".", state.pos):
+                    state.pos += 1
+                else:
+                    raise ParseError(".")
+                # Implicit whitespace/comments between sequence elements
+                parse_trivia(state, children2)
+                children2.extend(parse_key(state))
+                parse_trivia(state, children2)
+                state.ok()
+            except ParseError:
+                state.restore()
+                break
+        pairs.extend(children2)
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        if state.input.startswith("]]", state.pos):
+            state.pos += 2
+        else:
+            raise ParseError("]]")
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        # Repeat: match as many occurrences as we can
+        children3: list[Pair] = []
+        while True:
+            state.checkpoint()
+            try:
+                children3.extend(parse_pair(state))
+                parse_trivia(state, children3)
+                state.ok()
+            except ParseError:
+                state.restore()
+                break
+        pairs.extend(children3)
+        state.rule_stack.pop()
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
+    return inner
+
+
+parse_array_table = _parse_array_table()
+
+
+def _parse_pair() -> Callable[[State], Pairs]:
+    rule_frame = RuleFrame("pair", 0)
+
+    def inner(state: State) -> Pairs:
+        """Parse pair."""
+        pos1 = state.pos
+        state.rule_stack.push(rule_frame)
+        pairs: list[Pair] = []
+        # Sequence
+        pairs.extend(parse_key(state))
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        if state.input.startswith("=", state.pos):
+            state.pos += 1
+        else:
+            raise ParseError("=")
         # Implicit whitespace/comments between sequence elements
         parse_trivia(state, pairs)
         # Choice: expression | expression
@@ -111,10 +272,7 @@ def _parse_request() -> Callable[[State], Pairs]:
         if not matched3:
             state.checkpoint()
             try:
-                if state.input.startswith("\n", state.pos):
-                    state.pos += 1
-                else:
-                    raise ParseError("\n")
+                children2.extend(parse_inline_table(state))
                 matched3 = True
                 state.ok()
             except ParseError:
@@ -123,10 +281,7 @@ def _parse_request() -> Callable[[State], Pairs]:
         if not matched3:
             state.checkpoint()
             try:
-                if state.input.startswith("\r\n", state.pos):
-                    state.pos += 2
-                else:
-                    raise ParseError("\r\n")
+                children2.extend(parse_array(state))
                 matched3 = True
                 state.ok()
             except ParseError:
@@ -135,10 +290,97 @@ def _parse_request() -> Callable[[State], Pairs]:
         if not matched3:
             state.checkpoint()
             try:
-                if state.input.startswith("\r", state.pos):
-                    state.pos += 1
-                else:
-                    raise ParseError("\r")
+                children2.extend(parse_multi_line_string(state))
+                matched3 = True
+                state.ok()
+            except ParseError:
+                state.restore()
+                children2.clear()
+        if not matched3:
+            state.checkpoint()
+            try:
+                children2.extend(parse_string(state))
+                matched3 = True
+                state.ok()
+            except ParseError:
+                state.restore()
+                children2.clear()
+        if not matched3:
+            state.checkpoint()
+            try:
+                children2.extend(parse_multi_line_literal(state))
+                matched3 = True
+                state.ok()
+            except ParseError:
+                state.restore()
+                children2.clear()
+        if not matched3:
+            state.checkpoint()
+            try:
+                children2.extend(parse_literal(state))
+                matched3 = True
+                state.ok()
+            except ParseError:
+                state.restore()
+                children2.clear()
+        if not matched3:
+            state.checkpoint()
+            try:
+                children2.extend(parse_date_time(state))
+                matched3 = True
+                state.ok()
+            except ParseError:
+                state.restore()
+                children2.clear()
+        if not matched3:
+            state.checkpoint()
+            try:
+                children2.extend(parse_local_date_time(state))
+                matched3 = True
+                state.ok()
+            except ParseError:
+                state.restore()
+                children2.clear()
+        if not matched3:
+            state.checkpoint()
+            try:
+                children2.extend(parse_full_date(state))
+                matched3 = True
+                state.ok()
+            except ParseError:
+                state.restore()
+                children2.clear()
+        if not matched3:
+            state.checkpoint()
+            try:
+                children2.extend(parse_partial_time(state))
+                matched3 = True
+                state.ok()
+            except ParseError:
+                state.restore()
+                children2.clear()
+        if not matched3:
+            state.checkpoint()
+            try:
+                children2.extend(parse_float(state))
+                matched3 = True
+                state.ok()
+            except ParseError:
+                state.restore()
+                children2.clear()
+        if not matched3:
+            state.checkpoint()
+            try:
+                children2.extend(parse_integer(state))
+                matched3 = True
+                state.ok()
+            except ParseError:
+                state.restore()
+                children2.clear()
+        if not matched3:
+            state.checkpoint()
+            try:
+                children2.extend(parse_boolean(state))
                 matched3 = True
                 state.ok()
             except ParseError:
@@ -148,400 +390,1387 @@ def _parse_request() -> Callable[[State], Pairs]:
             raise ParseError("no choice matched")
         pairs.extend(children2)
         state.rule_stack.pop()
-        return Pairs(pairs)
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
 
     return inner
 
 
-parse_request = _parse_request()
+parse_pair = _parse_pair()
 
 
-def _parse_request_line() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame("request_line", 2)
+def _parse_key() -> Callable[[State], Pairs]:
+    rule_frame = RuleFrame("key", 4)
 
     def inner(state: State) -> Pairs:
-        """Parse request_line."""
+        """Parse key."""
+        pos1 = state.pos
         state.rule_stack.push(rule_frame)
         pairs: list[Pair] = []
-        # Sequence
-        pairs.extend(parse_method(state))
-        # Implicit whitespace/comments between sequence elements
-        parse_trivia(state, pairs)
-        # RepeatOnce: attempt to match at least one occurrence
-        children1: list[Pair] = []
-        count2 = 0
-        while True:
-            state.checkpoint()
-            try:
-                if state.input.startswith(" ", state.pos):
-                    state.pos += 1
-                else:
-                    raise ParseError(" ")
-                count2 += 1
-                state.ok()
-                parse_trivia(state, children1)
-            except ParseError:
-                state.restore()
-                break
-        if count2 < 1:
-            raise ParseError("Expected at least one match")
-        pairs.extend(children1)
-        # Implicit whitespace/comments between sequence elements
-        parse_trivia(state, pairs)
-        pairs.extend(parse_uri(state))
-        # Implicit whitespace/comments between sequence elements
-        parse_trivia(state, pairs)
-        # RepeatOnce: attempt to match at least one occurrence
-        children3: list[Pair] = []
-        count4 = 0
-        while True:
-            state.checkpoint()
-            try:
-                if state.input.startswith(" ", state.pos):
-                    state.pos += 1
-                else:
-                    raise ParseError(" ")
-                count4 += 1
-                state.ok()
-                parse_trivia(state, children3)
-            except ParseError:
-                state.restore()
-                break
-        if count4 < 1:
-            raise ParseError("Expected at least one match")
-        pairs.extend(children3)
-        # Implicit whitespace/comments between sequence elements
-        parse_trivia(state, pairs)
-        if state.input.startswith("HTTP/", state.pos):
-            state.pos += 5
-        else:
-            raise ParseError("HTTP/")
-        # Implicit whitespace/comments between sequence elements
-        parse_trivia(state, pairs)
-        pairs.extend(parse_version(state))
-        # Implicit whitespace/comments between sequence elements
-        parse_trivia(state, pairs)
         # Choice: expression | expression
-        children5: list[Pair] = []
-        matched6 = False
-        if not matched6:
+        children2: list[Pair] = []
+        matched3 = False
+        if not matched3:
             state.checkpoint()
             try:
-                if state.input.startswith("\n", state.pos):
-                    state.pos += 1
-                else:
-                    raise ParseError("\n")
-                matched6 = True
+                children2.extend(parse_identifier(state))
+                matched3 = True
                 state.ok()
             except ParseError:
                 state.restore()
-                children5.clear()
-        if not matched6:
+                children2.clear()
+        if not matched3:
             state.checkpoint()
             try:
-                if state.input.startswith("\r\n", state.pos):
-                    state.pos += 2
-                else:
-                    raise ParseError("\r\n")
-                matched6 = True
+                children2.extend(parse_string(state))
+                matched3 = True
                 state.ok()
             except ParseError:
                 state.restore()
-                children5.clear()
-        if not matched6:
+                children2.clear()
+        if not matched3:
             state.checkpoint()
             try:
-                if state.input.startswith("\r", state.pos):
-                    state.pos += 1
-                else:
-                    raise ParseError("\r")
-                matched6 = True
+                children2.extend(parse_literal(state))
+                matched3 = True
                 state.ok()
             except ParseError:
                 state.restore()
-                children5.clear()
-        if not matched6:
+                children2.clear()
+        if not matched3:
             raise ParseError("no choice matched")
-        pairs.extend(children5)
+        pairs.extend(children2)
         state.rule_stack.pop()
+        # Atomic rule key
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    [],
+                )
+            ]
+        )
+
+    return inner
+
+
+parse_key = _parse_key()
+
+
+def _parse_value() -> Callable[[State], Pairs]:
+    rule_frame = RuleFrame("value", 2)
+
+    def inner(state: State) -> Pairs:
+        """Parse value."""
+        pos1 = state.pos
+        state.rule_stack.push(rule_frame)
+        pairs: list[Pair] = []
+        # Choice: expression | expression
+        children2: list[Pair] = []
+        matched3 = False
+        if not matched3:
+            state.checkpoint()
+            try:
+                children2.extend(parse_inline_table(state))
+                matched3 = True
+                state.ok()
+            except ParseError:
+                state.restore()
+                children2.clear()
+        if not matched3:
+            state.checkpoint()
+            try:
+                children2.extend(parse_array(state))
+                matched3 = True
+                state.ok()
+            except ParseError:
+                state.restore()
+                children2.clear()
+        if not matched3:
+            state.checkpoint()
+            try:
+                children2.extend(parse_multi_line_string(state))
+                matched3 = True
+                state.ok()
+            except ParseError:
+                state.restore()
+                children2.clear()
+        if not matched3:
+            state.checkpoint()
+            try:
+                children2.extend(parse_string(state))
+                matched3 = True
+                state.ok()
+            except ParseError:
+                state.restore()
+                children2.clear()
+        if not matched3:
+            state.checkpoint()
+            try:
+                children2.extend(parse_multi_line_literal(state))
+                matched3 = True
+                state.ok()
+            except ParseError:
+                state.restore()
+                children2.clear()
+        if not matched3:
+            state.checkpoint()
+            try:
+                children2.extend(parse_literal(state))
+                matched3 = True
+                state.ok()
+            except ParseError:
+                state.restore()
+                children2.clear()
+        if not matched3:
+            state.checkpoint()
+            try:
+                children2.extend(parse_date_time(state))
+                matched3 = True
+                state.ok()
+            except ParseError:
+                state.restore()
+                children2.clear()
+        if not matched3:
+            state.checkpoint()
+            try:
+                children2.extend(parse_local_date_time(state))
+                matched3 = True
+                state.ok()
+            except ParseError:
+                state.restore()
+                children2.clear()
+        if not matched3:
+            state.checkpoint()
+            try:
+                children2.extend(parse_full_date(state))
+                matched3 = True
+                state.ok()
+            except ParseError:
+                state.restore()
+                children2.clear()
+        if not matched3:
+            state.checkpoint()
+            try:
+                children2.extend(parse_partial_time(state))
+                matched3 = True
+                state.ok()
+            except ParseError:
+                state.restore()
+                children2.clear()
+        if not matched3:
+            state.checkpoint()
+            try:
+                children2.extend(parse_float(state))
+                matched3 = True
+                state.ok()
+            except ParseError:
+                state.restore()
+                children2.clear()
+        if not matched3:
+            state.checkpoint()
+            try:
+                children2.extend(parse_integer(state))
+                matched3 = True
+                state.ok()
+            except ParseError:
+                state.restore()
+                children2.clear()
+        if not matched3:
+            state.checkpoint()
+            try:
+                children2.extend(parse_boolean(state))
+                matched3 = True
+                state.ok()
+            except ParseError:
+                state.restore()
+                children2.clear()
+        if not matched3:
+            raise ParseError("no choice matched")
+        pairs.extend(children2)
+        state.rule_stack.pop()
+        # Silent rule value
         return Pairs(pairs)
 
     return inner
 
 
-parse_request_line = _parse_request_line()
+parse_value = _parse_value()
 
 
-def _parse_uri() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame("uri", 0)
+def _parse_inline_table() -> Callable[[State], Pairs]:
+    rule_frame = RuleFrame("inline_table", 0)
 
     def inner(state: State) -> Pairs:
-        """Parse uri."""
+        """Parse inline_table."""
+        pos1 = state.pos
         state.rule_stack.push(rule_frame)
         pairs: list[Pair] = []
-        # RepeatOnce: attempt to match at least one occurrence
-        children1: list[Pair] = []
-        count2 = 0
-        while True:
+        # Choice: expression | expression
+        children2: list[Pair] = []
+        matched3 = False
+        if not matched3:
             state.checkpoint()
             try:
                 # Sequence
-                # NegativePredicate: !expression
-                children3: list[Pair] = []
-                state.checkpoint()
-                try:
-                    children3.extend(parse_whitespace(state))
-                except ParseError:
-                    state.restore()
-                    children3.clear()  # discard lookahead children
-                else:
-                    state.restore()
-                    raise ParseError("unexpected Identifier")
-                # Implicit whitespace/comments between sequence elements
-                parse_trivia(state, children1)
-                if state.pos < len(state.input):
+                if state.input.startswith("{", state.pos):
                     state.pos += 1
                 else:
-                    raise ParseError("unexpected end of input")
-                count2 += 1
-                state.ok()
-                parse_trivia(state, children1)
-            except ParseError:
-                state.restore()
-                break
-        if count2 < 1:
-            raise ParseError("Expected at least one match")
-        pairs.extend(children1)
-        state.rule_stack.pop()
-        return Pairs(pairs)
-
-    return inner
-
-
-parse_uri = _parse_uri()
-
-
-def _parse_method() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame("method", 0)
-
-    def inner(state: State) -> Pairs:
-        """Parse method."""
-        state.rule_stack.push(rule_frame)
-        pairs: list[Pair] = []
-        # Choice: expression | expression
-        children1: list[Pair] = []
-        matched2 = False
-        if not matched2:
-            state.checkpoint()
-            try:
-                if state.input.startswith("GET", state.pos):
-                    state.pos += 3
-                else:
-                    raise ParseError("GET")
-                matched2 = True
-                state.ok()
-            except ParseError:
-                state.restore()
-                children1.clear()
-        if not matched2:
-            state.checkpoint()
-            try:
-                if state.input.startswith("DELETE", state.pos):
-                    state.pos += 6
-                else:
-                    raise ParseError("DELETE")
-                matched2 = True
-                state.ok()
-            except ParseError:
-                state.restore()
-                children1.clear()
-        if not matched2:
-            state.checkpoint()
-            try:
-                if state.input.startswith("POST", state.pos):
-                    state.pos += 4
-                else:
-                    raise ParseError("POST")
-                matched2 = True
-                state.ok()
-            except ParseError:
-                state.restore()
-                children1.clear()
-        if not matched2:
-            state.checkpoint()
-            try:
-                if state.input.startswith("PUT", state.pos):
-                    state.pos += 3
-                else:
-                    raise ParseError("PUT")
-                matched2 = True
-                state.ok()
-            except ParseError:
-                state.restore()
-                children1.clear()
-        if not matched2:
-            raise ParseError("no choice matched")
-        pairs.extend(children1)
-        state.rule_stack.pop()
-        return Pairs(pairs)
-
-    return inner
-
-
-parse_method = _parse_method()
-
-
-def _parse_version() -> Callable[[State], Pairs]:
-    RE5 = re.compile("\\[0\\-9\\]", re.I)
-
-    rule_frame = RuleFrame("version", 0)
-
-    def inner(state: State) -> Pairs:
-        """Parse version."""
-        state.rule_stack.push(rule_frame)
-        pairs: list[Pair] = []
-        # RepeatOnce: attempt to match at least one occurrence
-        children1: list[Pair] = []
-        count2 = 0
-        while True:
-            state.checkpoint()
-            try:
-                # Choice: expression | expression
-                children3: list[Pair] = []
-                matched4 = False
-                if not matched4:
+                    raise ParseError("{")
+                # Implicit whitespace/comments between sequence elements
+                parse_trivia(state, children2)
+                children2.extend(parse_pair(state))
+                # Implicit whitespace/comments between sequence elements
+                parse_trivia(state, children2)
+                # Repeat: match as many occurrences as we can
+                children4: list[Pair] = []
+                while True:
                     state.checkpoint()
                     try:
-                        # Range: start..stop
-                        if match := RE5.match(state.input, state.pos):
-                            state.pos = match.end()
-                        else:
-                            raise ParseError("expected '0'..'9'")
-                        matched4 = True
-                        state.ok()
-                    except ParseError:
-                        state.restore()
-                        children3.clear()
-                if not matched4:
-                    state.checkpoint()
-                    try:
-                        if state.input.startswith(".", state.pos):
+                        # Sequence
+                        if state.input.startswith(",", state.pos):
                             state.pos += 1
                         else:
-                            raise ParseError(".")
-                        matched4 = True
+                            raise ParseError(",")
+                        # Implicit whitespace/comments between sequence elements
+                        parse_trivia(state, children4)
+                        children4.extend(parse_pair(state))
+                        parse_trivia(state, children4)
                         state.ok()
                     except ParseError:
                         state.restore()
-                        children3.clear()
-                if not matched4:
-                    raise ParseError("no choice matched")
-                children1.extend(children3)
-                count2 += 1
+                        break
+                children2.extend(children4)
+                # Implicit whitespace/comments between sequence elements
+                parse_trivia(state, children2)
+                children5: list[Pair] = []
+                state.checkpoint()
+                try:
+                    if state.input.startswith(",", state.pos):
+                        state.pos += 1
+                    else:
+                        raise ParseError(",")
+                    children2.extend(children5)
+                    state.ok()
+                except ParseError:
+                    state.restore()
+                    children5.clear()
+                # Implicit whitespace/comments between sequence elements
+                parse_trivia(state, children2)
+                if state.input.startswith("}", state.pos):
+                    state.pos += 1
+                else:
+                    raise ParseError("}")
+                matched3 = True
                 state.ok()
-                parse_trivia(state, children1)
             except ParseError:
                 state.restore()
-                break
-        if count2 < 1:
-            raise ParseError("Expected at least one match")
-        pairs.extend(children1)
+                children2.clear()
+        if not matched3:
+            state.checkpoint()
+            try:
+                # Sequence
+                if state.input.startswith("{", state.pos):
+                    state.pos += 1
+                else:
+                    raise ParseError("{")
+                # Implicit whitespace/comments between sequence elements
+                parse_trivia(state, children2)
+                if state.input.startswith("}", state.pos):
+                    state.pos += 1
+                else:
+                    raise ParseError("}")
+                matched3 = True
+                state.ok()
+            except ParseError:
+                state.restore()
+                children2.clear()
+        if not matched3:
+            raise ParseError("no choice matched")
+        pairs.extend(children2)
         state.rule_stack.pop()
-        return Pairs(pairs)
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
 
     return inner
 
 
-parse_version = _parse_version()
+parse_inline_table = _parse_inline_table()
 
 
-def _parse_whitespace() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame("whitespace", 2)
+def _parse_array() -> Callable[[State], Pairs]:
+    rule_frame = RuleFrame("array", 0)
 
     def inner(state: State) -> Pairs:
-        """Parse whitespace."""
+        """Parse array."""
+        pos1 = state.pos
         state.rule_stack.push(rule_frame)
         pairs: list[Pair] = []
         # Choice: expression | expression
-        children1: list[Pair] = []
-        matched2 = False
-        if not matched2:
+        children2: list[Pair] = []
+        matched3 = False
+        if not matched3:
             state.checkpoint()
             try:
-                if state.input.startswith(" ", state.pos):
+                # Sequence
+                if state.input.startswith("[", state.pos):
                     state.pos += 1
                 else:
-                    raise ParseError(" ")
-                matched2 = True
+                    raise ParseError("[")
+                # Implicit whitespace/comments between sequence elements
+                parse_trivia(state, children2)
+                # Choice: expression | expression
+                children4: list[Pair] = []
+                matched5 = False
+                if not matched5:
+                    state.checkpoint()
+                    try:
+                        children4.extend(parse_inline_table(state))
+                        matched5 = True
+                        state.ok()
+                    except ParseError:
+                        state.restore()
+                        children4.clear()
+                if not matched5:
+                    state.checkpoint()
+                    try:
+                        children4.extend(parse_array(state))
+                        matched5 = True
+                        state.ok()
+                    except ParseError:
+                        state.restore()
+                        children4.clear()
+                if not matched5:
+                    state.checkpoint()
+                    try:
+                        children4.extend(parse_multi_line_string(state))
+                        matched5 = True
+                        state.ok()
+                    except ParseError:
+                        state.restore()
+                        children4.clear()
+                if not matched5:
+                    state.checkpoint()
+                    try:
+                        children4.extend(parse_string(state))
+                        matched5 = True
+                        state.ok()
+                    except ParseError:
+                        state.restore()
+                        children4.clear()
+                if not matched5:
+                    state.checkpoint()
+                    try:
+                        children4.extend(parse_multi_line_literal(state))
+                        matched5 = True
+                        state.ok()
+                    except ParseError:
+                        state.restore()
+                        children4.clear()
+                if not matched5:
+                    state.checkpoint()
+                    try:
+                        children4.extend(parse_literal(state))
+                        matched5 = True
+                        state.ok()
+                    except ParseError:
+                        state.restore()
+                        children4.clear()
+                if not matched5:
+                    state.checkpoint()
+                    try:
+                        children4.extend(parse_date_time(state))
+                        matched5 = True
+                        state.ok()
+                    except ParseError:
+                        state.restore()
+                        children4.clear()
+                if not matched5:
+                    state.checkpoint()
+                    try:
+                        children4.extend(parse_local_date_time(state))
+                        matched5 = True
+                        state.ok()
+                    except ParseError:
+                        state.restore()
+                        children4.clear()
+                if not matched5:
+                    state.checkpoint()
+                    try:
+                        children4.extend(parse_full_date(state))
+                        matched5 = True
+                        state.ok()
+                    except ParseError:
+                        state.restore()
+                        children4.clear()
+                if not matched5:
+                    state.checkpoint()
+                    try:
+                        children4.extend(parse_partial_time(state))
+                        matched5 = True
+                        state.ok()
+                    except ParseError:
+                        state.restore()
+                        children4.clear()
+                if not matched5:
+                    state.checkpoint()
+                    try:
+                        children4.extend(parse_float(state))
+                        matched5 = True
+                        state.ok()
+                    except ParseError:
+                        state.restore()
+                        children4.clear()
+                if not matched5:
+                    state.checkpoint()
+                    try:
+                        children4.extend(parse_integer(state))
+                        matched5 = True
+                        state.ok()
+                    except ParseError:
+                        state.restore()
+                        children4.clear()
+                if not matched5:
+                    state.checkpoint()
+                    try:
+                        children4.extend(parse_boolean(state))
+                        matched5 = True
+                        state.ok()
+                    except ParseError:
+                        state.restore()
+                        children4.clear()
+                if not matched5:
+                    raise ParseError("no choice matched")
+                children2.extend(children4)
+                # Implicit whitespace/comments between sequence elements
+                parse_trivia(state, children2)
+                # Repeat: match as many occurrences as we can
+                children6: list[Pair] = []
+                while True:
+                    state.checkpoint()
+                    try:
+                        # Sequence
+                        if state.input.startswith(",", state.pos):
+                            state.pos += 1
+                        else:
+                            raise ParseError(",")
+                        # Implicit whitespace/comments between sequence elements
+                        parse_trivia(state, children6)
+                        # Choice: expression | expression
+                        children7: list[Pair] = []
+                        matched8 = False
+                        if not matched8:
+                            state.checkpoint()
+                            try:
+                                children7.extend(parse_inline_table(state))
+                                matched8 = True
+                                state.ok()
+                            except ParseError:
+                                state.restore()
+                                children7.clear()
+                        if not matched8:
+                            state.checkpoint()
+                            try:
+                                children7.extend(parse_array(state))
+                                matched8 = True
+                                state.ok()
+                            except ParseError:
+                                state.restore()
+                                children7.clear()
+                        if not matched8:
+                            state.checkpoint()
+                            try:
+                                children7.extend(parse_multi_line_string(state))
+                                matched8 = True
+                                state.ok()
+                            except ParseError:
+                                state.restore()
+                                children7.clear()
+                        if not matched8:
+                            state.checkpoint()
+                            try:
+                                children7.extend(parse_string(state))
+                                matched8 = True
+                                state.ok()
+                            except ParseError:
+                                state.restore()
+                                children7.clear()
+                        if not matched8:
+                            state.checkpoint()
+                            try:
+                                children7.extend(parse_multi_line_literal(state))
+                                matched8 = True
+                                state.ok()
+                            except ParseError:
+                                state.restore()
+                                children7.clear()
+                        if not matched8:
+                            state.checkpoint()
+                            try:
+                                children7.extend(parse_literal(state))
+                                matched8 = True
+                                state.ok()
+                            except ParseError:
+                                state.restore()
+                                children7.clear()
+                        if not matched8:
+                            state.checkpoint()
+                            try:
+                                children7.extend(parse_date_time(state))
+                                matched8 = True
+                                state.ok()
+                            except ParseError:
+                                state.restore()
+                                children7.clear()
+                        if not matched8:
+                            state.checkpoint()
+                            try:
+                                children7.extend(parse_local_date_time(state))
+                                matched8 = True
+                                state.ok()
+                            except ParseError:
+                                state.restore()
+                                children7.clear()
+                        if not matched8:
+                            state.checkpoint()
+                            try:
+                                children7.extend(parse_full_date(state))
+                                matched8 = True
+                                state.ok()
+                            except ParseError:
+                                state.restore()
+                                children7.clear()
+                        if not matched8:
+                            state.checkpoint()
+                            try:
+                                children7.extend(parse_partial_time(state))
+                                matched8 = True
+                                state.ok()
+                            except ParseError:
+                                state.restore()
+                                children7.clear()
+                        if not matched8:
+                            state.checkpoint()
+                            try:
+                                children7.extend(parse_float(state))
+                                matched8 = True
+                                state.ok()
+                            except ParseError:
+                                state.restore()
+                                children7.clear()
+                        if not matched8:
+                            state.checkpoint()
+                            try:
+                                children7.extend(parse_integer(state))
+                                matched8 = True
+                                state.ok()
+                            except ParseError:
+                                state.restore()
+                                children7.clear()
+                        if not matched8:
+                            state.checkpoint()
+                            try:
+                                children7.extend(parse_boolean(state))
+                                matched8 = True
+                                state.ok()
+                            except ParseError:
+                                state.restore()
+                                children7.clear()
+                        if not matched8:
+                            raise ParseError("no choice matched")
+                        children6.extend(children7)
+                        parse_trivia(state, children6)
+                        state.ok()
+                    except ParseError:
+                        state.restore()
+                        break
+                children2.extend(children6)
+                # Implicit whitespace/comments between sequence elements
+                parse_trivia(state, children2)
+                children9: list[Pair] = []
+                state.checkpoint()
+                try:
+                    if state.input.startswith(",", state.pos):
+                        state.pos += 1
+                    else:
+                        raise ParseError(",")
+                    children2.extend(children9)
+                    state.ok()
+                except ParseError:
+                    state.restore()
+                    children9.clear()
+                # Implicit whitespace/comments between sequence elements
+                parse_trivia(state, children2)
+                if state.input.startswith("]", state.pos):
+                    state.pos += 1
+                else:
+                    raise ParseError("]")
+                matched3 = True
                 state.ok()
             except ParseError:
                 state.restore()
-                children1.clear()
-        if not matched2:
+                children2.clear()
+        if not matched3:
             state.checkpoint()
             try:
-                if state.input.startswith("\t", state.pos):
+                # Sequence
+                if state.input.startswith("[", state.pos):
                     state.pos += 1
                 else:
-                    raise ParseError("\t")
-                matched2 = True
+                    raise ParseError("[")
+                # Implicit whitespace/comments between sequence elements
+                parse_trivia(state, children2)
+                if state.input.startswith("]", state.pos):
+                    state.pos += 1
+                else:
+                    raise ParseError("]")
+                matched3 = True
                 state.ok()
             except ParseError:
                 state.restore()
-                children1.clear()
-        if not matched2:
+                children2.clear()
+        if not matched3:
             raise ParseError("no choice matched")
-        pairs.extend(children1)
+        pairs.extend(children2)
         state.rule_stack.pop()
-        return Pairs(pairs)
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
 
     return inner
 
 
-parse_whitespace = _parse_whitespace()
+parse_array = _parse_array()
 
 
-def _parse_headers() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame("headers", 0)
+def _parse_identifier() -> Callable[[State], Pairs]:
+    RE2 = re.compile("[\\-_0-9A-Za-z]", re.VERSION1)
+    RE4 = re.compile("[\\-_0-9A-Za-z]", re.VERSION1)
 
-    def inner(state: State) -> Pairs:
-        """Parse headers."""
-        state.rule_stack.push(rule_frame)
-        pairs: list[Pair] = []
-        # RepeatOnce: attempt to match at least one occurrence
-        children1: list[Pair] = []
-        count2 = 0
-        while True:
-            state.checkpoint()
-            try:
-                children1.extend(parse_header(state))
-                count2 += 1
-                state.ok()
-                parse_trivia(state, children1)
-            except ParseError:
-                state.restore()
-                break
-        if count2 < 1:
-            raise ParseError("Expected at least one match")
-        pairs.extend(children1)
-        state.rule_stack.pop()
-        return Pairs(pairs)
-
-    return inner
-
-
-parse_headers = _parse_headers()
-
-
-def _parse_header() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame("header", 0)
+    rule_frame = RuleFrame("identifier", 0)
 
     def inner(state: State) -> Pairs:
-        """Parse header."""
+        """Parse identifier."""
+        pos1 = state.pos
         state.rule_stack.push(rule_frame)
         pairs: list[Pair] = []
         # Sequence
-        pairs.extend(parse_header_name(state))
+        # ChoiceRegex:
+        if match := RE2.match(state.input, state.pos):
+            state.pos = match.end()
+        else:
+            raise ParseError("expected one of choice")
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        # Repeat: match as many occurrences as we can
+        children3: list[Pair] = []
+        while True:
+            state.checkpoint()
+            try:
+                # ChoiceRegex:
+                if match := RE4.match(state.input, state.pos):
+                    state.pos = match.end()
+                else:
+                    raise ParseError("expected one of choice")
+                parse_trivia(state, children3)
+                state.ok()
+            except ParseError:
+                state.restore()
+                break
+        pairs.extend(children3)
+        state.rule_stack.pop()
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
+    return inner
+
+
+parse_identifier = _parse_identifier()
+
+
+def _parse_multi_line_string() -> Callable[[State], Pairs]:
+    rule_frame = RuleFrame("multi_line_string", 4)
+
+    def inner(state: State) -> Pairs:
+        """Parse multi_line_string."""
+        pos1 = state.pos
+        state.rule_stack.push(rule_frame)
+        pairs: list[Pair] = []
+        # Sequence
+        if state.input.startswith('"""', state.pos):
+            state.pos += 3
+        else:
+            raise ParseError('"""')
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        pairs.extend(parse_inner(state))
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        if state.input.startswith('"""', state.pos):
+            state.pos += 3
+        else:
+            raise ParseError('"""')
+        state.rule_stack.pop()
+        # Atomic rule multi_line_string
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    [],
+                )
+            ]
+        )
+
+    return inner
+
+
+parse_multi_line_string = _parse_multi_line_string()
+
+
+def _parse_string() -> Callable[[State], Pairs]:
+    rule_frame = RuleFrame("string", 4)
+
+    def inner(state: State) -> Pairs:
+        """Parse string."""
+        pos1 = state.pos
+        state.rule_stack.push(rule_frame)
+        pairs: list[Pair] = []
+        # Sequence
+        if state.input.startswith('"', state.pos):
+            state.pos += 1
+        else:
+            raise ParseError('"')
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        pairs.extend(parse_inner(state))
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        if state.input.startswith('"', state.pos):
+            state.pos += 1
+        else:
+            raise ParseError('"')
+        state.rule_stack.pop()
+        # Atomic rule string
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    [],
+                )
+            ]
+        )
+
+    return inner
+
+
+parse_string = _parse_string()
+
+
+def _parse_inner() -> Callable[[State], Pairs]:
+    SUBS2 = ['"', "\\", "\x00", "\x1f"]
+
+    rule_frame = RuleFrame("inner", 4)
+
+    def inner(state: State) -> Pairs:
+        """Parse inner."""
+        pos1 = state.pos
+        state.rule_stack.push(rule_frame)
+        pairs: list[Pair] = []
+        # Sequence
+        # SkipUntil:
+        s5 = state.input
+        idx4: int | None = None
+        for sub3 in SUBS2:
+            pos6 = s5.find(sub3, state.pos)
+            if pos6 != -1 and (idx4 is None or pos6 < idx4):
+                idx4 = pos6
+        if idx4 is not None:
+            state.pos = idx4
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        children7: list[Pair] = []
+        state.checkpoint()
+        try:
+            # Sequence
+            children7.extend(parse_escape(state))
+            # Implicit whitespace/comments between sequence elements
+            parse_trivia(state, children7)
+            children7.extend(parse_inner(state))
+            pairs.extend(children7)
+            state.ok()
+        except ParseError:
+            state.restore()
+            children7.clear()
+        state.rule_stack.pop()
+        # Atomic rule inner
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    [],
+                )
+            ]
+        )
+
+    return inner
+
+
+parse_inner = _parse_inner()
+
+
+def _parse_multi_line_literal() -> Callable[[State], Pairs]:
+    SUBS2 = ["'''"]
+
+    rule_frame = RuleFrame("multi_line_literal", 4)
+
+    def inner(state: State) -> Pairs:
+        """Parse multi_line_literal."""
+        pos1 = state.pos
+        state.rule_stack.push(rule_frame)
+        pairs: list[Pair] = []
+        # Sequence
+        if state.input.startswith("'''", state.pos):
+            state.pos += 3
+        else:
+            raise ParseError("'''")
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        # SkipUntil:
+        s5 = state.input
+        idx4: int | None = None
+        for sub3 in SUBS2:
+            pos6 = s5.find(sub3, state.pos)
+            if pos6 != -1 and (idx4 is None or pos6 < idx4):
+                idx4 = pos6
+        if idx4 is not None:
+            state.pos = idx4
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        if state.input.startswith("'''", state.pos):
+            state.pos += 3
+        else:
+            raise ParseError("'''")
+        state.rule_stack.pop()
+        # Atomic rule multi_line_literal
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    [],
+                )
+            ]
+        )
+
+    return inner
+
+
+parse_multi_line_literal = _parse_multi_line_literal()
+
+
+def _parse_literal() -> Callable[[State], Pairs]:
+    SUBS2 = ["'"]
+
+    rule_frame = RuleFrame("literal", 4)
+
+    def inner(state: State) -> Pairs:
+        """Parse literal."""
+        pos1 = state.pos
+        state.rule_stack.push(rule_frame)
+        pairs: list[Pair] = []
+        # Sequence
+        if state.input.startswith("'", state.pos):
+            state.pos += 1
+        else:
+            raise ParseError("'")
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        # SkipUntil:
+        s5 = state.input
+        idx4: int | None = None
+        for sub3 in SUBS2:
+            pos6 = s5.find(sub3, state.pos)
+            if pos6 != -1 and (idx4 is None or pos6 < idx4):
+                idx4 = pos6
+        if idx4 is not None:
+            state.pos = idx4
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        if state.input.startswith("'", state.pos):
+            state.pos += 1
+        else:
+            raise ParseError("'")
+        state.rule_stack.pop()
+        # Atomic rule literal
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    [],
+                )
+            ]
+        )
+
+    return inner
+
+
+parse_literal = _parse_literal()
+
+
+def _parse_escape() -> Callable[[State], Pairs]:
+    RE5 = re.compile("(?:\\\r\\\n|[\\\n\\\r])", re.VERSION1)
+
+    rule_frame = RuleFrame("escape", 4)
+
+    def inner(state: State) -> Pairs:
+        """Parse escape."""
+        pos1 = state.pos
+        state.rule_stack.push(rule_frame)
+        pairs: list[Pair] = []
+        # Sequence
+        if state.input.startswith("\\", state.pos):
+            state.pos += 1
+        else:
+            raise ParseError("\\")
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        children2: list[Pair] = []
+        state.checkpoint()
+        try:
+            # Choice: expression | expression
+            children3: list[Pair] = []
+            matched4 = False
+            if not matched4:
+                state.checkpoint()
+                try:
+                    if state.input.startswith("b", state.pos):
+                        state.pos += 1
+                    else:
+                        raise ParseError("b")
+                    matched4 = True
+                    state.ok()
+                except ParseError:
+                    state.restore()
+                    children3.clear()
+            if not matched4:
+                state.checkpoint()
+                try:
+                    if state.input.startswith("t", state.pos):
+                        state.pos += 1
+                    else:
+                        raise ParseError("t")
+                    matched4 = True
+                    state.ok()
+                except ParseError:
+                    state.restore()
+                    children3.clear()
+            if not matched4:
+                state.checkpoint()
+                try:
+                    if state.input.startswith("n", state.pos):
+                        state.pos += 1
+                    else:
+                        raise ParseError("n")
+                    matched4 = True
+                    state.ok()
+                except ParseError:
+                    state.restore()
+                    children3.clear()
+            if not matched4:
+                state.checkpoint()
+                try:
+                    if state.input.startswith("f", state.pos):
+                        state.pos += 1
+                    else:
+                        raise ParseError("f")
+                    matched4 = True
+                    state.ok()
+                except ParseError:
+                    state.restore()
+                    children3.clear()
+            if not matched4:
+                state.checkpoint()
+                try:
+                    if state.input.startswith("r", state.pos):
+                        state.pos += 1
+                    else:
+                        raise ParseError("r")
+                    matched4 = True
+                    state.ok()
+                except ParseError:
+                    state.restore()
+                    children3.clear()
+            if not matched4:
+                state.checkpoint()
+                try:
+                    if state.input.startswith('"', state.pos):
+                        state.pos += 1
+                    else:
+                        raise ParseError('"')
+                    matched4 = True
+                    state.ok()
+                except ParseError:
+                    state.restore()
+                    children3.clear()
+            if not matched4:
+                state.checkpoint()
+                try:
+                    if state.input.startswith("\\", state.pos):
+                        state.pos += 1
+                    else:
+                        raise ParseError("\\")
+                    matched4 = True
+                    state.ok()
+                except ParseError:
+                    state.restore()
+                    children3.clear()
+            if not matched4:
+                state.checkpoint()
+                try:
+                    children3.extend(parse_unicode(state))
+                    matched4 = True
+                    state.ok()
+                except ParseError:
+                    state.restore()
+                    children3.clear()
+            if not matched4:
+                state.checkpoint()
+                try:
+                    # ChoiceRegex:
+                    if match := RE5.match(state.input, state.pos):
+                        state.pos = match.end()
+                    else:
+                        raise ParseError("expected one of choice")
+                    matched4 = True
+                    state.ok()
+                except ParseError:
+                    state.restore()
+                    children3.clear()
+            if not matched4:
+                raise ParseError("no choice matched")
+            children2.extend(children3)
+            pairs.extend(children2)
+            state.ok()
+        except ParseError:
+            state.restore()
+            children2.clear()
+        state.rule_stack.pop()
+        # Atomic rule escape
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    [],
+                )
+            ]
+        )
+
+    return inner
+
+
+parse_escape = _parse_escape()
+
+
+def _parse_unicode() -> Callable[[State], Pairs]:
+    RE4 = re.compile("[0-9A-Fa-f]", re.VERSION1)
+    RE5 = re.compile("[0-9A-Fa-f]", re.VERSION1)
+    RE6 = re.compile("[0-9A-Fa-f]", re.VERSION1)
+    RE7 = re.compile("[0-9A-Fa-f]", re.VERSION1)
+    RE8 = re.compile("[0-9A-Fa-f]", re.VERSION1)
+    RE9 = re.compile("[0-9A-Fa-f]", re.VERSION1)
+    RE10 = re.compile("[0-9A-Fa-f]", re.VERSION1)
+    RE11 = re.compile("[0-9A-Fa-f]", re.VERSION1)
+    RE12 = re.compile("[0-9A-Fa-f]", re.VERSION1)
+    RE13 = re.compile("[0-9A-Fa-f]", re.VERSION1)
+    RE14 = re.compile("[0-9A-Fa-f]", re.VERSION1)
+    RE15 = re.compile("[0-9A-Fa-f]", re.VERSION1)
+
+    rule_frame = RuleFrame("unicode", 4)
+
+    def inner(state: State) -> Pairs:
+        """Parse unicode."""
+        pos1 = state.pos
+        state.rule_stack.push(rule_frame)
+        pairs: list[Pair] = []
+        # Choice: expression | expression
+        children2: list[Pair] = []
+        matched3 = False
+        if not matched3:
+            state.checkpoint()
+            try:
+                # Sequence
+                if state.input.startswith("u", state.pos):
+                    state.pos += 1
+                else:
+                    raise ParseError("u")
+                # Implicit whitespace/comments between sequence elements
+                parse_trivia(state, children2)
+                # Sequence
+                # ChoiceRegex:
+                if match := RE4.match(state.input, state.pos):
+                    state.pos = match.end()
+                else:
+                    raise ParseError("expected one of choice")
+                # Implicit whitespace/comments between sequence elements
+                parse_trivia(state, children2)
+                # ChoiceRegex:
+                if match := RE5.match(state.input, state.pos):
+                    state.pos = match.end()
+                else:
+                    raise ParseError("expected one of choice")
+                # Implicit whitespace/comments between sequence elements
+                parse_trivia(state, children2)
+                # ChoiceRegex:
+                if match := RE6.match(state.input, state.pos):
+                    state.pos = match.end()
+                else:
+                    raise ParseError("expected one of choice")
+                # Implicit whitespace/comments between sequence elements
+                parse_trivia(state, children2)
+                # ChoiceRegex:
+                if match := RE7.match(state.input, state.pos):
+                    state.pos = match.end()
+                else:
+                    raise ParseError("expected one of choice")
+                matched3 = True
+                state.ok()
+            except ParseError:
+                state.restore()
+                children2.clear()
+        if not matched3:
+            state.checkpoint()
+            try:
+                # Sequence
+                if state.input.startswith("U", state.pos):
+                    state.pos += 1
+                else:
+                    raise ParseError("U")
+                # Implicit whitespace/comments between sequence elements
+                parse_trivia(state, children2)
+                # Sequence
+                # ChoiceRegex:
+                if match := RE8.match(state.input, state.pos):
+                    state.pos = match.end()
+                else:
+                    raise ParseError("expected one of choice")
+                # Implicit whitespace/comments between sequence elements
+                parse_trivia(state, children2)
+                # ChoiceRegex:
+                if match := RE9.match(state.input, state.pos):
+                    state.pos = match.end()
+                else:
+                    raise ParseError("expected one of choice")
+                # Implicit whitespace/comments between sequence elements
+                parse_trivia(state, children2)
+                # ChoiceRegex:
+                if match := RE10.match(state.input, state.pos):
+                    state.pos = match.end()
+                else:
+                    raise ParseError("expected one of choice")
+                # Implicit whitespace/comments between sequence elements
+                parse_trivia(state, children2)
+                # ChoiceRegex:
+                if match := RE11.match(state.input, state.pos):
+                    state.pos = match.end()
+                else:
+                    raise ParseError("expected one of choice")
+                # Implicit whitespace/comments between sequence elements
+                parse_trivia(state, children2)
+                # ChoiceRegex:
+                if match := RE12.match(state.input, state.pos):
+                    state.pos = match.end()
+                else:
+                    raise ParseError("expected one of choice")
+                # Implicit whitespace/comments between sequence elements
+                parse_trivia(state, children2)
+                # ChoiceRegex:
+                if match := RE13.match(state.input, state.pos):
+                    state.pos = match.end()
+                else:
+                    raise ParseError("expected one of choice")
+                # Implicit whitespace/comments between sequence elements
+                parse_trivia(state, children2)
+                # ChoiceRegex:
+                if match := RE14.match(state.input, state.pos):
+                    state.pos = match.end()
+                else:
+                    raise ParseError("expected one of choice")
+                # Implicit whitespace/comments between sequence elements
+                parse_trivia(state, children2)
+                # ChoiceRegex:
+                if match := RE15.match(state.input, state.pos):
+                    state.pos = match.end()
+                else:
+                    raise ParseError("expected one of choice")
+                matched3 = True
+                state.ok()
+            except ParseError:
+                state.restore()
+                children2.clear()
+        if not matched3:
+            raise ParseError("no choice matched")
+        pairs.extend(children2)
+        state.rule_stack.pop()
+        # Atomic rule unicode
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    [],
+                )
+            ]
+        )
+
+    return inner
+
+
+parse_unicode = _parse_unicode()
+
+
+def _parse_date_time() -> Callable[[State], Pairs]:
+    rule_frame = RuleFrame("date_time", 8)
+
+    def inner(state: State) -> Pairs:
+        """Parse date_time."""
+        pos1 = state.pos
+        state.rule_stack.push(rule_frame)
+        pairs: list[Pair] = []
+        # Sequence
+        pairs.extend(parse_full_date(state))
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        if state.input.startswith("T", state.pos):
+            state.pos += 1
+        else:
+            raise ParseError("T")
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        pairs.extend(parse_full_time(state))
+        state.rule_stack.pop()
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
+    return inner
+
+
+parse_date_time = _parse_date_time()
+
+
+def _parse_local_date_time() -> Callable[[State], Pairs]:
+    rule_frame = RuleFrame("local_date_time", 8)
+
+    def inner(state: State) -> Pairs:
+        """Parse local_date_time."""
+        pos1 = state.pos
+        state.rule_stack.push(rule_frame)
+        pairs: list[Pair] = []
+        # Sequence
+        pairs.extend(parse_full_date(state))
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        if state.input.startswith("T", state.pos):
+            state.pos += 1
+        else:
+            raise ParseError("T")
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        pairs.extend(parse_partial_time(state))
+        state.rule_stack.pop()
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
+    return inner
+
+
+parse_local_date_time = _parse_local_date_time()
+
+
+def _parse_partial_time() -> Callable[[State], Pairs]:
+    rule_frame = RuleFrame("partial_time", 8)
+
+    def inner(state: State) -> Pairs:
+        """Parse partial_time."""
+        pos1 = state.pos
+        state.rule_stack.push(rule_frame)
+        pairs: list[Pair] = []
+        # Sequence
+        pairs.extend(parse_time_hour(state))
         # Implicit whitespace/comments between sequence elements
         parse_trivia(state, pairs)
         if state.input.startswith(":", state.pos):
@@ -550,341 +1779,1051 @@ def _parse_header() -> Callable[[State], Pairs]:
             raise ParseError(":")
         # Implicit whitespace/comments between sequence elements
         parse_trivia(state, pairs)
-        pairs.extend(parse_whitespace(state))
+        pairs.extend(parse_time_minute(state))
         # Implicit whitespace/comments between sequence elements
         parse_trivia(state, pairs)
-        pairs.extend(parse_header_value(state))
+        if state.input.startswith(":", state.pos):
+            state.pos += 1
+        else:
+            raise ParseError(":")
         # Implicit whitespace/comments between sequence elements
         parse_trivia(state, pairs)
+        pairs.extend(parse_time_second(state))
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        children2: list[Pair] = []
+        state.checkpoint()
+        try:
+            children2.extend(parse_time_secfrac(state))
+            pairs.extend(children2)
+            state.ok()
+        except ParseError:
+            state.restore()
+            children2.clear()
+        state.rule_stack.pop()
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
+    return inner
+
+
+parse_partial_time = _parse_partial_time()
+
+
+def _parse_full_date() -> Callable[[State], Pairs]:
+    rule_frame = RuleFrame("full_date", 8)
+
+    def inner(state: State) -> Pairs:
+        """Parse full_date."""
+        pos1 = state.pos
+        state.rule_stack.push(rule_frame)
+        pairs: list[Pair] = []
+        # Sequence
+        pairs.extend(parse_date_fullyear(state))
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        if state.input.startswith("-", state.pos):
+            state.pos += 1
+        else:
+            raise ParseError("-")
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        pairs.extend(parse_date_month(state))
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        if state.input.startswith("-", state.pos):
+            state.pos += 1
+        else:
+            raise ParseError("-")
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        pairs.extend(parse_date_mday(state))
+        state.rule_stack.pop()
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
+    return inner
+
+
+parse_full_date = _parse_full_date()
+
+
+def _parse_full_time() -> Callable[[State], Pairs]:
+    rule_frame = RuleFrame("full_time", 8)
+
+    def inner(state: State) -> Pairs:
+        """Parse full_time."""
+        pos1 = state.pos
+        state.rule_stack.push(rule_frame)
+        pairs: list[Pair] = []
+        # Sequence
+        pairs.extend(parse_partial_time(state))
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        pairs.extend(parse_time_offset(state))
+        state.rule_stack.pop()
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
+    return inner
+
+
+parse_full_time = _parse_full_time()
+
+
+def _parse_date_fullyear() -> Callable[[State], Pairs]:
+    RE2 = re.compile("[0-9]", re.I)
+    RE3 = re.compile("[0-9]", re.I)
+    RE4 = re.compile("[0-9]", re.I)
+    RE5 = re.compile("[0-9]", re.I)
+
+    rule_frame = RuleFrame("date_fullyear", 4)
+
+    def inner(state: State) -> Pairs:
+        """Parse date_fullyear."""
+        pos1 = state.pos
+        state.rule_stack.push(rule_frame)
+        pairs: list[Pair] = []
+        # Sequence
+        # Range: start..stop
+        if match := RE2.match(state.input, state.pos):
+            state.pos = match.end()
+        else:
+            raise ParseError("expected '0'..'9'")
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        # Range: start..stop
+        if match := RE3.match(state.input, state.pos):
+            state.pos = match.end()
+        else:
+            raise ParseError("expected '0'..'9'")
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        # Range: start..stop
+        if match := RE4.match(state.input, state.pos):
+            state.pos = match.end()
+        else:
+            raise ParseError("expected '0'..'9'")
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        # Range: start..stop
+        if match := RE5.match(state.input, state.pos):
+            state.pos = match.end()
+        else:
+            raise ParseError("expected '0'..'9'")
+        state.rule_stack.pop()
+        # Atomic rule date_fullyear
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    [],
+                )
+            ]
+        )
+
+    return inner
+
+
+parse_date_fullyear = _parse_date_fullyear()
+
+
+def _parse_date_month() -> Callable[[State], Pairs]:
+    RE2 = re.compile("[0-9]", re.I)
+    RE3 = re.compile("[0-9]", re.I)
+
+    rule_frame = RuleFrame("date_month", 4)
+
+    def inner(state: State) -> Pairs:
+        """Parse date_month."""
+        pos1 = state.pos
+        state.rule_stack.push(rule_frame)
+        pairs: list[Pair] = []
+        # Sequence
+        # Range: start..stop
+        if match := RE2.match(state.input, state.pos):
+            state.pos = match.end()
+        else:
+            raise ParseError("expected '0'..'9'")
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        # Range: start..stop
+        if match := RE3.match(state.input, state.pos):
+            state.pos = match.end()
+        else:
+            raise ParseError("expected '0'..'9'")
+        state.rule_stack.pop()
+        # Atomic rule date_month
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    [],
+                )
+            ]
+        )
+
+    return inner
+
+
+parse_date_month = _parse_date_month()
+
+
+def _parse_date_mday() -> Callable[[State], Pairs]:
+    RE2 = re.compile("[0-9]", re.I)
+    RE3 = re.compile("[0-9]", re.I)
+
+    rule_frame = RuleFrame("date_mday", 4)
+
+    def inner(state: State) -> Pairs:
+        """Parse date_mday."""
+        pos1 = state.pos
+        state.rule_stack.push(rule_frame)
+        pairs: list[Pair] = []
+        # Sequence
+        # Range: start..stop
+        if match := RE2.match(state.input, state.pos):
+            state.pos = match.end()
+        else:
+            raise ParseError("expected '0'..'9'")
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        # Range: start..stop
+        if match := RE3.match(state.input, state.pos):
+            state.pos = match.end()
+        else:
+            raise ParseError("expected '0'..'9'")
+        state.rule_stack.pop()
+        # Atomic rule date_mday
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    [],
+                )
+            ]
+        )
+
+    return inner
+
+
+parse_date_mday = _parse_date_mday()
+
+
+def _parse_time_hour() -> Callable[[State], Pairs]:
+    RE2 = re.compile("[0-9]", re.I)
+    RE3 = re.compile("[0-9]", re.I)
+
+    rule_frame = RuleFrame("time_hour", 4)
+
+    def inner(state: State) -> Pairs:
+        """Parse time_hour."""
+        pos1 = state.pos
+        state.rule_stack.push(rule_frame)
+        pairs: list[Pair] = []
+        # Sequence
+        # Range: start..stop
+        if match := RE2.match(state.input, state.pos):
+            state.pos = match.end()
+        else:
+            raise ParseError("expected '0'..'9'")
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        # Range: start..stop
+        if match := RE3.match(state.input, state.pos):
+            state.pos = match.end()
+        else:
+            raise ParseError("expected '0'..'9'")
+        state.rule_stack.pop()
+        # Atomic rule time_hour
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    [],
+                )
+            ]
+        )
+
+    return inner
+
+
+parse_time_hour = _parse_time_hour()
+
+
+def _parse_time_minute() -> Callable[[State], Pairs]:
+    RE2 = re.compile("[0-9]", re.I)
+    RE3 = re.compile("[0-9]", re.I)
+
+    rule_frame = RuleFrame("time_minute", 4)
+
+    def inner(state: State) -> Pairs:
+        """Parse time_minute."""
+        pos1 = state.pos
+        state.rule_stack.push(rule_frame)
+        pairs: list[Pair] = []
+        # Sequence
+        # Range: start..stop
+        if match := RE2.match(state.input, state.pos):
+            state.pos = match.end()
+        else:
+            raise ParseError("expected '0'..'9'")
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        # Range: start..stop
+        if match := RE3.match(state.input, state.pos):
+            state.pos = match.end()
+        else:
+            raise ParseError("expected '0'..'9'")
+        state.rule_stack.pop()
+        # Atomic rule time_minute
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    [],
+                )
+            ]
+        )
+
+    return inner
+
+
+parse_time_minute = _parse_time_minute()
+
+
+def _parse_time_second() -> Callable[[State], Pairs]:
+    RE2 = re.compile("[0-9]", re.I)
+    RE3 = re.compile("[0-9]", re.I)
+
+    rule_frame = RuleFrame("time_second", 4)
+
+    def inner(state: State) -> Pairs:
+        """Parse time_second."""
+        pos1 = state.pos
+        state.rule_stack.push(rule_frame)
+        pairs: list[Pair] = []
+        # Sequence
+        # Range: start..stop
+        if match := RE2.match(state.input, state.pos):
+            state.pos = match.end()
+        else:
+            raise ParseError("expected '0'..'9'")
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        # Range: start..stop
+        if match := RE3.match(state.input, state.pos):
+            state.pos = match.end()
+        else:
+            raise ParseError("expected '0'..'9'")
+        state.rule_stack.pop()
+        # Atomic rule time_second
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    [],
+                )
+            ]
+        )
+
+    return inner
+
+
+parse_time_second = _parse_time_second()
+
+
+def _parse_time_secfrac() -> Callable[[State], Pairs]:
+    RE2 = re.compile("[0-9]", re.I)
+    RE4 = re.compile("[0-9]", re.I)
+
+    rule_frame = RuleFrame("time_secfrac", 4)
+
+    def inner(state: State) -> Pairs:
+        """Parse time_secfrac."""
+        pos1 = state.pos
+        state.rule_stack.push(rule_frame)
+        pairs: list[Pair] = []
+        # Sequence
+        if state.input.startswith(".", state.pos):
+            state.pos += 1
+        else:
+            raise ParseError(".")
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        # Sequence
+        # Range: start..stop
+        if match := RE2.match(state.input, state.pos):
+            state.pos = match.end()
+        else:
+            raise ParseError("expected '0'..'9'")
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        # Repeat: match as many occurrences as we can
+        children3: list[Pair] = []
+        while True:
+            state.checkpoint()
+            try:
+                # Range: start..stop
+                if match := RE4.match(state.input, state.pos):
+                    state.pos = match.end()
+                else:
+                    raise ParseError("expected '0'..'9'")
+                parse_trivia(state, children3)
+                state.ok()
+            except ParseError:
+                state.restore()
+                break
+        pairs.extend(children3)
+        state.rule_stack.pop()
+        # Atomic rule time_secfrac
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    [],
+                )
+            ]
+        )
+
+    return inner
+
+
+parse_time_secfrac = _parse_time_secfrac()
+
+
+def _parse_time_offset() -> Callable[[State], Pairs]:
+    RE4 = re.compile("[\\+\\-]", re.VERSION1)
+
+    rule_frame = RuleFrame("time_offset", 8)
+
+    def inner(state: State) -> Pairs:
+        """Parse time_offset."""
+        pos1 = state.pos
+        state.rule_stack.push(rule_frame)
+        pairs: list[Pair] = []
         # Choice: expression | expression
-        children1: list[Pair] = []
-        matched2 = False
-        if not matched2:
+        children2: list[Pair] = []
+        matched3 = False
+        if not matched3:
             state.checkpoint()
             try:
-                if state.input.startswith("\n", state.pos):
+                if state.input.startswith("Z", state.pos):
                     state.pos += 1
                 else:
-                    raise ParseError("\n")
-                matched2 = True
+                    raise ParseError("Z")
+                matched3 = True
                 state.ok()
             except ParseError:
                 state.restore()
-                children1.clear()
-        if not matched2:
+                children2.clear()
+        if not matched3:
             state.checkpoint()
             try:
-                if state.input.startswith("\r\n", state.pos):
-                    state.pos += 2
+                # Sequence
+                # ChoiceRegex:
+                if match := RE4.match(state.input, state.pos):
+                    state.pos = match.end()
                 else:
-                    raise ParseError("\r\n")
-                matched2 = True
-                state.ok()
-            except ParseError:
-                state.restore()
-                children1.clear()
-        if not matched2:
-            state.checkpoint()
-            try:
-                if state.input.startswith("\r", state.pos):
+                    raise ParseError("expected one of choice")
+                # Implicit whitespace/comments between sequence elements
+                parse_trivia(state, children2)
+                children2.extend(parse_time_hour(state))
+                # Implicit whitespace/comments between sequence elements
+                parse_trivia(state, children2)
+                if state.input.startswith(":", state.pos):
                     state.pos += 1
                 else:
-                    raise ParseError("\r")
-                matched2 = True
+                    raise ParseError(":")
+                # Implicit whitespace/comments between sequence elements
+                parse_trivia(state, children2)
+                children2.extend(parse_time_minute(state))
+                matched3 = True
                 state.ok()
             except ParseError:
                 state.restore()
-                children1.clear()
-        if not matched2:
+                children2.clear()
+        if not matched3:
             raise ParseError("no choice matched")
-        pairs.extend(children1)
+        pairs.extend(children2)
         state.rule_stack.pop()
-        return Pairs(pairs)
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
 
     return inner
 
 
-parse_header = _parse_header()
+parse_time_offset = _parse_time_offset()
 
 
-def _parse_header_name() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame("header_name", 0)
+def _parse_integer() -> Callable[[State], Pairs]:
+    RE3 = re.compile("[\\+\\-]", re.VERSION1)
+
+    rule_frame = RuleFrame("integer", 4)
 
     def inner(state: State) -> Pairs:
-        """Parse header_name."""
+        """Parse integer."""
+        pos1 = state.pos
         state.rule_stack.push(rule_frame)
         pairs: list[Pair] = []
-        # RepeatOnce: attempt to match at least one occurrence
-        children1: list[Pair] = []
-        count2 = 0
-        while True:
+        # Sequence
+        children2: list[Pair] = []
+        state.checkpoint()
+        try:
+            # ChoiceRegex:
+            if match := RE3.match(state.input, state.pos):
+                state.pos = match.end()
+            else:
+                raise ParseError("expected one of choice")
+            pairs.extend(children2)
+            state.ok()
+        except ParseError:
+            state.restore()
+            children2.clear()
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        pairs.extend(parse_int(state))
+        state.rule_stack.pop()
+        # Atomic rule integer
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    [],
+                )
+            ]
+        )
+
+    return inner
+
+
+parse_integer = _parse_integer()
+
+
+def _parse_float() -> Callable[[State], Pairs]:
+    RE3 = re.compile("[\\+\\-]", re.VERSION1)
+
+    rule_frame = RuleFrame("float", 4)
+
+    def inner(state: State) -> Pairs:
+        """Parse float."""
+        pos1 = state.pos
+        state.rule_stack.push(rule_frame)
+        pairs: list[Pair] = []
+        # Sequence
+        children2: list[Pair] = []
+        state.checkpoint()
+        try:
+            # ChoiceRegex:
+            if match := RE3.match(state.input, state.pos):
+                state.pos = match.end()
+            else:
+                raise ParseError("expected one of choice")
+            pairs.extend(children2)
+            state.ok()
+        except ParseError:
+            state.restore()
+            children2.clear()
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        pairs.extend(parse_int(state))
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        children4: list[Pair] = []
+        state.checkpoint()
+        try:
+            # Choice: expression | expression
+            children5: list[Pair] = []
+            matched6 = False
+            if not matched6:
+                state.checkpoint()
+                try:
+                    # Sequence
+                    if state.input.startswith(".", state.pos):
+                        state.pos += 1
+                    else:
+                        raise ParseError(".")
+                    # Implicit whitespace/comments between sequence elements
+                    parse_trivia(state, children5)
+                    children5.extend(parse_digits(state))
+                    # Implicit whitespace/comments between sequence elements
+                    parse_trivia(state, children5)
+                    children7: list[Pair] = []
+                    state.checkpoint()
+                    try:
+                        children7.extend(parse_exp(state))
+                        children5.extend(children7)
+                        state.ok()
+                    except ParseError:
+                        state.restore()
+                        children7.clear()
+                    matched6 = True
+                    state.ok()
+                except ParseError:
+                    state.restore()
+                    children5.clear()
+            if not matched6:
+                state.checkpoint()
+                try:
+                    children5.extend(parse_exp(state))
+                    matched6 = True
+                    state.ok()
+                except ParseError:
+                    state.restore()
+                    children5.clear()
+            if not matched6:
+                raise ParseError("no choice matched")
+            children4.extend(children5)
+            pairs.extend(children4)
+            state.ok()
+        except ParseError:
+            state.restore()
+            children4.clear()
+        state.rule_stack.pop()
+        # Atomic rule float
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    [],
+                )
+            ]
+        )
+
+    return inner
+
+
+parse_float = _parse_float()
+
+
+def _parse_int() -> Callable[[State], Pairs]:
+    RE4 = re.compile("[1-9]", re.I)
+
+    rule_frame = RuleFrame("int", 4)
+
+    def inner(state: State) -> Pairs:
+        """Parse int."""
+        pos1 = state.pos
+        state.rule_stack.push(rule_frame)
+        pairs: list[Pair] = []
+        # Choice: expression | expression
+        children2: list[Pair] = []
+        matched3 = False
+        if not matched3:
+            state.checkpoint()
+            try:
+                if state.input.startswith("0", state.pos):
+                    state.pos += 1
+                else:
+                    raise ParseError("0")
+                matched3 = True
+                state.ok()
+            except ParseError:
+                state.restore()
+                children2.clear()
+        if not matched3:
             state.checkpoint()
             try:
                 # Sequence
-                # NegativePredicate: !expression
-                children3: list[Pair] = []
+                # Range: start..stop
+                if match := RE4.match(state.input, state.pos):
+                    state.pos = match.end()
+                else:
+                    raise ParseError("expected '1'..'9'")
+                # Implicit whitespace/comments between sequence elements
+                parse_trivia(state, children2)
+                children5: list[Pair] = []
                 state.checkpoint()
                 try:
-                    # Choice: expression | expression
-                    children4: list[Pair] = []
-                    matched5 = False
-                    if not matched5:
-                        state.checkpoint()
-                        try:
-                            # Choice: expression | expression
-                            children6: list[Pair] = []
-                            matched7 = False
-                            if not matched7:
-                                state.checkpoint()
-                                try:
-                                    if state.input.startswith("\n", state.pos):
-                                        state.pos += 1
-                                    else:
-                                        raise ParseError("\n")
-                                    matched7 = True
-                                    state.ok()
-                                except ParseError:
-                                    state.restore()
-                                    children6.clear()
-                            if not matched7:
-                                state.checkpoint()
-                                try:
-                                    if state.input.startswith("\r\n", state.pos):
-                                        state.pos += 2
-                                    else:
-                                        raise ParseError("\r\n")
-                                    matched7 = True
-                                    state.ok()
-                                except ParseError:
-                                    state.restore()
-                                    children6.clear()
-                            if not matched7:
-                                state.checkpoint()
-                                try:
-                                    if state.input.startswith("\r", state.pos):
-                                        state.pos += 1
-                                    else:
-                                        raise ParseError("\r")
-                                    matched7 = True
-                                    state.ok()
-                                except ParseError:
-                                    state.restore()
-                                    children6.clear()
-                            if not matched7:
-                                raise ParseError("no choice matched")
-                            children4.extend(children6)
-                            matched5 = True
-                            state.ok()
-                        except ParseError:
-                            state.restore()
-                            children4.clear()
-                    if not matched5:
-                        state.checkpoint()
-                        try:
-                            if state.input.startswith(":", state.pos):
-                                state.pos += 1
-                            else:
-                                raise ParseError(":")
-                            matched5 = True
-                            state.ok()
-                        except ParseError:
-                            state.restore()
-                            children4.clear()
-                    if not matched5:
-                        raise ParseError("no choice matched")
-                    children3.extend(children4)
+                    children5.extend(parse_digits(state))
+                    children2.extend(children5)
+                    state.ok()
                 except ParseError:
                     state.restore()
-                    children3.clear()  # discard lookahead children
-                else:
-                    state.restore()
-                    raise ParseError("unexpected Group")
-                # Implicit whitespace/comments between sequence elements
-                parse_trivia(state, children1)
-                if state.pos < len(state.input):
-                    state.pos += 1
-                else:
-                    raise ParseError("unexpected end of input")
-                count2 += 1
+                    children5.clear()
+                matched3 = True
                 state.ok()
-                parse_trivia(state, children1)
             except ParseError:
                 state.restore()
-                break
-        if count2 < 1:
-            raise ParseError("Expected at least one match")
-        pairs.extend(children1)
+                children2.clear()
+        if not matched3:
+            raise ParseError("no choice matched")
+        pairs.extend(children2)
         state.rule_stack.pop()
-        return Pairs(pairs)
+        # Atomic rule int
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    [],
+                )
+            ]
+        )
 
     return inner
 
 
-parse_header_name = _parse_header_name()
+parse_int = _parse_int()
 
 
-def _parse_header_value() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame("header_value", 0)
+def _parse_digits() -> Callable[[State], Pairs]:
+    RE4 = re.compile("[0-9]", re.I)
+    RE5 = re.compile("[0-9]", re.I)
+    RE9 = re.compile("[0-9]", re.I)
+    RE10 = re.compile("[0-9]", re.I)
+
+    rule_frame = RuleFrame("digits", 4)
 
     def inner(state: State) -> Pairs:
-        """Parse header_value."""
+        """Parse digits."""
+        pos1 = state.pos
         state.rule_stack.push(rule_frame)
         pairs: list[Pair] = []
-        # RepeatOnce: attempt to match at least one occurrence
-        children1: list[Pair] = []
-        count2 = 0
-        while True:
+        # Sequence
+        # Choice: expression | expression
+        children2: list[Pair] = []
+        matched3 = False
+        if not matched3:
+            state.checkpoint()
+            try:
+                # Range: start..stop
+                if match := RE4.match(state.input, state.pos):
+                    state.pos = match.end()
+                else:
+                    raise ParseError("expected '0'..'9'")
+                matched3 = True
+                state.ok()
+            except ParseError:
+                state.restore()
+                children2.clear()
+        if not matched3:
             state.checkpoint()
             try:
                 # Sequence
-                # NegativePredicate: !expression
-                children3: list[Pair] = []
-                state.checkpoint()
-                try:
-                    # Choice: expression | expression
-                    children4: list[Pair] = []
-                    matched5 = False
-                    if not matched5:
-                        state.checkpoint()
-                        try:
-                            if state.input.startswith("\n", state.pos):
-                                state.pos += 1
-                            else:
-                                raise ParseError("\n")
-                            matched5 = True
-                            state.ok()
-                        except ParseError:
-                            state.restore()
-                            children4.clear()
-                    if not matched5:
-                        state.checkpoint()
-                        try:
-                            if state.input.startswith("\r\n", state.pos):
-                                state.pos += 2
-                            else:
-                                raise ParseError("\r\n")
-                            matched5 = True
-                            state.ok()
-                        except ParseError:
-                            state.restore()
-                            children4.clear()
-                    if not matched5:
-                        state.checkpoint()
-                        try:
-                            if state.input.startswith("\r", state.pos):
-                                state.pos += 1
-                            else:
-                                raise ParseError("\r")
-                            matched5 = True
-                            state.ok()
-                        except ParseError:
-                            state.restore()
-                            children4.clear()
-                    if not matched5:
-                        raise ParseError("no choice matched")
-                    children3.extend(children4)
-                except ParseError:
-                    state.restore()
-                    children3.clear()  # discard lookahead children
-                else:
-                    state.restore()
-                    raise ParseError("unexpected BuiltInRule")
-                # Implicit whitespace/comments between sequence elements
-                parse_trivia(state, children1)
-                if state.pos < len(state.input):
+                if state.input.startswith("_", state.pos):
                     state.pos += 1
                 else:
-                    raise ParseError("unexpected end of input")
-                count2 += 1
+                    raise ParseError("_")
+                # Implicit whitespace/comments between sequence elements
+                parse_trivia(state, children2)
+                # Range: start..stop
+                if match := RE5.match(state.input, state.pos):
+                    state.pos = match.end()
+                else:
+                    raise ParseError("expected '0'..'9'")
+                matched3 = True
                 state.ok()
-                parse_trivia(state, children1)
             except ParseError:
                 state.restore()
-                break
-        if count2 < 1:
-            raise ParseError("Expected at least one match")
-        pairs.extend(children1)
-        state.rule_stack.pop()
-        return Pairs(pairs)
-
-    return inner
-
-
-parse_header_value = _parse_header_value()
-
-
-def _parse_delimiter() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame("delimiter", 0)
-
-    def inner(state: State) -> Pairs:
-        """Parse delimiter."""
-        state.rule_stack.push(rule_frame)
-        pairs: list[Pair] = []
-        # RepeatOnce: attempt to match at least one occurrence
-        children1: list[Pair] = []
-        count2 = 0
+                children2.clear()
+        if not matched3:
+            raise ParseError("no choice matched")
+        pairs.extend(children2)
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        # Repeat: match as many occurrences as we can
+        children6: list[Pair] = []
         while True:
             state.checkpoint()
             try:
                 # Choice: expression | expression
-                children3: list[Pair] = []
-                matched4 = False
-                if not matched4:
+                children7: list[Pair] = []
+                matched8 = False
+                if not matched8:
                     state.checkpoint()
                     try:
-                        if state.input.startswith("\n", state.pos):
+                        # Range: start..stop
+                        if match := RE9.match(state.input, state.pos):
+                            state.pos = match.end()
+                        else:
+                            raise ParseError("expected '0'..'9'")
+                        matched8 = True
+                        state.ok()
+                    except ParseError:
+                        state.restore()
+                        children7.clear()
+                if not matched8:
+                    state.checkpoint()
+                    try:
+                        # Sequence
+                        if state.input.startswith("_", state.pos):
                             state.pos += 1
                         else:
-                            raise ParseError("\n")
-                        matched4 = True
-                        state.ok()
-                    except ParseError:
-                        state.restore()
-                        children3.clear()
-                if not matched4:
-                    state.checkpoint()
-                    try:
-                        if state.input.startswith("\r\n", state.pos):
-                            state.pos += 2
+                            raise ParseError("_")
+                        # Implicit whitespace/comments between sequence elements
+                        parse_trivia(state, children7)
+                        # Range: start..stop
+                        if match := RE10.match(state.input, state.pos):
+                            state.pos = match.end()
                         else:
-                            raise ParseError("\r\n")
-                        matched4 = True
+                            raise ParseError("expected '0'..'9'")
+                        matched8 = True
                         state.ok()
                     except ParseError:
                         state.restore()
-                        children3.clear()
-                if not matched4:
-                    state.checkpoint()
-                    try:
-                        if state.input.startswith("\r", state.pos):
-                            state.pos += 1
-                        else:
-                            raise ParseError("\r")
-                        matched4 = True
-                        state.ok()
-                    except ParseError:
-                        state.restore()
-                        children3.clear()
-                if not matched4:
+                        children7.clear()
+                if not matched8:
                     raise ParseError("no choice matched")
-                children1.extend(children3)
-                count2 += 1
+                children6.extend(children7)
+                parse_trivia(state, children6)
                 state.ok()
-                parse_trivia(state, children1)
             except ParseError:
                 state.restore()
                 break
-        if count2 < 1:
-            raise ParseError("Expected at least one match")
-        pairs.extend(children1)
+        pairs.extend(children6)
         state.rule_stack.pop()
+        # Atomic rule digits
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    [],
+                )
+            ]
+        )
+
+    return inner
+
+
+parse_digits = _parse_digits()
+
+
+def _parse_exp() -> Callable[[State], Pairs]:
+    RE2 = re.compile("[Ee]", re.VERSION1)
+    RE4 = re.compile("[\\+\\-]", re.VERSION1)
+
+    rule_frame = RuleFrame("exp", 4)
+
+    def inner(state: State) -> Pairs:
+        """Parse exp."""
+        pos1 = state.pos
+        state.rule_stack.push(rule_frame)
+        pairs: list[Pair] = []
+        # Sequence
+        # ChoiceRegex:
+        if match := RE2.match(state.input, state.pos):
+            state.pos = match.end()
+        else:
+            raise ParseError("expected one of choice")
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        children3: list[Pair] = []
+        state.checkpoint()
+        try:
+            # ChoiceRegex:
+            if match := RE4.match(state.input, state.pos):
+                state.pos = match.end()
+            else:
+                raise ParseError("expected one of choice")
+            pairs.extend(children3)
+            state.ok()
+        except ParseError:
+            state.restore()
+            children3.clear()
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        pairs.extend(parse_int(state))
+        state.rule_stack.pop()
+        # Atomic rule exp
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    [],
+                )
+            ]
+        )
+
+    return inner
+
+
+parse_exp = _parse_exp()
+
+
+def _parse_boolean() -> Callable[[State], Pairs]:
+    RE2 = re.compile("(?:true|false)", re.VERSION1)
+
+    rule_frame = RuleFrame("boolean", 0)
+
+    def inner(state: State) -> Pairs:
+        """Parse boolean."""
+        pos1 = state.pos
+        state.rule_stack.push(rule_frame)
+        pairs: list[Pair] = []
+        # ChoiceRegex:
+        if match := RE2.match(state.input, state.pos):
+            state.pos = match.end()
+        else:
+            raise ParseError("expected one of choice")
+        state.rule_stack.pop()
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
+    return inner
+
+
+parse_boolean = _parse_boolean()
+
+
+def _parse_WHITESPACE() -> Callable[[State], Pairs]:
+    RE2 = re.compile("(?:\\\r\\\n|[\\\t\\\n\\\r\\ ])", re.VERSION1)
+
+    rule_frame = RuleFrame("WHITESPACE", 2)
+
+    def inner(state: State) -> Pairs:
+        """Parse WHITESPACE."""
+        pos1 = state.pos
+        state.rule_stack.push(rule_frame)
+        pairs: list[Pair] = []
+        # ChoiceRegex:
+        if match := RE2.match(state.input, state.pos):
+            state.pos = match.end()
+        else:
+            raise ParseError("expected one of choice")
+        state.rule_stack.pop()
+        # Silent rule WHITESPACE
         return Pairs(pairs)
 
     return inner
 
 
-parse_delimiter = _parse_delimiter()
+parse_WHITESPACE = _parse_WHITESPACE()
+
+
+def _parse_COMMENT() -> Callable[[State], Pairs]:
+    SUBS2 = ["\n", "\r\n", "\r"]
+
+    rule_frame = RuleFrame("COMMENT", 2)
+
+    def inner(state: State) -> Pairs:
+        """Parse COMMENT."""
+        pos1 = state.pos
+        state.rule_stack.push(rule_frame)
+        pairs: list[Pair] = []
+        # Sequence
+        if state.input.startswith("#", state.pos):
+            state.pos += 1
+        else:
+            raise ParseError("#")
+        # Implicit whitespace/comments between sequence elements
+        parse_trivia(state, pairs)
+        # SkipUntil:
+        s5 = state.input
+        idx4: int | None = None
+        for sub3 in SUBS2:
+            pos6 = s5.find(sub3, state.pos)
+            if pos6 != -1 and (idx4 is None or pos6 < idx4):
+                idx4 = pos6
+        if idx4 is not None:
+            state.pos = idx4
+        state.rule_stack.pop()
+        # Silent rule COMMENT
+        return Pairs(pairs)
+
+    return inner
+
+
+parse_COMMENT = _parse_COMMENT()
 
 
 def parse_trivia(state: State, pairs: list[Pair]) -> None:
-    pass
+    while True:
+        state.checkpoint()
+        matched = False
+        try:
+            pairs.extend(parse_WHITESPACE(state))
+            state.ok()
+            matched = True
+        except ParseError:
+            state.restore()
+        if not state.rule_stack or state.rule_stack[-1].name != "COMMENT":
+            state.checkpoint()
+            try:
+                pairs.extend(parse_COMMENT(state))
+                state.ok()
+                matched = True
+            except ParseError:
+                state.restore()
+        if not matched:
+            break

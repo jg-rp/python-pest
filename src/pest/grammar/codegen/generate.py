@@ -12,13 +12,6 @@ import regex as re
 from pest.grammar.codegen.state import ParseError
 from pest.grammar.codegen.state import RuleFrame
 from pest.grammar.codegen.state import State
-from pest.grammar.rule import ATOMIC
-from pest.grammar.rule import COMPOUND
-from pest.grammar.rule import NONATOMIC
-from pest.grammar.rule import SILENT
-from pest.grammar.rule import SILENT_ATOMIC
-from pest.grammar.rule import SILENT_COMPOUND
-from pest.grammar.rule import SILENT_NONATOMIC
 from pest.pairs import Pair
 from pest.pairs import Pairs
 
@@ -122,7 +115,6 @@ def generate_parse_trivia(rules: dict[str, Rule]) -> str:
                     gen.writeln("pairs.extend(parse_WHITESPACE(state))")
                     gen.writeln("state.ok()")
                     gen.writeln("matched = True")
-                    gen.writeln("continue")
                 gen.writeln("except ParseError:")
                 with gen.block():
                     gen.writeln("state.restore()")
@@ -132,6 +124,7 @@ def generate_parse_trivia(rules: dict[str, Rule]) -> str:
                     "if not state.rule_stack or state.rule_stack[-1].name != 'COMMENT':"
                 )
                 with gen.block():
+                    gen.writeln("state.checkpoint()")
                     gen.writeln("try:")
                     with gen.block():
                         gen.writeln("pairs.extend(parse_COMMENT(state))")

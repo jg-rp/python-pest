@@ -1,10 +1,12 @@
+import json
+
 from pest import Parser
 from pest.grammar.codegen.generate import generate_module
 
-with open("tests/grammars/http.pest", encoding="utf-8") as fd:
+with open("tests/grammars/toml.pest", encoding="utf-8") as fd:
     grammar = fd.read()
 
-g = Parser.from_grammar(grammar, optimizer=None)
+g = Parser.from_grammar(grammar)
 # rules = Parser.from_grammar(grammar).rules
 
 # TODO: Attach rule tags in generated code
@@ -13,14 +15,14 @@ g = Parser.from_grammar(grammar, optimizer=None)
 #       - modifier bit masks
 
 
-print(generate_module(g.rules))
+# print(generate_module(g.rules))
 
 # print(g.tree_view())
 
-# from pest.grammar.codegen.state import State
-# from tmp import parse_header
+from pest.grammar.codegen.state import State
+from tmp import parse_partial_time
 
-# t = "Connection: keep-alive\n"
-# state = State(t)
-# pairs = parse_header(state)
-# print(pairs.as_list())
+t = "12:34:56.000"
+state = State(t)
+pairs = parse_partial_time(state)
+print(json.dumps(pairs.as_list(), indent=2))
