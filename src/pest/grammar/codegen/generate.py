@@ -1,19 +1,38 @@
 from pest.grammar.codegen.builder import Builder
+from pest.grammar.rule import BuiltInRule
 from pest.grammar.rule import Rule
 
-# TODO: finish me
 PRELUDE = """\
 from typing import Callable
 
+import regex as re
+
+from pest.grammar.codegen.state import ParseError
+from pest.grammar.codegen.state import RuleFrame
 from pest.grammar.codegen.state import State
+from pest.grammar.rule import ATOMIC
+from pest.grammar.rule import COMPOUND
+from pest.grammar.rule import NONATOMIC
+from pest.grammar.rule import SILENT
+from pest.grammar.rule import SILENT_ATOMIC
+from pest.grammar.rule import SILENT_COMPOUND
+from pest.grammar.rule import SILENT_NONATOMIC
 from pest.pairs import Pair
+from pest.pairs import Pairs
+
+# ruff: noqa: D103 N802 N816 N806 PLR0912 PLR0915
 """
 
 
 def generate_module(rules: dict[str, Rule]) -> str:
     """"""
-    # TODO:
-    raise NotImplementedError
+    generated_rules = "\n\n".join(
+        generate_rule(rule)
+        for rule in rules.values()
+        if not isinstance(rule, BuiltInRule)
+    )
+    generated_parse_trivia = generate_parse_trivia(rules)
+    return "\n\n".join([PRELUDE, generated_rules, generated_parse_trivia])
 
 
 def generate_rule(rule: Rule) -> str:
@@ -35,7 +54,7 @@ def generate_rule(rule: Rule) -> str:
     gen = Builder()
     func_name = f"parse_{rule.name}"
 
-    gen.writeln(f"def _{func_name}() -> Callable[[State, list[Pair]], None]:")
+    gen.writeln(f"def _{func_name}() -> Callable[[State], Pairs]:")
     with gen.block():
         # Emit rule-scoped constants (regexes, tables, etc.)
         if inner_gen.rule_constants:
@@ -73,7 +92,7 @@ def generate_parse_trivia(rules: dict[str, Rule]) -> str:
     has_comment = "COMMENT" in rules
 
     gen = Builder()
-    gen.writeln("def parse_trivia(state: ParserState, pairs: list[Pair]) -> None:")
+    gen.writeln("def parse_trivia(state: State, pairs: list[Pair]) -> None:")
     with gen.block():
         if not (has_skip or has_ws or has_comment):
             # Nothing to do
@@ -87,7 +106,6 @@ def generate_parse_trivia(rules: dict[str, Rule]) -> str:
             gen.writeln("parse_SKIP(state, pairs)")
             return gen.render()
 
-        gen.writeln("children: list[Pair] = []")
         gen.writeln("while True:")
         with gen.block():
             gen.writeln("state.checkpoint()")
@@ -96,11 +114,9 @@ def generate_parse_trivia(rules: dict[str, Rule]) -> str:
             if has_ws:
                 gen.writeln("try:")
                 with gen.block():
-                    gen.writeln("parse_WHITESPACE(state, children)")
-                    gen.writeln("pairs.extend(children)")
+                    gen.writeln("pairs.extend(parse_WHITESPACE(state))")
                     gen.writeln("state.ok()")
                     gen.writeln("matched = True")
-                    gen.writeln("children.clear()")
                     gen.writeln("continue")
                 gen.writeln("except ParseError:")
                 with gen.block():
@@ -113,11 +129,9 @@ def generate_parse_trivia(rules: dict[str, Rule]) -> str:
                 with gen.block():
                     gen.writeln("try:")
                     with gen.block():
-                        gen.writeln("parse_COMMENT(state, children)")
-                        gen.writeln("pairs.extend(children)")
+                        gen.writeln("pairs.extend(parse_COMMENT(state))")
                         gen.writeln("state.ok()")
                         gen.writeln("matched = True")
-                        gen.writeln("children.clear()")
                     gen.writeln("except ParseError:")
                     with gen.block():
                         gen.writeln("state.restore()")

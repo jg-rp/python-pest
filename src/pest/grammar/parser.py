@@ -26,8 +26,8 @@ from .expressions import Repeat
 from .expressions import RepeatExact
 from .expressions import RepeatMax
 from .expressions import RepeatMin
-from .expressions import RepeatOnce
 from .expressions import RepeatMinMax
+from .expressions import RepeatOnce
 from .expressions import Sequence
 from .expressions import String
 from .rule import MODIFIER_MAP

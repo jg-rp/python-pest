@@ -176,7 +176,7 @@ class RegexExpression(Terminal):
         gen.writeln("# ChoiceRegex:")
         re_var = gen.constant("RE", f"re.compile({self.pattern!r}, re.VERSION1)")
 
-        gen.writeln(f"if match := {re_var}.match(state.text, state.pos):")
+        gen.writeln(f"if match := {re_var}.match(state.input, state.pos):")
         with gen.block():
             gen.writeln("state.pos = match.end()")
         gen.writeln("else:")

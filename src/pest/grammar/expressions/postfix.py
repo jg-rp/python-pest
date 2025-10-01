@@ -217,7 +217,7 @@ class RepeatOnce(Expression):
         # After the loop, validate minimum
         gen.writeln(f"if {count_var} < 1:")
         with gen.block():
-            gen.writeln("raise ParseError(f'Expected at least one matches')")
+            gen.writeln("raise ParseError('Expected at least one match')")
 
         # Append successful children to the parent pair list
         gen.writeln(f"{pairs_var}.extend({tmp_pairs})")

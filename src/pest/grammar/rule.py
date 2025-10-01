@@ -143,11 +143,12 @@ class Rule(Expression):
         with gen.block():
             gen.writeln(f'"""Parse {self.name}."""')
             # `rule_frame` is defined in the closure by `generate_rule`.
-            gen.writeln("state.rule_stack.append(rule_frame)")
+            gen.writeln("state.rule_stack.push(rule_frame)")
             pairs_var = "pairs"
             gen.writeln(f"{pairs_var}: list[Pair] = []")
             self.expression.generate(gen, pairs_var)
             gen.writeln("state.rule_stack.pop()")
+            # TODO: Create a pair for this rule!!
             # TODO: handle silent, atomic, etc
             gen.writeln(f"return Pairs({pairs_var})")
 

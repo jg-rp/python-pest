@@ -1,30 +1,26 @@
 from pest import Parser
-from pest.grammar.codegen.builder import Builder
-from pest.grammar.codegen.generate import generate_parse_trivia
-from pest.grammar.codegen.generate import generate_rule
-from pest.grammar.rule import Rule
+from pest.grammar.codegen.generate import generate_module
+from pest.grammar.codegen.state import State
 
-# with open("tests/grammars/toml.pest", encoding="utf-8") as fd:
-#     grammar = fd.read()
+with open("tests/grammars/http.pest", encoding="utf-8") as fd:
+    grammar = fd.read()
 
-grammar = """\
-WHITESPACE = _{ " " | "\t" | NEWLINE }
-COMMENT    = _{ "#" ~ (!NEWLINE ~ ANY)* }
-"""
-
-rules = Parser.from_grammar(grammar).rules
+g = Parser.from_grammar(grammar, optimizer=None)
 # rules = Parser.from_grammar(grammar).rules
 
 # TODO: Attach rule tags in generated code
 # TODO: generate_module
 #    - Prelude
-#       - imports
-#           - Callable
-#           - ParseError
-#           - State
-#           - Pair
-#       - RuleFrame
 #       - modifier bit masks
 
 
-print(generate_parse_trivia(rules))
+print(generate_module(g.rules))
+
+# print(g.tree_view())
+
+# from tmp import parse_header
+
+# t = "Connection: keep-alive\n"
+# state = State(t)
+# pairs = parse_header(state)
+# print(pairs.as_list())

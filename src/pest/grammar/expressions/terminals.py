@@ -464,7 +464,7 @@ class CIString(Terminal):
         pattern = re.escape(self.value)
         re_var = gen.constant("RE", f"re.compile({pattern!r}, re.I)")
 
-        gen.writeln(f"if match := {re_var}.match(state.text, state.pos):")
+        gen.writeln(f"if match := {re_var}.match(state.input, state.pos):")
         with gen.block():
             gen.writeln("state.pos = match.end()")
         gen.writeln("else:")
@@ -484,7 +484,7 @@ class Range(Terminal):
         self._re = re.compile(rf"[{re.escape(self.start)}-{re.escape(self.stop)}]")
 
     def __str__(self) -> str:
-        return f"{self.tag_str()}'{self.start}'..'{self.stop}'"
+        return f"{self.tag_str()}'{self.start!r}'..'{self.stop!r}'"
 
     def parse(self, state: ParserState, start: int) -> list[Match] | None:
         """Attempt to match this expression against the input at `start`."""
@@ -498,12 +498,12 @@ class Range(Terminal):
         pattern = re.escape(rf"[{re.escape(self.start)}-{re.escape(self.stop)}]")
         re_var = gen.constant("RE", f"re.compile({pattern!r}, re.I)")
 
-        gen.writeln(f"if match := {re_var}.match(state.text, state.pos):")
+        gen.writeln(f"if match := {re_var}.match(state.input, state.pos):")
         with gen.block():
             gen.writeln("state.pos = match.end()")
         gen.writeln("else:")
         with gen.block():
-            gen.writeln(f'raise ParseError("expected {pattern}")')
+            gen.writeln(f'raise ParseError("expected {self.start!r}..{self.stop!r}")')
 
 
 class SkipUntil(Terminal):
@@ -558,6 +558,9 @@ class SkipUntil(Terminal):
         index_var = gen.new_temp("idx")
         input_var = gen.new_temp("s")
         pos_var = gen.new_temp("pos")
+
+        gen.writeln(f"{input_var} = state.input")
+        gen.writeln(f"{index_var}: int | None = None")
 
         gen.writeln(f"for {sub_var} in {subs_var}:")
         with gen.block():

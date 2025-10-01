@@ -116,7 +116,9 @@ class NegativePredicate(Expression):
         with gen.block():
             # Inner matched, so the negative predicate fails.
             gen.writeln("state.restore()")
-            gen.writeln(f"raise ParseError(f'unexpected {self.expression}')")
+            gen.writeln(
+                f"raise ParseError('unexpected {self.expression.__class__.__name__}')"
+            )
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""

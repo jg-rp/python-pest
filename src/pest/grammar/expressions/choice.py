@@ -150,12 +150,13 @@ class LazyChoiceRegex(Expression):
         pattern = self.build_optimized_pattern()
         re_var = gen.constant("RE", f"re.compile({pattern!r}, re.VERSION1)")
 
-        gen.writeln(f"if match := {re_var}.match(state.text, state.pos):")
+        gen.writeln(f"if match := {re_var}.match(state.input, state.pos):")
         with gen.block():
             gen.writeln("state.pos = match.end()")
         gen.writeln("else:")
         with gen.block():
-            gen.writeln(f'raise ParseError("expected {pattern}")')
+            # TODO: pretty print choices
+            gen.writeln('raise ParseError("expected one of choice")')
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""
