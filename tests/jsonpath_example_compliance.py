@@ -27,7 +27,7 @@ class Case:
     results: list[Any] | None = None
     results_paths: list[Any] | None = None
     invalid_selector: bool | None = None
-    tags: list[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list[str])
 
 
 # We're skipping these because we don't want to depend on the `regex` package

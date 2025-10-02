@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 
 class Parser:
-    """A pest generated parser.
+    """A pest parser.
 
     Attributes:
         rules: A mapping of rule names to `Rule` instances.
@@ -61,7 +61,7 @@ class Parser:
         optimizer: Optimizer | None = DEFAULT_OPTIMIZER,
         debug: bool = False,
     ) -> Parser:
-        """Parse `grammar` and return a new Parser for it."""
+        """Parse `grammar` and return a new `Parser` for it."""
         rules, doc = parse(grammar, cls.BUILTIN)
 
         # TODO: validate rules

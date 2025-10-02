@@ -6,18 +6,15 @@ See LICENSE_PEST.txt
 """
 
 import pytest
-from _pytest.fixtures import SubRequest
 
-from pest import DEFAULT_OPTIMIZER
 from pest import Parser
 from pest import PestParsingError
 
 
-@pytest.fixture(scope="module", params=["not optimized", "optimized"])
-def parser(request: SubRequest) -> Parser:
-    optimizer = DEFAULT_OPTIMIZER if request.param == "optimized" else None
+@pytest.fixture(scope="module")
+def grammar() -> str:
     with open("tests/grammars/grammar.pest", encoding="utf-8") as fd:
-        return Parser.from_grammar(fd.read(), optimizer=optimizer)
+        return fd.read()
 
 
 def test_string_rule(parser: Parser) -> None:
