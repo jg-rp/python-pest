@@ -25,14 +25,15 @@ class State:
     the execution of generated parsers.
     """
 
-    def __init__(self, text: str):
+    def __init__(self, text: str, start_pos: int = 0):
         """Initialize a new parser state for the given input text.
 
         Args:
             text: The input string to be parsed.
+            start_pos: The index in `text` to start parsing from.
         """
         self.input = text
-        self.pos = 0
+        self.pos = start_pos
         self.user_stack = Stack[str]()  # PUSH/POP/PEEK/DROP
         self.rule_stack = Stack[RuleFrame]()
         self._pos_history: list[int] = []  # TODO: better

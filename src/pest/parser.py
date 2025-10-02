@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Mapping
 
 from .grammar import parse
+from .grammar.codegen.generate import generate_module
 from .grammar.optimizer import DEFAULT_OPTIMIZER
 from .grammar.rule import BuiltInRule
 from .grammar.rules.ascii import ASCII_RULES
@@ -17,6 +17,8 @@ from .pairs import Pairs
 from .state import ParserState
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from .grammar.optimizer import Optimizer
     from .grammar.rule import Rule
 
@@ -87,6 +89,10 @@ class Parser:
             state.raise_failure()
 
         return Pairs([result.pair for result in results if result.pair])
+
+    def generate(self) -> str:
+        """Return a generated parser as Python module source code."""
+        return generate_module(self.rules)
 
     def tree_view(self) -> str:
         """Return a tree view for each non-built-in rule in this grammar."""

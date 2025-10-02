@@ -10,6 +10,7 @@ from typing import overload
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
+    from .grammar.codegen.state import RuleFrame
     from .grammar.rule import Rule
 
 
@@ -23,7 +24,7 @@ class Token:
 
     __slots__ = ("rule", "pos")
 
-    def __init__(self, rule: Rule, pos: int) -> None:
+    def __init__(self, rule: Rule | RuleFrame, pos: int) -> None:
         self.rule = rule
         self.pos = pos
 
@@ -126,7 +127,7 @@ class Pair:
         input_: str,
         start: int,
         end: int,
-        rule: Rule,
+        rule: Rule | RuleFrame,
         children: list[Pair] | None = None,
         tag: str | None = None,
     ):
