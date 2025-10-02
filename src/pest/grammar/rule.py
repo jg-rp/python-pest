@@ -77,7 +77,6 @@ class Rule(Expression):
         # Restore atomic depth to what it was before this rule
         state.atomic_depth.restore()
 
-        # TODO: let ParserState restore atomic depth
         if not results:
             return None
 
@@ -148,11 +147,17 @@ class Rule(Expression):
                 gen.writeln(f"{start_pos} = state.pos")
             # `rule_frame` is defined in the closure by `generate_rule`.
             gen.writeln("state.rule_stack.push(rule_frame)")
-            # TODO: set state.atomic_depth
+
+            if self.modifier & (ATOMIC | COMPOUND):
+                gen.writeln("state.atomic_depth += 1")
+            elif self.modifier & NONATOMIC:
+                gen.writeln("state.atomic_depth.zero()")
+
             pairs_var = "pairs"
             gen.writeln(f"{pairs_var}: list[Pair] = []")
             self.expression.generate(gen, pairs_var)
             gen.writeln("state.rule_stack.pop()")
+            gen.writeln("state.atomic_depth.restore()")
 
             children: str = pairs_var
 
@@ -168,7 +173,11 @@ class Rule(Expression):
                     ) or not self.expression.modifier & (NONATOMIC | COMPOUND):
                         children = "[]"
 
-                pair = f"Pair(state.input, {start_pos}, state.pos, rule_frame, {children},)"
+                pair = (
+                    f"Pair("
+                    f"state.input, {start_pos}, state.pos, rule_frame, {children},"
+                    ")"
+                )
                 gen.writeln(f"return Pairs([{pair}])")
 
     def children(self) -> list[Expression]:

@@ -23,15 +23,19 @@ with open("tests/grammars/toml.pest", encoding="utf-8") as fd:
 
 parser = Parser.from_grammar(grammar)
 
-print(parser.tree_view())
+# print(parser.tree_view())
 
-g_parser = GeneratedParser(parser.generate())
+# with open("tmp.py", "w") as fd:
+#     fd.write(parser.generate())
+
+# g_parser = GeneratedParser(parser.generate())
 
 
-pairs = g_parser.parse("inline_table", "{ a = 'b' }")
+# pairs = g_parser.parse("inline_table", "{ a = 'b' }")
+from tmp import parse_inline_table
+from pest.grammar.codegen.state import State
+
+pairs = parse_inline_table(State("{ a = 'b' }"))
 print(json.dumps(pairs.as_list(), indent=2))
 
 # TODO: Attach rule tags in generated code
-# TODO: generate_module
-#    - Prelude
-#       - modifier bit masks

@@ -119,7 +119,7 @@ class Repeat(Expression):
         gen.writeln("# Repeat: match as many occurrences as we can")
         tmp_pairs = gen.new_temp("children")
         trivia_pos = gen.new_temp("trivia_pos")
-        gen.writeln(f"{trivia_pos} = -1")
+        gen.writeln(f"{trivia_pos} = state.pos")
         gen.writeln(f"{tmp_pairs}: list[Pair] = []")
 
         gen.writeln("while True:")

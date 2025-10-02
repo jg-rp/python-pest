@@ -4,9 +4,7 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
-from typing import Iterator
 from typing import Never
-from typing import Sequence
 
 from .checkpoint_int import SnapshottingInt
 from .exceptions import PestParsingError
@@ -15,6 +13,9 @@ from .grammar.rule import Rule
 from .stack import Stack
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
+    from collections.abc import Sequence
+
     from pest.grammar.expression import Expression
 
     from .parser import Parser

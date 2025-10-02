@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from pest.checkpoint_int import SnapshottingInt
 from pest.stack import Stack
 
 if TYPE_CHECKING:
@@ -37,7 +38,7 @@ class State:
         self.user_stack = Stack[str]()  # PUSH/POP/PEEK/DROP
         self.rule_stack = Stack[RuleFrame]()
         self._pos_history: list[int] = []  # TODO: better
-        # TODO: atomic_depth
+        self.atomic_depth = SnapshottingInt()
 
     def checkpoint(self) -> None:
         """Take a snapshot of the current state for potential backtracking.
@@ -46,6 +47,7 @@ class State:
         """
         self.user_stack.snapshot()
         self.rule_stack.snapshot()
+        self.atomic_depth.snapshot()
         self._pos_history.append(self.pos)
 
     def ok(self) -> None:
@@ -56,6 +58,7 @@ class State:
         """
         self.user_stack.drop_snapshot()
         self.rule_stack.drop_snapshot()
+        self.atomic_depth.drop()
         self._pos_history.pop()
 
     def restore(self) -> None:
@@ -66,6 +69,7 @@ class State:
         """
         self.user_stack.restore()
         self.rule_stack.restore()
+        self.atomic_depth.restore()
         self.pos = self._pos_history.pop()
 
     def push(self, value: str) -> None:

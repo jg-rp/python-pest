@@ -47,6 +47,9 @@ class Sequence(Expression):
             position = result[-1].pos
             results.extend(result)
 
+            # XXX: If the last expression can't fail, do we still parse implicit rules
+            # before it if it does not match anything?
+
             # Only skip trivia between expressions, not after the last one.
             if i < len(self.expressions) - 1:
                 implicit_result = list(state.parse_implicit_rules(position))
