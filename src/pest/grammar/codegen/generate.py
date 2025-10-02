@@ -136,6 +136,8 @@ def generate_parse_trivia(rules: dict[str, Rule]) -> str:
     gen = Builder()
     gen.writeln("def parse_trivia(state: State, pairs: list[Pair]) -> None:")
     with gen.block():
+        # TODO: Nothing if state.atomic_depth > 0
+
         if not (has_skip or has_ws or has_comment):
             # Nothing to do
             gen.writeln("pass")

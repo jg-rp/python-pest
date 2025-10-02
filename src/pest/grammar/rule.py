@@ -148,6 +148,7 @@ class Rule(Expression):
                 gen.writeln(f"{start_pos} = state.pos")
             # `rule_frame` is defined in the closure by `generate_rule`.
             gen.writeln("state.rule_stack.push(rule_frame)")
+            # TODO: set state.atomic_depth
             pairs_var = "pairs"
             gen.writeln(f"{pairs_var}: list[Pair] = []")
             self.expression.generate(gen, pairs_var)

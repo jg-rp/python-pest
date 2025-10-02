@@ -37,6 +37,7 @@ class State:
         self.user_stack = Stack[str]()  # PUSH/POP/PEEK/DROP
         self.rule_stack = Stack[RuleFrame]()
         self._pos_history: list[int] = []  # TODO: better
+        # TODO: atomic_depth
 
     def checkpoint(self) -> None:
         """Take a snapshot of the current state for potential backtracking.

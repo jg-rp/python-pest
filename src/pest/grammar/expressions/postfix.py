@@ -118,6 +118,8 @@ class Repeat(Expression):
         """Emit Python code for repeat zero or more times."""
         gen.writeln("# Repeat: match as many occurrences as we can")
         tmp_pairs = gen.new_temp("children")
+        trivia_pos = gen.new_temp("trivia_pos")
+        gen.writeln(f"{trivia_pos} = -1")
         gen.writeln(f"{tmp_pairs}: list[Pair] = []")
 
         gen.writeln("while True:")
@@ -125,16 +127,26 @@ class Repeat(Expression):
             gen.writeln("state.checkpoint()")
             gen.writeln("try:")
             with gen.block():
+                # Parse one item
                 self.expression.generate(gen, tmp_pairs)
-                gen.writeln(f"parse_trivia(state, {tmp_pairs})")
                 gen.writeln("state.ok()")
+
+                # Commit the item immediately
+                gen.writeln(f"{pairs_var}.extend({tmp_pairs})")
+                gen.writeln(f"{tmp_pairs}.clear()")
+
+                # Save pos before trivia
+                gen.writeln(f"{trivia_pos} = state.pos")
+
+                # Parse trivia after item
+                gen.writeln(f"parse_trivia(state, {tmp_pairs})")
+
             gen.writeln("except ParseError:")
             with gen.block():
+                # Restore checkpoint and also rewind trivia pos
                 gen.writeln("state.restore()")
+                gen.writeln(f"state.pos = {trivia_pos}")
                 gen.writeln("break")
-
-        # Append successful children to the parent pair list
-        gen.writeln(f"{pairs_var}.extend({tmp_pairs})")
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""
@@ -197,6 +209,8 @@ class RepeatOnce(Expression):
         gen.writeln("# RepeatOnce: attempt to match at least one occurrence")
         tmp_pairs = gen.new_temp("children")
         count_var = gen.new_temp("count")
+        trivia_pos = gen.new_temp("trivia_pos")
+        gen.writeln(f"{trivia_pos} = state.pos")
         gen.writeln(f"{tmp_pairs}: list[Pair] = []")
 
         gen.writeln(f"{count_var} = 0")
@@ -205,22 +219,32 @@ class RepeatOnce(Expression):
             gen.writeln("state.checkpoint()")
             gen.writeln("try:")
             with gen.block():
+                # Parse one item
                 self.expression.generate(gen, tmp_pairs)
                 gen.writeln(f"{count_var} += 1")
                 gen.writeln("state.ok()")
+
+                # Commit the item immediately
+                gen.writeln(f"{pairs_var}.extend({tmp_pairs})")
+                gen.writeln(f"{tmp_pairs}.clear()")
+
+                # Save pos before trivia
+                gen.writeln(f"{trivia_pos} = state.pos")
+
+                # Parse trivia after item
                 gen.writeln(f"parse_trivia(state, {tmp_pairs})")
+
             gen.writeln("except ParseError:")
             with gen.block():
+                # Restore checkpoint and also rewind trivia pos
                 gen.writeln("state.restore()")
+                gen.writeln(f"state.pos = {trivia_pos}")
                 gen.writeln("break")
 
         # After the loop, validate minimum
         gen.writeln(f"if {count_var} < 1:")
         with gen.block():
             gen.writeln("raise ParseError('Expected at least one match')")
-
-        # Append successful children to the parent pair list
-        gen.writeln(f"{pairs_var}.extend({tmp_pairs})")
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""
