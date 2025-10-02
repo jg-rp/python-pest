@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Mapping
 
 from pest.grammar import Identifier
 from pest.grammar.rule import SILENT
 from pest.grammar.rule import BuiltInRule
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from pest.grammar import Expression
     from pest.grammar import Rule
 

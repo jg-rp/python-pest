@@ -17,11 +17,11 @@ class GeneratedParser:
         return self._parse(start_rule, input_, start_pos=start_pos)
 
 
-with open("tests/grammars/toml.pest", encoding="utf-8") as fd:
+with open("tests/grammars/lists.pest", encoding="utf-8") as fd:
     grammar = fd.read()
 
 
-parser = Parser.from_grammar(grammar)
+parser = Parser.from_grammar(grammar, optimizer=None)
 
 # print(parser.tree_view())
 
@@ -31,11 +31,11 @@ parser = Parser.from_grammar(grammar)
 # g_parser = GeneratedParser(parser.generate())
 
 
-# pairs = g_parser.parse("inline_table", "{ a = 'b' }")
-from tmp import parse_inline_table
+# pairs = g_parser.parse("Command", "select * from table")
+from tmp import parse_children
 from pest.grammar.codegen.state import State
 
-pairs = parse_inline_table(State("{ a = 'b' }"))
+pairs = parse_children(State("  - b"))
 print(json.dumps(pairs.as_list(), indent=2))
 
 # TODO: Attach rule tags in generated code

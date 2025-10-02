@@ -201,4 +201,7 @@ class BuiltInRule(Rule):
 
     def generate(self, gen: Builder, pairs_var: str) -> None:
         """Emit Python source code that implements this grammar expression."""
-        self.expression.generate(gen, pairs_var)
+        if self.name == "EOI":
+            super().generate(gen, pairs_var)
+        else:
+            self.expression.generate(gen, pairs_var)

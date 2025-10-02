@@ -50,7 +50,7 @@ def generate_module(rules: dict[str, Rule]) -> str:
     generated_rules = "\n\n".join(
         generate_rule(rule)
         for rule in rules.values()
-        if not isinstance(rule, BuiltInRule)
+        if not isinstance(rule, BuiltInRule) or rule.name == "EOI"
     )
     return "\n\n".join(
         [
@@ -193,7 +193,7 @@ def generate_rule_enum(rules: dict[str, Rule]) -> str:
     with gen.block():
         gen.writeln('"""Grammar rules."""')
         for name, rule in rules.items():
-            if not isinstance(rule, BuiltInRule):
+            if not isinstance(rule, BuiltInRule) or rule.name == "EOI":
                 gen.writeln(f"{name.upper()} = auto()")
 
     return gen.render()
@@ -205,7 +205,7 @@ def generate_rule_map(rules: dict[str, Rule]) -> str:
     gen.writeln("_RULE_MAP: dict[str, Callable[[State], Pairs]] = {")
     with gen.block():
         for name, rule in rules.items():
-            if not isinstance(rule, BuiltInRule):
+            if not isinstance(rule, BuiltInRule) or rule.name == "EOI":
                 gen.writeln(f"{name!r}: parse_{name},")
     gen.writeln("}")
     return gen.render()

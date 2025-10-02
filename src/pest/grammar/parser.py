@@ -163,8 +163,8 @@ class Parser:
             self.eat(TokenKind.RPAREN)
         elif left_kind == TokenKind.IDENTIFIER:
             name = self.next().value
-            if rule := self.builtins.get(name):
-                left = rule
+            if name != "EOI" and name in self.builtins:
+                left = self.builtins[name]
             else:
                 left = Identifier(name, tag=tag)
         elif left_kind == TokenKind.PUSH_LITERAL:
