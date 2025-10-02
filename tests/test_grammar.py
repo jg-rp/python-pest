@@ -7,8 +7,9 @@ See LICENSE_PEST.txt
 
 import pytest
 
-from pest import Parser
 from pest import PestParsingError
+
+from .conftest import ParserLike as Parser
 
 
 @pytest.fixture(scope="module")
