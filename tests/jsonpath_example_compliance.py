@@ -1,11 +1,15 @@
 """Compare our JSONPath implementation with the JSONPath Compliance Test Suite."""
 
+from __future__ import annotations
+
 import json
 import operator
 import os
 import sys
+import types
 from dataclasses import dataclass
 from dataclasses import field
+from typing import TYPE_CHECKING
 from typing import Any
 
 import pytest
@@ -14,7 +18,14 @@ sys.path.append(os.getcwd())
 
 from examples.jsonpath.exceptions import JSONPathError
 from examples.jsonpath.jsonpath import JSONPathParser
-from examples.jsonpath.types import JSONValue
+from examples.jsonpath.jsonpath import grammar
+from pest import Parser
+
+if TYPE_CHECKING:
+    from _pytest.fixtures import SubRequest
+
+    from examples.jsonpath.types import JSONValue
+    from pest import Pairs
 
 
 @dataclass
@@ -59,18 +70,53 @@ def invalid_cases() -> list[Case]:
     return [case for case in cases() if case.invalid_selector]
 
 
-@pytest.fixture(scope="module")
-def parser() -> JSONPathParser:
-    return JSONPathParser()
+class GeneratedParser:
+    def __init__(self, code: str, *, module_name: str = "generated_parser"):
+        # Create an in-memory module for the generated code
+        module = types.ModuleType(module_name)
+        exec(compile(code, filename=f"{module_name}.py", mode="exec"), module.__dict__)  # noqa: S102
+        # Keep a reference to the generated entry point
+        self._parse = module.parse
+
+    def parse(self, start_rule: str, input_: str, *, start_pos: int = 0) -> Pairs:
+        return self._parse(start_rule, input_, start_pos=start_pos)
+
+
+class UnoptimizedJSONPathParser(JSONPathParser):
+    PARSER = Parser.from_grammar(grammar, optimizer=None)
+
+
+class GeneratedJSONPathParser(JSONPathParser):
+    PARSER = GeneratedParser(Parser.from_grammar(grammar).generate())
+
+
+class UnoptimizedGeneratedJSONPathParser(JSONPathParser):
+    PARSER = GeneratedParser(Parser.from_grammar(grammar, optimizer=None).generate())
+
+
+@pytest.fixture(
+    scope="module",
+    params=["not optimized", "optimized", "generated", "optimized generated"],
+)
+def jsonpath(request: SubRequest) -> JSONPathParser:
+    assert isinstance(request.param, str)
+    if request.param == "not optimized":
+        return UnoptimizedJSONPathParser()
+    if request.param == "optimized":
+        return JSONPathParser()
+    if request.param == "generated":
+        return UnoptimizedGeneratedJSONPathParser()
+    assert request.param == "optimized generated"
+    return GeneratedJSONPathParser()
 
 
 @pytest.mark.parametrize("case", valid_cases(), ids=operator.attrgetter("name"))
-def test_compliance(parser: JSONPathParser, case: Case) -> None:
+def test_compliance(jsonpath: JSONPathParser, case: Case) -> None:
     if case.name in SKIP:
         pytest.skip()
 
     assert case.document is not None
-    query = parser.parse(case.selector)
+    query = jsonpath.parse(case.selector)
     nodes = query.find(case.document)
 
     if case.results is not None:
@@ -83,9 +129,9 @@ def test_compliance(parser: JSONPathParser, case: Case) -> None:
 
 
 @pytest.mark.parametrize("case", invalid_cases(), ids=operator.attrgetter("name"))
-def test_invalid_selectors(parser: JSONPathParser, case: Case) -> None:
+def test_invalid_selectors(jsonpath: JSONPathParser, case: Case) -> None:
     if case.name in SKIP:
         pytest.skip()
 
     with pytest.raises(JSONPathError):
-        parser.parse(case.selector)
+        jsonpath.parse(case.selector)

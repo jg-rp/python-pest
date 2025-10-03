@@ -1,27 +1,55 @@
+from __future__ import annotations
+
 import json
 import os
 import sys
 import timeit
+import types
+from typing import TYPE_CHECKING
 from typing import Any
-from typing import Mapping
 from typing import NamedTuple
-from typing import Sequence
-from typing import Union
 
 from pest import Parser
 
 sys.path.append(os.getcwd())
 
-from examples.jsonpath import compile  # noqa: A004
-from examples.jsonpath import find
 from examples.jsonpath.jsonpath import JSONPathParser
+from examples.jsonpath.jsonpath import grammar
 
-PARSER = JSONPathParser()
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+    from collections.abc import Sequence
+
+    from pest import Pairs
+
+
+class GeneratedParser:
+    def __init__(self, code: str, *, module_name: str = "generated_parser"):
+        # Create an in-memory module for the generated code
+        module = types.ModuleType(module_name)
+        exec(compile(code, filename=f"{module_name}.py", mode="exec"), module.__dict__)  # noqa: S102
+        # Keep a reference to the generated entry point
+        self._parse = module.parse
+
+    def parse(self, start_rule: str, input_: str, *, start_pos: int = 0) -> Pairs:  # noqa: D102
+        return self._parse(start_rule, input_, start_pos=start_pos)
+
+
+class UnoptimizedJSONPathParser(JSONPathParser):
+    PARSER = Parser.from_grammar(grammar, optimizer=None)
+
+
+class GeneratedJSONPathParser(JSONPathParser):
+    PARSER = GeneratedParser(Parser.from_grammar(grammar).generate())
+
+
+class UnoptimizedGeneratedJSONPathParser(JSONPathParser):
+    PARSER = GeneratedParser(Parser.from_grammar(grammar, optimizer=None).generate())
 
 
 class CTSCase(NamedTuple):
     query: str
-    data: Union[Sequence[Any], Mapping[str, Any]]
+    data: Sequence[Any] | Mapping[str, Any]
 
 
 def valid_queries() -> Sequence[CTSCase]:
@@ -36,17 +64,11 @@ def valid_queries() -> Sequence[CTSCase]:
 
 
 QUERIES = valid_queries()
-
-with open("examples/jsonpath/jsonpath.pest", encoding="utf-8") as fd:
-    PEST = Parser.from_grammar(fd.read())
+PEST = GeneratedParser(Parser.from_grammar(grammar).generate())
 
 COMPILE_AND_FIND_STMT = """\
 for path, data in QUERIES:
-    list(find(path, data))"""
-
-COMPILE_AND_FIND_VALUES_STMT = """\
-for path, data in QUERIES:
-    [node.value for node in find(path, data)]"""
+    list(PARSER.parse(path).find(data))"""
 
 JUST_PARSE_STMT = """\
 for path, _ in QUERIES:
@@ -54,19 +76,15 @@ for path, _ in QUERIES:
 
 JUST_COMPILE_STMT = """\
 for path, _ in QUERIES:
-    compile(path)"""
+    PARSER.parse(path)"""
 
 JUST_FIND_SETUP = """\
-compiled_queries = [(compile(q), d) for q, d in QUERIES]
+compiled_queries = [(PARSER.parse(q), d) for q, d in QUERIES]
 """
 
 JUST_FIND_STMT = """\
 for path, data in compiled_queries:
     list(path.find(data))"""
-
-JUST_FIND_VALUES_STMT = """\
-for path, data in compiled_queries:
-    [node.value for node in path.find(data)]"""
 
 
 def benchmark(number: int = 10, best_of: int = 3) -> None:
@@ -76,29 +94,12 @@ def benchmark(number: int = 10, best_of: int = 3) -> None:
         COMPILE_AND_FIND_STMT,
         globals={
             "QUERIES": QUERIES,
-            "PARSER": PARSER,
-            "find": find,
-            "compile": compile,
+            "PARSER": GeneratedJSONPathParser(),
         },
         number=number,
         repeat=best_of,
     )
-
-    print("compile and find".ljust(30), f"\033[92m{min(results):.3f}\033[0m")
-
-    results = timeit.repeat(
-        COMPILE_AND_FIND_VALUES_STMT,
-        globals={
-            "QUERIES": QUERIES,
-            "PARSER": PARSER,
-            "find": find,
-            "compile": compile,
-        },
-        number=number,
-        repeat=best_of,
-    )
-
-    print("compile and find (values)".ljust(30), f"{min(results):.3f}")
+    print("compile and find".ljust(38), f"\033[92m{min(results):.3f}\033[0m")
 
     results = timeit.repeat(
         JUST_PARSE_STMT,
@@ -109,51 +110,63 @@ def benchmark(number: int = 10, best_of: int = 3) -> None:
         number=number,
         repeat=best_of,
     )
-
-    print("just pest parse".ljust(30), f"{min(results):.3f}")
+    print("just pest parse".ljust(38), f"{min(results):.3f}")
 
     results = timeit.repeat(
         JUST_COMPILE_STMT,
         globals={
             "QUERIES": QUERIES,
-            "PARSER": PARSER,
-            "compile": compile,
+            "PARSER": JSONPathParser(),
         },
         number=number,
         repeat=best_of,
     )
+    print("just compile (optimized)".ljust(38), f"{min(results):.3f}")
 
-    print("just compile".ljust(30), f"{min(results):.3f}")
+    results = timeit.repeat(
+        JUST_COMPILE_STMT,
+        globals={
+            "QUERIES": QUERIES,
+            "PARSER": UnoptimizedGeneratedJSONPathParser(),
+        },
+        number=number,
+        repeat=best_of,
+    )
+    print("just compile (unoptimized)".ljust(38), f"{min(results):.3f}")
+
+    results = timeit.repeat(
+        JUST_COMPILE_STMT,
+        globals={
+            "QUERIES": QUERIES,
+            "PARSER": GeneratedJSONPathParser(),
+        },
+        number=number,
+        repeat=best_of,
+    )
+    print("just compile (generated)".ljust(38), f"{min(results):.3f}")
+
+    results = timeit.repeat(
+        JUST_COMPILE_STMT,
+        globals={
+            "QUERIES": QUERIES,
+            "PARSER": UnoptimizedGeneratedJSONPathParser(),
+        },
+        number=number,
+        repeat=best_of,
+    )
+    print("just compile (generated unoptimized)".ljust(38), f"{min(results):.3f}")
 
     results = timeit.repeat(
         JUST_FIND_STMT,
         setup=JUST_FIND_SETUP,
         globals={
             "QUERIES": QUERIES,
-            "PARSER": PARSER,
-            "find": find,
-            "compile": compile,
+            "PARSER": JSONPathParser(),
         },
         number=number,
         repeat=best_of,
     )
-
-    print("just find".ljust(30), f"\033[92m{min(results):.3f}\033[0m")
-
-    results = timeit.repeat(
-        JUST_FIND_VALUES_STMT,
-        setup=JUST_FIND_SETUP,
-        globals={
-            "QUERIES": QUERIES,
-            "PARSER": PARSER,
-            "find": find,
-            "compile": compile,
-        },
-        number=number,
-        repeat=best_of,
-    )
-
-    print("just find (values)".ljust(30), f"{min(results):.3f}")
+    print("just find".ljust(38), f"\033[92m{min(results):.3f}\033[0m")
 
 
 if __name__ == "__main__":

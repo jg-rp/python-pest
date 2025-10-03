@@ -49,8 +49,6 @@ from .unescape import unescape_string
 with open("examples/jsonpath/jsonpath.pest", encoding="utf-8") as fd:
     grammar = fd.read()
 
-PARSER = Parser.from_grammar(grammar)
-
 
 class Rule(StrEnum):
     """JSONPath grammar rules."""
@@ -104,9 +102,11 @@ class JSONPathParser:
     MAX_INT_INDEX = (2**53) - 1
     MIN_INT_INDEX = -(2**53) + 1
 
+    PARSER = Parser.from_grammar(grammar)
+
     def parse(self, query: str) -> JSONPathQuery:
         try:
-            segments = PARSER.parse(Rule.JSONPATH, query)
+            segments = self.PARSER.parse(Rule.JSONPATH, query)
         except PestParsingError as err:
             raise JSONPathSyntaxError(str(err)) from err
 
