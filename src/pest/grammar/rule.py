@@ -147,18 +147,19 @@ class Rule(Expression):
                 gen.writeln(f"{start_pos} = state.pos")
             # `rule_frame` is defined in the closure by `generate_rule`.
             gen.writeln("state.rule_stack.push(rule_frame)")
-            gen.writeln("state.atomic_depth.snapshot()")
-
-            if self.modifier & (ATOMIC | COMPOUND):
-                gen.writeln("state.atomic_depth += 1")
-            elif self.modifier & NONATOMIC:
-                gen.writeln("state.atomic_depth.zero()")
 
             pairs_var = "pairs"
             gen.writeln(f"{pairs_var}: list[Pair] = []")
-            self.expression.generate(gen, pairs_var)
+
+            gen.writeln("with state.atomic_checkpoint():")
+            with gen.block():
+                if self.modifier & (ATOMIC | COMPOUND):
+                    gen.writeln("state.atomic_depth += 1")
+                elif self.modifier & NONATOMIC:
+                    gen.writeln("state.atomic_depth.zero()")
+                self.expression.generate(gen, pairs_var)
+
             gen.writeln("state.rule_stack.pop()")
-            gen.writeln("state.atomic_depth.restore()")
 
             children: str = pairs_var
 

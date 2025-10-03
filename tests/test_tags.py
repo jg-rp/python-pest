@@ -1,7 +1,5 @@
 import pytest
-from _pytest.fixtures import SubRequest
 
-from pest import DEFAULT_OPTIMIZER
 from pest import Parser
 
 GRAMMAR = """\
@@ -15,10 +13,9 @@ STAR={"*"}
 DOT={"."}"""
 
 
-@pytest.fixture(scope="module", params=["not optimized", "optimized"])
-def parser(request: SubRequest) -> Parser:
-    optimizer = DEFAULT_OPTIMIZER if request.param == "optimized" else None
-    return Parser.from_grammar(GRAMMAR, optimizer=optimizer)
+@pytest.fixture(scope="module")
+def grammar() -> str:
+    return GRAMMAR
 
 
 def test_opt_tag_star(parser: Parser) -> None:

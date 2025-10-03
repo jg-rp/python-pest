@@ -8,12 +8,14 @@ restoration for backtracking and error recovery.
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
 from pest.checkpoint_int import SnapshottingInt
 from pest.stack import Stack
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from collections.abc import Sequence
 
 
@@ -111,6 +113,15 @@ class State:
         if start is None and end is None:
             return self.user_stack[:]
         return self.user_stack[slice(start, end)]
+
+    @contextmanager
+    def atomic_checkpoint(self) -> Iterator[State]:
+        """A context manager that restores atomic depth on exit."""
+        self.atomic_depth.snapshot()
+        try:
+            yield self
+        finally:
+            self.atomic_depth.restore()
 
 
 class RuleFrame:
