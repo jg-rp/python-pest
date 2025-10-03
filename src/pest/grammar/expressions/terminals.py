@@ -133,9 +133,9 @@ class PeekSlice(Terminal):
         pos = gen.new_temp("pos")
         gen.writeln(f"{pos} = state.pos")
         peeked = gen.new_temp("peek")
-        gen.writeln(f"for {peeked} in state.peek_slice({self.start, self.stop}):")
+        gen.writeln(f"for {peeked} in state.peek_slice({self.start}, {self.stop}):")
         with gen.block():
-            gen.writeln(f"if state.startswith({peeked}, {pos}):")
+            gen.writeln(f"if state.input.startswith({peeked}, {pos}):")
             with gen.block():
                 gen.writeln(f"{pos} += len({peeked})")
             gen.writeln("else:")
@@ -169,7 +169,7 @@ class Peek(Terminal):
         gen.writeln("# Peek: PEEK")
         peeked = gen.new_temp("peek")
         gen.writeln(f"{peeked} = state.peek()")
-        gen.writeln(f"if state.input.startswith({peeked}, state.pos):")
+        gen.writeln(f"if {peeked} and state.input.startswith({peeked}, state.pos):")
         with gen.block():
             gen.writeln(f"state.pos += len({peeked})")
         gen.writeln("else:")
@@ -257,7 +257,7 @@ class Pop(Terminal):
         gen.writeln("# Pop: POP")
         peeked = gen.new_temp("peek")
         gen.writeln(f"{peeked} = state.peek()")
-        gen.writeln(f"if state.input.startswith({peeked}, state.pos):")
+        gen.writeln(f"if {peeked} and state.input.startswith({peeked}, state.pos):")
         with gen.block():
             gen.writeln("state.user_stack.pop()")
             gen.writeln(f"state.pos += len({peeked})")
@@ -305,7 +305,7 @@ class PopAll(Terminal):
         peeked = gen.new_temp("peek")
         gen.writeln(f"for {peeked} in state.peek_slice():")
         with gen.block():
-            gen.writeln(f"if state.startswith({peeked}, {pos}):")
+            gen.writeln(f"if state.input.startswith({peeked}, {pos}):")
             with gen.block():
                 gen.writeln(f"{pos} += len({peeked})")
             gen.writeln("else:")

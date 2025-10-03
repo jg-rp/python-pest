@@ -24,6 +24,7 @@ from typing import TYPE_CHECKING
 
 import regex as re
 
+from pest.exceptions import PestParsingError
 from pest.grammar.codegen.state import ParseError
 from pest.grammar.codegen.state import RuleFrame
 from pest.grammar.codegen.state import State
@@ -223,7 +224,19 @@ def generate_parse_entry_point() -> str:
         # TODO: improve doc comment
         gen.writeln('"""Parse `input_` starting from `rule`."""')
         gen.writeln("state = State(input_, start_pos)")
-        # TODO: error handling!!
-        gen.writeln("return _RULE_MAP[start_rule](state)")
+        gen.writeln("try:")
+        with gen.block():
+            gen.writeln("return _RULE_MAP[start_rule](state)")
+        gen.writeln("except ParseError as err:")
+        # TODO: Better error messages
+        with gen.block():
+            gen.writeln("pos = state.pos")
+            gen.writeln('line = state.input.count("\\n", 0, pos) + 1')
+            gen.writeln('col = pos - state.input.rfind("\\n", 0, pos)')
+            gen.writeln('found = state.input[pos : pos + 10] or "end of input"')
+            gen.writeln(
+                "raise PestParsingError("
+                "str(err), [], [], state.pos, '', (line, col)) from err"
+            )
 
     return gen.render()

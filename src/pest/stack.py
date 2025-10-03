@@ -58,6 +58,15 @@ class Stack(Sequence[T]):
                 self.popped.append(popped)
         return popped
 
+    def clear(self) -> None:
+        """Remove all items from the stack."""
+        # TODO: optimize
+        while True:
+            try:
+                self.pop()
+            except IndexError:
+                return
+
     @overload
     def __getitem__(self, index: int) -> T: ...
 

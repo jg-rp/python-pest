@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 
 import regex as re
 
+from pest.exceptions import PestParsingError
 from pest.grammar.codegen.state import ParseError
 from pest.grammar.codegen.state import RuleFrame
 from pest.grammar.codegen.state import State
@@ -25,6 +26,7 @@ if TYPE_CHECKING:
 
 class Rule(StrEnum):
     """Grammar rules."""
+
     SYMBOL = auto()
     EOI = auto()
     STRING = auto()
@@ -88,30 +90,43 @@ class Rule(StrEnum):
     WHITESPACE = auto()
     COMMENT = auto()
 
+
 def _parse_SYMBOL() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('SYMBOL', 0)
-    
+    rule_frame = RuleFrame("SYMBOL", 0)
+
     def inner(state: State) -> Pairs:
         """Parse SYMBOL."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
         state.atomic_depth.snapshot()
         pairs: list[Pair] = []
-        if state.input.startswith('shadows builtin', state.pos):
+        if state.input.startswith("shadows builtin", state.pos):
             state.pos += 15
         else:
-            raise ParseError('shadows builtin')
+            raise ParseError("shadows builtin")
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_SYMBOL = _parse_SYMBOL()
 
+
 def _parse_EOI() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('EOI', 0)
-    
+    rule_frame = RuleFrame("EOI", 0)
+
     def inner(state: State) -> Pairs:
         """Parse EOI."""
         pos1 = state.pos
@@ -119,41 +134,65 @@ def _parse_EOI() -> Callable[[State], Pairs]:
         state.atomic_depth.snapshot()
         pairs: list[Pair] = []
         if state.pos != len(state.input):
-            raise ParseError('expected end of input')
+            raise ParseError("expected end of input")
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_EOI = _parse_EOI()
 
+
 def _parse_string() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('string', 0)
-    
+    rule_frame = RuleFrame("string", 0)
+
     def inner(state: State) -> Pairs:
         """Parse string."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
         state.atomic_depth.snapshot()
         pairs: list[Pair] = []
-        if state.input.startswith('abc', state.pos):
+        if state.input.startswith("abc", state.pos):
             state.pos += 3
         else:
-            raise ParseError('abc')
+            raise ParseError("abc")
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_string = _parse_string()
 
+
 def _parse_insensitive() -> Callable[[State], Pairs]:
-    RE2 = re.compile('abc', re.I)
-    
-    rule_frame = RuleFrame('insensitive', 0)
-    
+    RE2 = re.compile("abc", re.I)
+
+    rule_frame = RuleFrame("insensitive", 0)
+
     def inner(state: State) -> Pairs:
         """Parse insensitive."""
         pos1 = state.pos
@@ -167,17 +206,29 @@ def _parse_insensitive() -> Callable[[State], Pairs]:
             raise ParseError("expected 'abc'")
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_insensitive = _parse_insensitive()
 
+
 def _parse_range() -> Callable[[State], Pairs]:
-    RE2 = re.compile('[0-9]', re.I)
-    
-    rule_frame = RuleFrame('range', 0)
-    
+    RE2 = re.compile("[0-9]", re.I)
+
+    rule_frame = RuleFrame("range", 0)
+
     def inner(state: State) -> Pairs:
         """Parse range."""
         pos1 = state.pos
@@ -191,15 +242,27 @@ def _parse_range() -> Callable[[State], Pairs]:
             raise ParseError("expected '0'..'9'")
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_range = _parse_range()
 
+
 def _parse_ident() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('ident', 0)
-    
+    rule_frame = RuleFrame("ident", 0)
+
     def inner(state: State) -> Pairs:
         """Parse ident."""
         pos1 = state.pos
@@ -209,15 +272,27 @@ def _parse_ident() -> Callable[[State], Pairs]:
         pairs.extend(parse_string(state))
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_ident = _parse_ident()
 
+
 def _parse_pos_pred() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('pos_pred', 0)
-    
+    rule_frame = RuleFrame("pos_pred", 0)
+
     def inner(state: State) -> Pairs:
         """Parse pos_pred."""
         pos1 = state.pos
@@ -236,15 +311,27 @@ def _parse_pos_pred() -> Callable[[State], Pairs]:
             raise
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_pos_pred = _parse_pos_pred()
 
+
 def _parse_neg_pred() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('neg_pred', 0)
-    
+    rule_frame = RuleFrame("neg_pred", 0)
+
     def inner(state: State) -> Pairs:
         """Parse neg_pred."""
         pos1 = state.pos
@@ -261,18 +348,30 @@ def _parse_neg_pred() -> Callable[[State], Pairs]:
             children2.clear()  # discard lookahead children
         else:
             state.restore()
-            raise ParseError('unexpected Identifier')
+            raise ParseError("unexpected Identifier")
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_neg_pred = _parse_neg_pred()
 
+
 def _parse_double_neg_pred() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('double_neg_pred', 0)
-    
+    rule_frame = RuleFrame("double_neg_pred", 0)
+
     def inner(state: State) -> Pairs:
         """Parse double_neg_pred."""
         pos1 = state.pos
@@ -293,24 +392,36 @@ def _parse_double_neg_pred() -> Callable[[State], Pairs]:
                 children3.clear()  # discard lookahead children
             else:
                 state.restore()
-                raise ParseError('unexpected Identifier')
+                raise ParseError("unexpected Identifier")
         except ParseError:
             state.restore()
             children2.clear()  # discard lookahead children
         else:
             state.restore()
-            raise ParseError('unexpected NegativePredicate')
+            raise ParseError("unexpected NegativePredicate")
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_double_neg_pred = _parse_double_neg_pred()
 
+
 def _parse_sequence() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('sequence', 16)
-    
+    rule_frame = RuleFrame("sequence", 16)
+
     def inner(state: State) -> Pairs:
         """Parse sequence."""
         pos1 = state.pos
@@ -325,15 +436,27 @@ def _parse_sequence() -> Callable[[State], Pairs]:
         pairs.extend(parse_string(state))
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_sequence = _parse_sequence()
 
+
 def _parse_sequence_compound() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('sequence_compound', 8)
-    
+    rule_frame = RuleFrame("sequence_compound", 8)
+
     def inner(state: State) -> Pairs:
         """Parse sequence_compound."""
         pos1 = state.pos
@@ -348,15 +471,27 @@ def _parse_sequence_compound() -> Callable[[State], Pairs]:
         pairs.extend(parse_string(state))
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_sequence_compound = _parse_sequence_compound()
 
+
 def _parse_sequence_atomic() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('sequence_atomic', 4)
-    
+    rule_frame = RuleFrame("sequence_atomic", 4)
+
     def inner(state: State) -> Pairs:
         """Parse sequence_atomic."""
         pos1 = state.pos
@@ -372,15 +507,27 @@ def _parse_sequence_atomic() -> Callable[[State], Pairs]:
         state.rule_stack.pop()
         state.atomic_depth.restore()
         # Atomic rule: 'sequence_atomic'
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, [],)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    [],
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_sequence_atomic = _parse_sequence_atomic()
 
+
 def _parse_sequence_non_atomic() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('sequence_non_atomic', 4)
-    
+    rule_frame = RuleFrame("sequence_non_atomic", 4)
+
     def inner(state: State) -> Pairs:
         """Parse sequence_non_atomic."""
         pos1 = state.pos
@@ -392,15 +539,27 @@ def _parse_sequence_non_atomic() -> Callable[[State], Pairs]:
         state.rule_stack.pop()
         state.atomic_depth.restore()
         # Atomic rule: 'sequence_non_atomic'
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_sequence_non_atomic = _parse_sequence_non_atomic()
 
+
 def _parse_sequence_atomic_compound() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('sequence_atomic_compound', 4)
-    
+    rule_frame = RuleFrame("sequence_atomic_compound", 4)
+
     def inner(state: State) -> Pairs:
         """Parse sequence_atomic_compound."""
         pos1 = state.pos
@@ -412,15 +571,27 @@ def _parse_sequence_atomic_compound() -> Callable[[State], Pairs]:
         state.rule_stack.pop()
         state.atomic_depth.restore()
         # Atomic rule: 'sequence_atomic_compound'
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_sequence_atomic_compound = _parse_sequence_atomic_compound()
 
+
 def _parse_sequence_nested() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('sequence_nested', 0)
-    
+    rule_frame = RuleFrame("sequence_nested", 0)
+
     def inner(state: State) -> Pairs:
         """Parse sequence_nested."""
         pos1 = state.pos
@@ -434,15 +605,27 @@ def _parse_sequence_nested() -> Callable[[State], Pairs]:
         pairs.extend(parse_string(state))
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_sequence_nested = _parse_sequence_nested()
 
+
 def _parse_sequence_compound_nested() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('sequence_compound_nested', 8)
-    
+    rule_frame = RuleFrame("sequence_compound_nested", 8)
+
     def inner(state: State) -> Pairs:
         """Parse sequence_compound_nested."""
         pos1 = state.pos
@@ -453,15 +636,27 @@ def _parse_sequence_compound_nested() -> Callable[[State], Pairs]:
         pairs.extend(parse_sequence_nested(state))
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_sequence_compound_nested = _parse_sequence_compound_nested()
 
+
 def _parse_node_tag() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('node_tag', 0)
-    
+    rule_frame = RuleFrame("node_tag", 0)
+
     def inner(state: State) -> Pairs:
         """Parse node_tag."""
         pos1 = state.pos
@@ -471,15 +666,27 @@ def _parse_node_tag() -> Callable[[State], Pairs]:
         pairs.extend(parse_string(state))
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_node_tag = _parse_node_tag()
 
+
 def _parse_choice() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('choice', 0)
-    
+    rule_frame = RuleFrame("choice", 0)
+
     def inner(state: State) -> Pairs:
         """Parse choice."""
         pos1 = state.pos
@@ -512,15 +719,27 @@ def _parse_choice() -> Callable[[State], Pairs]:
         pairs.extend(children2)
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_choice = _parse_choice()
 
+
 def _parse_choice_prefix() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('choice_prefix', 0)
-    
+    rule_frame = RuleFrame("choice_prefix", 0)
+
     def inner(state: State) -> Pairs:
         """Parse choice_prefix."""
         pos1 = state.pos
@@ -553,15 +772,27 @@ def _parse_choice_prefix() -> Callable[[State], Pairs]:
         pairs.extend(children2)
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_choice_prefix = _parse_choice_prefix()
 
+
 def _parse_optional() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('optional', 0)
-    
+    rule_frame = RuleFrame("optional", 0)
+
     def inner(state: State) -> Pairs:
         """Parse optional."""
         pos1 = state.pos
@@ -579,15 +810,27 @@ def _parse_optional() -> Callable[[State], Pairs]:
             children2.clear()
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_optional = _parse_optional()
 
+
 def _parse_repeat() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('repeat', 0)
-    
+    rule_frame = RuleFrame("repeat", 0)
+
     def inner(state: State) -> Pairs:
         """Parse repeat."""
         pos1 = state.pos
@@ -612,15 +855,27 @@ def _parse_repeat() -> Callable[[State], Pairs]:
                 break
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_repeat = _parse_repeat()
 
+
 def _parse_repeat_atomic() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('repeat_atomic', 4)
-    
+    rule_frame = RuleFrame("repeat_atomic", 4)
+
     def inner(state: State) -> Pairs:
         """Parse repeat_atomic."""
         pos1 = state.pos
@@ -647,15 +902,27 @@ def _parse_repeat_atomic() -> Callable[[State], Pairs]:
         state.rule_stack.pop()
         state.atomic_depth.restore()
         # Atomic rule: 'repeat_atomic'
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, [],)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    [],
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_repeat_atomic = _parse_repeat_atomic()
 
+
 def _parse_repeat_once() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('repeat_once', 0)
-    
+    rule_frame = RuleFrame("repeat_once", 0)
+
     def inner(state: State) -> Pairs:
         """Parse repeat_once."""
         pos1 = state.pos
@@ -681,18 +948,30 @@ def _parse_repeat_once() -> Callable[[State], Pairs]:
                 state.pos = trivia_pos4
                 break
         if count3 < 1:
-            raise ParseError('Expected at least one match')
+            raise ParseError("Expected at least one match")
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_repeat_once = _parse_repeat_once()
 
+
 def _parse_repeat_once_atomic() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('repeat_once_atomic', 4)
-    
+    rule_frame = RuleFrame("repeat_once_atomic", 4)
+
     def inner(state: State) -> Pairs:
         """Parse repeat_once_atomic."""
         pos1 = state.pos
@@ -719,19 +998,31 @@ def _parse_repeat_once_atomic() -> Callable[[State], Pairs]:
                 state.pos = trivia_pos4
                 break
         if count3 < 1:
-            raise ParseError('Expected at least one match')
+            raise ParseError("Expected at least one match")
         state.rule_stack.pop()
         state.atomic_depth.restore()
         # Atomic rule: 'repeat_once_atomic'
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, [],)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    [],
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_repeat_once_atomic = _parse_repeat_once_atomic()
 
+
 def _parse_repeat_min_max() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('repeat_min_max', 0)
-    
+    rule_frame = RuleFrame("repeat_min_max", 0)
+
     def inner(state: State) -> Pairs:
         """Parse repeat_min_max."""
         pos1 = state.pos
@@ -754,19 +1045,31 @@ def _parse_repeat_min_max() -> Callable[[State], Pairs]:
                 state.restore()
                 break
         if count3 < 2:
-            raise ParseError(f'Expected at least 2 matches, got {count3}')
+            raise ParseError(f"Expected at least 2 matches, got {count3}")
         pairs.extend(children2)
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_repeat_min_max = _parse_repeat_min_max()
 
+
 def _parse_repeat_min_max_atomic() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('repeat_min_max_atomic', 4)
-    
+    rule_frame = RuleFrame("repeat_min_max_atomic", 4)
+
     def inner(state: State) -> Pairs:
         """Parse repeat_min_max_atomic."""
         pos1 = state.pos
@@ -790,20 +1093,32 @@ def _parse_repeat_min_max_atomic() -> Callable[[State], Pairs]:
                 state.restore()
                 break
         if count3 < 2:
-            raise ParseError(f'Expected at least 2 matches, got {count3}')
+            raise ParseError(f"Expected at least 2 matches, got {count3}")
         pairs.extend(children2)
         state.rule_stack.pop()
         state.atomic_depth.restore()
         # Atomic rule: 'repeat_min_max_atomic'
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, [],)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    [],
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_repeat_min_max_atomic = _parse_repeat_min_max_atomic()
 
+
 def _parse_repeat_exact() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('repeat_exact', 0)
-    
+    rule_frame = RuleFrame("repeat_exact", 0)
+
     def inner(state: State) -> Pairs:
         """Parse repeat_exact."""
         pos1 = state.pos
@@ -826,19 +1141,31 @@ def _parse_repeat_exact() -> Callable[[State], Pairs]:
                 state.restore()
                 break
         if count3 < 2:
-            raise ParseError(f'Expected 2 matches, got {count3}')
+            raise ParseError(f"Expected 2 matches, got {count3}")
         pairs.extend(children2)
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_repeat_exact = _parse_repeat_exact()
 
+
 def _parse_repeat_min() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('repeat_min', 0)
-    
+    rule_frame = RuleFrame("repeat_min", 0)
+
     def inner(state: State) -> Pairs:
         """Parse repeat_min."""
         pos1 = state.pos
@@ -859,19 +1186,31 @@ def _parse_repeat_min() -> Callable[[State], Pairs]:
                 state.restore()
                 break
         if count3 < 2:
-            raise ParseError(f'Expected at least 2 matches, got {count3}')
+            raise ParseError(f"Expected at least 2 matches, got {count3}")
         pairs.extend(children2)
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_repeat_min = _parse_repeat_min()
 
+
 def _parse_repeat_min_atomic() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('repeat_min_atomic', 4)
-    
+    rule_frame = RuleFrame("repeat_min_atomic", 4)
+
     def inner(state: State) -> Pairs:
         """Parse repeat_min_atomic."""
         pos1 = state.pos
@@ -893,20 +1232,32 @@ def _parse_repeat_min_atomic() -> Callable[[State], Pairs]:
                 state.restore()
                 break
         if count3 < 2:
-            raise ParseError(f'Expected at least 2 matches, got {count3}')
+            raise ParseError(f"Expected at least 2 matches, got {count3}")
         pairs.extend(children2)
         state.rule_stack.pop()
         state.atomic_depth.restore()
         # Atomic rule: 'repeat_min_atomic'
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, [],)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    [],
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_repeat_min_atomic = _parse_repeat_min_atomic()
 
+
 def _parse_repeat_max() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('repeat_max', 0)
-    
+    rule_frame = RuleFrame("repeat_max", 0)
+
     def inner(state: State) -> Pairs:
         """Parse repeat_max."""
         pos1 = state.pos
@@ -931,15 +1282,27 @@ def _parse_repeat_max() -> Callable[[State], Pairs]:
         pairs.extend(children2)
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_repeat_max = _parse_repeat_max()
 
+
 def _parse_repeat_max_atomic() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('repeat_max_atomic', 4)
-    
+    rule_frame = RuleFrame("repeat_max_atomic", 4)
+
     def inner(state: State) -> Pairs:
         """Parse repeat_max_atomic."""
         pos1 = state.pos
@@ -966,15 +1329,27 @@ def _parse_repeat_max_atomic() -> Callable[[State], Pairs]:
         state.rule_stack.pop()
         state.atomic_depth.restore()
         # Atomic rule: 'repeat_max_atomic'
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, [],)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    [],
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_repeat_max_atomic = _parse_repeat_max_atomic()
 
+
 def _parse_soi_at_start() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('soi_at_start', 0)
-    
+    rule_frame = RuleFrame("soi_at_start", 0)
+
     def inner(state: State) -> Pairs:
         """Parse soi_at_start."""
         pos1 = state.pos
@@ -983,23 +1358,35 @@ def _parse_soi_at_start() -> Callable[[State], Pairs]:
         pairs: list[Pair] = []
         # Sequence
         if state.pos != 0:
-            raise ParseError('expected start of input')
+            raise ParseError("expected start of input")
         # Implicit whitespace/comments between sequence elements
         parse_trivia(state, pairs)
         pairs.extend(parse_string(state))
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_soi_at_start = _parse_soi_at_start()
 
+
 def _parse_repeat_mutate_stack() -> Callable[[State], Pairs]:
-    RE5 = re.compile('[a-c]', re.I)
-    
-    rule_frame = RuleFrame('repeat_mutate_stack', 0)
-    
+    RE5 = re.compile("[a-c]", re.I)
+
+    rule_frame = RuleFrame("repeat_mutate_stack", 0)
+
     def inner(state: State) -> Pairs:
         """Parse repeat_mutate_stack."""
         pos1 = state.pos
@@ -1024,10 +1411,10 @@ def _parse_repeat_mutate_stack() -> Callable[[State], Pairs]:
                 state.push(state.input[start4 : state.pos])
                 # Implicit whitespace/comments between sequence elements
                 parse_trivia(state, children2)
-                if state.input.startswith(',', state.pos):
+                if state.input.startswith(",", state.pos):
                     state.pos += 1
                 else:
-                    raise ParseError(',')
+                    raise ParseError(",")
                 state.ok()
                 pairs.extend(children2)
                 children2.clear()
@@ -1041,42 +1428,54 @@ def _parse_repeat_mutate_stack() -> Callable[[State], Pairs]:
         parse_trivia(state, pairs)
         # Pop: POP
         peek6 = state.peek()
-        if state.input.startswith(peek6, state.pos):
+        if peek6 and state.input.startswith(peek6, state.pos):
             state.user_stack.pop()
             state.pos += len(peek6)
         else:
-            raise ParseError('expected {peek6!r}')
+            raise ParseError("expected {peek6!r}")
         # Implicit whitespace/comments between sequence elements
         parse_trivia(state, pairs)
         # Pop: POP
         peek7 = state.peek()
-        if state.input.startswith(peek7, state.pos):
+        if peek7 and state.input.startswith(peek7, state.pos):
             state.user_stack.pop()
             state.pos += len(peek7)
         else:
-            raise ParseError('expected {peek7!r}')
+            raise ParseError("expected {peek7!r}")
         # Implicit whitespace/comments between sequence elements
         parse_trivia(state, pairs)
         # Pop: POP
         peek8 = state.peek()
-        if state.input.startswith(peek8, state.pos):
+        if peek8 and state.input.startswith(peek8, state.pos):
             state.user_stack.pop()
             state.pos += len(peek8)
         else:
-            raise ParseError('expected {peek8!r}')
+            raise ParseError("expected {peek8!r}")
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_repeat_mutate_stack = _parse_repeat_mutate_stack()
 
+
 def _parse_repeat_mutate_stack_pop_all() -> Callable[[State], Pairs]:
-    RE5 = re.compile('[a-c]', re.I)
-    
-    rule_frame = RuleFrame('repeat_mutate_stack_pop_all', 0)
-    
+    RE5 = re.compile("[a-c]", re.I)
+
+    rule_frame = RuleFrame("repeat_mutate_stack_pop_all", 0)
+
     def inner(state: State) -> Pairs:
         """Parse repeat_mutate_stack_pop_all."""
         pos1 = state.pos
@@ -1101,10 +1500,10 @@ def _parse_repeat_mutate_stack_pop_all() -> Callable[[State], Pairs]:
                 state.push(state.input[start4 : state.pos])
                 # Implicit whitespace/comments between sequence elements
                 parse_trivia(state, children2)
-                if state.input.startswith(',', state.pos):
+                if state.input.startswith(",", state.pos):
                     state.pos += 1
                 else:
-                    raise ParseError(',')
+                    raise ParseError(",")
                 state.ok()
                 pairs.extend(children2)
                 children2.clear()
@@ -1119,23 +1518,35 @@ def _parse_repeat_mutate_stack_pop_all() -> Callable[[State], Pairs]:
         # PopAll: POP_ALL
         pos6 = state.pos
         for peek7 in state.peek_slice():
-            if state.startswith(peek7, pos6):
+            if state.input.startswith(peek7, pos6):
                 pos6 += len(peek7)
             else:
-                raise ParseError('expected {peek7!r}')
+                raise ParseError("expected {peek7!r}")
         state.user_stack.clear()
         state.pos = pos6
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_repeat_mutate_stack_pop_all = _parse_repeat_mutate_stack_pop_all()
 
+
 def _parse_will_fail() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('will_fail', 0)
-    
+    rule_frame = RuleFrame("will_fail", 0)
+
     def inner(state: State) -> Pairs:
         """Parse will_fail."""
         pos1 = state.pos
@@ -1146,21 +1557,33 @@ def _parse_will_fail() -> Callable[[State], Pairs]:
         pairs.extend(parse_repeat_mutate_stack_pop_all(state))
         # Implicit whitespace/comments between sequence elements
         parse_trivia(state, pairs)
-        if state.input.startswith('FAIL', state.pos):
+        if state.input.startswith("FAIL", state.pos):
             state.pos += 4
         else:
-            raise ParseError('FAIL')
+            raise ParseError("FAIL")
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_will_fail = _parse_will_fail()
 
+
 def _parse_stack_resume_after_fail() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('stack_resume_after_fail', 0)
-    
+    rule_frame = RuleFrame("stack_resume_after_fail", 0)
+
     def inner(state: State) -> Pairs:
         """Parse stack_resume_after_fail."""
         pos1 = state.pos
@@ -1193,15 +1616,27 @@ def _parse_stack_resume_after_fail() -> Callable[[State], Pairs]:
         pairs.extend(children2)
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_stack_resume_after_fail = _parse_stack_resume_after_fail()
 
+
 def _parse_peek_() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('peek_', 0)
-    
+    rule_frame = RuleFrame("peek_", 0)
+
     def inner(state: State) -> Pairs:
         """Parse peek_."""
         pos1 = state.pos
@@ -1223,29 +1658,41 @@ def _parse_peek_() -> Callable[[State], Pairs]:
         parse_trivia(state, pairs)
         # Peek: PEEK
         peek4 = state.peek()
-        if state.input.startswith(peek4, state.pos):
+        if peek4 and state.input.startswith(peek4, state.pos):
             state.pos += len(peek4)
         else:
-            raise ParseError('expected {peek4!r}')
+            raise ParseError("expected {peek4!r}")
         # Implicit whitespace/comments between sequence elements
         parse_trivia(state, pairs)
         # Peek: PEEK
         peek5 = state.peek()
-        if state.input.startswith(peek5, state.pos):
+        if peek5 and state.input.startswith(peek5, state.pos):
             state.pos += len(peek5)
         else:
-            raise ParseError('expected {peek5!r}')
+            raise ParseError("expected {peek5!r}")
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_peek_ = _parse_peek_()
 
+
 def _parse_peek_all() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('peek_all', 0)
-    
+    rule_frame = RuleFrame("peek_all", 0)
+
     def inner(state: State) -> Pairs:
         """Parse peek_all."""
         pos1 = state.pos
@@ -1275,18 +1722,30 @@ def _parse_peek_all() -> Callable[[State], Pairs]:
                     parse_trivia(state, pairs5)
             else:
                 state.pos = start4
-                raise ParseError(f'expected {_literal!r}')
+                raise ParseError(f"expected {_literal!r}")
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_peek_all = _parse_peek_all()
 
+
 def _parse_peek_slice_23() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('peek_slice_23', 0)
-    
+    rule_frame = RuleFrame("peek_slice_23", 0)
+
     def inner(state: State) -> Pairs:
         """Parse peek_slice_23."""
         pos1 = state.pos
@@ -1326,23 +1785,35 @@ def _parse_peek_slice_23() -> Callable[[State], Pairs]:
         parse_trivia(state, pairs)
         # PeekSlice: PEEK[stat..end]
         pos7 = state.pos
-        for peek8 in state.peek_slice((1, -2)):
-            if state.startswith(peek8, pos7):
+        for peek8 in state.peek_slice(1, -2):
+            if state.input.startswith(peek8, pos7):
                 pos7 += len(peek8)
             else:
-                raise ParseError('expected {peek8!r}')
+                raise ParseError("expected {peek8!r}")
         state.pos = pos7
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_peek_slice_23 = _parse_peek_slice_23()
 
+
 def _parse_pop_() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('pop_', 0)
-    
+    rule_frame = RuleFrame("pop_", 0)
+
     def inner(state: State) -> Pairs:
         """Parse pop_."""
         pos1 = state.pos
@@ -1364,31 +1835,43 @@ def _parse_pop_() -> Callable[[State], Pairs]:
         parse_trivia(state, pairs)
         # Pop: POP
         peek4 = state.peek()
-        if state.input.startswith(peek4, state.pos):
+        if peek4 and state.input.startswith(peek4, state.pos):
             state.user_stack.pop()
             state.pos += len(peek4)
         else:
-            raise ParseError('expected {peek4!r}')
+            raise ParseError("expected {peek4!r}")
         # Implicit whitespace/comments between sequence elements
         parse_trivia(state, pairs)
         # Pop: POP
         peek5 = state.peek()
-        if state.input.startswith(peek5, state.pos):
+        if peek5 and state.input.startswith(peek5, state.pos):
             state.user_stack.pop()
             state.pos += len(peek5)
         else:
-            raise ParseError('expected {peek5!r}')
+            raise ParseError("expected {peek5!r}")
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_pop_ = _parse_pop_()
 
+
 def _parse_pop_all() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('pop_all', 0)
-    
+    rule_frame = RuleFrame("pop_all", 0)
+
     def inner(state: State) -> Pairs:
         """Parse pop_all."""
         pos1 = state.pos
@@ -1411,23 +1894,35 @@ def _parse_pop_all() -> Callable[[State], Pairs]:
         # PopAll: POP_ALL
         pos4 = state.pos
         for peek5 in state.peek_slice():
-            if state.startswith(peek5, pos4):
+            if state.input.startswith(peek5, pos4):
                 pos4 += len(peek5)
             else:
-                raise ParseError('expected {peek5!r}')
+                raise ParseError("expected {peek5!r}")
         state.user_stack.clear()
         state.pos = pos4
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_pop_all = _parse_pop_all()
 
+
 def _parse_pop_fail() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('pop_fail', 0)
-    
+    rule_frame = RuleFrame("pop_fail", 0)
+
     def inner(state: State) -> Pairs:
         """Parse pop_fail."""
         pos1 = state.pos
@@ -1447,17 +1942,17 @@ def _parse_pop_fail() -> Callable[[State], Pairs]:
         try:
             # Pop: POP
             peek4 = state.peek()
-            if state.input.startswith(peek4, state.pos):
+            if peek4 and state.input.startswith(peek4, state.pos):
                 state.user_stack.pop()
                 state.pos += len(peek4)
             else:
-                raise ParseError('expected {peek4!r}')
+                raise ParseError("expected {peek4!r}")
         except ParseError:
             state.restore()
             children3.clear()  # discard lookahead children
         else:
             state.restore()
-            raise ParseError('unexpected Pop')
+            raise ParseError("unexpected Pop")
         # Implicit whitespace/comments between sequence elements
         parse_trivia(state, pairs)
         pairs.extend(parse_range(state))
@@ -1465,22 +1960,34 @@ def _parse_pop_fail() -> Callable[[State], Pairs]:
         parse_trivia(state, pairs)
         # Pop: POP
         peek5 = state.peek()
-        if state.input.startswith(peek5, state.pos):
+        if peek5 and state.input.startswith(peek5, state.pos):
             state.user_stack.pop()
             state.pos += len(peek5)
         else:
-            raise ParseError('expected {peek5!r}')
+            raise ParseError("expected {peek5!r}")
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_pop_fail = _parse_pop_fail()
 
+
 def _parse_checkpoint_restore() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('checkpoint_restore', 8)
-    
+    rule_frame = RuleFrame("checkpoint_restore", 8)
+
     def inner(state: State) -> Pairs:
         """Parse checkpoint_restore."""
         pos1 = state.pos
@@ -1491,10 +1998,10 @@ def _parse_checkpoint_restore() -> Callable[[State], Pairs]:
         # Sequence
         # Push: PUSH(expression)
         start2 = state.pos
-        if state.input.startswith('', state.pos):
+        if state.input.startswith("", state.pos):
             state.pos += 0
         else:
-            raise ParseError('')
+            raise ParseError("")
         state.push(state.input[start2 : state.pos])
         # Implicit whitespace/comments between sequence elements
         parse_trivia(state, pairs)
@@ -1507,26 +2014,26 @@ def _parse_checkpoint_restore() -> Callable[[State], Pairs]:
                 # Sequence
                 # Push: PUSH(expression)
                 start5 = state.pos
-                if state.input.startswith('a', state.pos):
+                if state.input.startswith("a", state.pos):
                     state.pos += 1
                 else:
-                    raise ParseError('a')
+                    raise ParseError("a")
                 state.push(state.input[start5 : state.pos])
                 # Implicit whitespace/comments between sequence elements
                 parse_trivia(state, children3)
-                if state.input.startswith('b', state.pos):
+                if state.input.startswith("b", state.pos):
                     state.pos += 1
                 else:
-                    raise ParseError('b')
+                    raise ParseError("b")
                 # Implicit whitespace/comments between sequence elements
                 parse_trivia(state, children3)
                 # Pop: POP
                 peek6 = state.peek()
-                if state.input.startswith(peek6, state.pos):
+                if peek6 and state.input.startswith(peek6, state.pos):
                     state.user_stack.pop()
                     state.pos += len(peek6)
                 else:
-                    raise ParseError('expected {peek6!r}')
+                    raise ParseError("expected {peek6!r}")
                 matched4 = True
                 state.ok()
             except ParseError:
@@ -1540,13 +2047,13 @@ def _parse_checkpoint_restore() -> Callable[[State], Pairs]:
                 if not state.user_stack.empty():
                     state.user_stack.pop()
                 else:
-                    raise ParseError('drop from empty stack')
+                    raise ParseError("drop from empty stack")
                 # Implicit whitespace/comments between sequence elements
                 parse_trivia(state, children3)
-                if state.input.startswith('b', state.pos):
+                if state.input.startswith("b", state.pos):
                     state.pos += 1
                 else:
-                    raise ParseError('b')
+                    raise ParseError("b")
                 matched4 = True
                 state.ok()
             except ParseError:
@@ -1558,17 +2065,17 @@ def _parse_checkpoint_restore() -> Callable[[State], Pairs]:
                 # Sequence
                 # Pop: POP
                 peek7 = state.peek()
-                if state.input.startswith(peek7, state.pos):
+                if peek7 and state.input.startswith(peek7, state.pos):
                     state.user_stack.pop()
                     state.pos += len(peek7)
                 else:
-                    raise ParseError('expected {peek7!r}')
+                    raise ParseError("expected {peek7!r}")
                 # Implicit whitespace/comments between sequence elements
                 parse_trivia(state, children3)
-                if state.input.startswith('a', state.pos):
+                if state.input.startswith("a", state.pos):
                     state.pos += 1
                 else:
-                    raise ParseError('a')
+                    raise ParseError("a")
                 matched4 = True
                 state.ok()
             except ParseError:
@@ -1582,17 +2089,29 @@ def _parse_checkpoint_restore() -> Callable[[State], Pairs]:
         pairs.extend(parse_EOI(state))
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_checkpoint_restore = _parse_checkpoint_restore()
 
+
 def _parse_ascii_digits() -> Callable[[State], Pairs]:
-    RE5 = re.compile('[0-9]', re.I)
-    
-    rule_frame = RuleFrame('ascii_digits', 0)
-    
+    RE5 = re.compile("[0-9]", re.I)
+
+    rule_frame = RuleFrame("ascii_digits", 0)
+
     def inner(state: State) -> Pairs:
         """Parse ascii_digits."""
         pos1 = state.pos
@@ -1622,20 +2141,32 @@ def _parse_ascii_digits() -> Callable[[State], Pairs]:
                 state.pos = trivia_pos4
                 break
         if count3 < 1:
-            raise ParseError('Expected at least one match')
+            raise ParseError("Expected at least one match")
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_ascii_digits = _parse_ascii_digits()
 
+
 def _parse_ascii_nonzero_digits() -> Callable[[State], Pairs]:
-    RE5 = re.compile('[1-9]', re.I)
-    
-    rule_frame = RuleFrame('ascii_nonzero_digits', 0)
-    
+    RE5 = re.compile("[1-9]", re.I)
+
+    rule_frame = RuleFrame("ascii_nonzero_digits", 0)
+
     def inner(state: State) -> Pairs:
         """Parse ascii_nonzero_digits."""
         pos1 = state.pos
@@ -1665,20 +2196,32 @@ def _parse_ascii_nonzero_digits() -> Callable[[State], Pairs]:
                 state.pos = trivia_pos4
                 break
         if count3 < 1:
-            raise ParseError('Expected at least one match')
+            raise ParseError("Expected at least one match")
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_ascii_nonzero_digits = _parse_ascii_nonzero_digits()
 
+
 def _parse_ascii_bin_digits() -> Callable[[State], Pairs]:
-    RE5 = re.compile('[0-1]', re.I)
-    
-    rule_frame = RuleFrame('ascii_bin_digits', 0)
-    
+    RE5 = re.compile("[0-1]", re.I)
+
+    rule_frame = RuleFrame("ascii_bin_digits", 0)
+
     def inner(state: State) -> Pairs:
         """Parse ascii_bin_digits."""
         pos1 = state.pos
@@ -1708,20 +2251,32 @@ def _parse_ascii_bin_digits() -> Callable[[State], Pairs]:
                 state.pos = trivia_pos4
                 break
         if count3 < 1:
-            raise ParseError('Expected at least one match')
+            raise ParseError("Expected at least one match")
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_ascii_bin_digits = _parse_ascii_bin_digits()
 
+
 def _parse_ascii_oct_digits() -> Callable[[State], Pairs]:
-    RE5 = re.compile('[0-7]', re.I)
-    
-    rule_frame = RuleFrame('ascii_oct_digits', 0)
-    
+    RE5 = re.compile("[0-7]", re.I)
+
+    rule_frame = RuleFrame("ascii_oct_digits", 0)
+
     def inner(state: State) -> Pairs:
         """Parse ascii_oct_digits."""
         pos1 = state.pos
@@ -1751,22 +2306,34 @@ def _parse_ascii_oct_digits() -> Callable[[State], Pairs]:
                 state.pos = trivia_pos4
                 break
         if count3 < 1:
-            raise ParseError('Expected at least one match')
+            raise ParseError("Expected at least one match")
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_ascii_oct_digits = _parse_ascii_oct_digits()
 
+
 def _parse_ascii_hex_digits() -> Callable[[State], Pairs]:
-    RE7 = re.compile('[0-9]', re.I)
-    RE8 = re.compile('[a-f]', re.I)
-    RE9 = re.compile('[A-F]', re.I)
-    
-    rule_frame = RuleFrame('ascii_hex_digits', 0)
-    
+    RE7 = re.compile("[0-9]", re.I)
+    RE8 = re.compile("[a-f]", re.I)
+    RE9 = re.compile("[A-F]", re.I)
+
+    rule_frame = RuleFrame("ascii_hex_digits", 0)
+
     def inner(state: State) -> Pairs:
         """Parse ascii_hex_digits."""
         pos1 = state.pos
@@ -1836,20 +2403,32 @@ def _parse_ascii_hex_digits() -> Callable[[State], Pairs]:
                 state.pos = trivia_pos4
                 break
         if count3 < 1:
-            raise ParseError('Expected at least one match')
+            raise ParseError("Expected at least one match")
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_ascii_hex_digits = _parse_ascii_hex_digits()
 
+
 def _parse_ascii_alpha_lowers() -> Callable[[State], Pairs]:
-    RE5 = re.compile('[a-z]', re.I)
-    
-    rule_frame = RuleFrame('ascii_alpha_lowers', 0)
-    
+    RE5 = re.compile("[a-z]", re.I)
+
+    rule_frame = RuleFrame("ascii_alpha_lowers", 0)
+
     def inner(state: State) -> Pairs:
         """Parse ascii_alpha_lowers."""
         pos1 = state.pos
@@ -1879,20 +2458,32 @@ def _parse_ascii_alpha_lowers() -> Callable[[State], Pairs]:
                 state.pos = trivia_pos4
                 break
         if count3 < 1:
-            raise ParseError('Expected at least one match')
+            raise ParseError("Expected at least one match")
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_ascii_alpha_lowers = _parse_ascii_alpha_lowers()
 
+
 def _parse_ascii_alpha_uppers() -> Callable[[State], Pairs]:
-    RE5 = re.compile('[A-Z]', re.I)
-    
-    rule_frame = RuleFrame('ascii_alpha_uppers', 0)
-    
+    RE5 = re.compile("[A-Z]", re.I)
+
+    rule_frame = RuleFrame("ascii_alpha_uppers", 0)
+
     def inner(state: State) -> Pairs:
         """Parse ascii_alpha_uppers."""
         pos1 = state.pos
@@ -1922,21 +2513,33 @@ def _parse_ascii_alpha_uppers() -> Callable[[State], Pairs]:
                 state.pos = trivia_pos4
                 break
         if count3 < 1:
-            raise ParseError('Expected at least one match')
+            raise ParseError("Expected at least one match")
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_ascii_alpha_uppers = _parse_ascii_alpha_uppers()
 
+
 def _parse_ascii_alphas() -> Callable[[State], Pairs]:
-    RE7 = re.compile('[a-z]', re.I)
-    RE8 = re.compile('[A-Z]', re.I)
-    
-    rule_frame = RuleFrame('ascii_alphas', 0)
-    
+    RE7 = re.compile("[a-z]", re.I)
+    RE8 = re.compile("[A-Z]", re.I)
+
+    rule_frame = RuleFrame("ascii_alphas", 0)
+
     def inner(state: State) -> Pairs:
         """Parse ascii_alphas."""
         pos1 = state.pos
@@ -1993,22 +2596,34 @@ def _parse_ascii_alphas() -> Callable[[State], Pairs]:
                 state.pos = trivia_pos4
                 break
         if count3 < 1:
-            raise ParseError('Expected at least one match')
+            raise ParseError("Expected at least one match")
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_ascii_alphas = _parse_ascii_alphas()
 
+
 def _parse_ascii_alphanumerics() -> Callable[[State], Pairs]:
-    RE7 = re.compile('[0-9]', re.I)
-    RE8 = re.compile('[a-z]', re.I)
-    RE9 = re.compile('[A-Z]', re.I)
-    
-    rule_frame = RuleFrame('ascii_alphanumerics', 0)
-    
+    RE7 = re.compile("[0-9]", re.I)
+    RE8 = re.compile("[a-z]", re.I)
+    RE9 = re.compile("[A-Z]", re.I)
+
+    rule_frame = RuleFrame("ascii_alphanumerics", 0)
+
     def inner(state: State) -> Pairs:
         """Parse ascii_alphanumerics."""
         pos1 = state.pos
@@ -2078,20 +2693,32 @@ def _parse_ascii_alphanumerics() -> Callable[[State], Pairs]:
                 state.pos = trivia_pos4
                 break
         if count3 < 1:
-            raise ParseError('Expected at least one match')
+            raise ParseError("Expected at least one match")
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_ascii_alphanumerics = _parse_ascii_alphanumerics()
 
+
 def _parse_asciis() -> Callable[[State], Pairs]:
-    RE5 = re.compile('[\x00-\x7f]', re.I)
-    
-    rule_frame = RuleFrame('asciis', 0)
-    
+    RE5 = re.compile("[\x00-\x7f]", re.I)
+
+    rule_frame = RuleFrame("asciis", 0)
+
     def inner(state: State) -> Pairs:
         """Parse asciis."""
         pos1 = state.pos
@@ -2121,18 +2748,30 @@ def _parse_asciis() -> Callable[[State], Pairs]:
                 state.pos = trivia_pos4
                 break
         if count3 < 1:
-            raise ParseError('Expected at least one match')
+            raise ParseError("Expected at least one match")
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_asciis = _parse_asciis()
 
+
 def _parse_newline() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('newline', 0)
-    
+    rule_frame = RuleFrame("newline", 0)
+
     def inner(state: State) -> Pairs:
         """Parse newline."""
         pos1 = state.pos
@@ -2152,10 +2791,10 @@ def _parse_newline() -> Callable[[State], Pairs]:
                 if not matched6:
                     state.checkpoint()
                     try:
-                        if state.input.startswith('\n', state.pos):
+                        if state.input.startswith("\n", state.pos):
                             state.pos += 1
                         else:
-                            raise ParseError('\n')
+                            raise ParseError("\n")
                         matched6 = True
                         state.ok()
                     except ParseError:
@@ -2164,10 +2803,10 @@ def _parse_newline() -> Callable[[State], Pairs]:
                 if not matched6:
                     state.checkpoint()
                     try:
-                        if state.input.startswith('\r\n', state.pos):
+                        if state.input.startswith("\r\n", state.pos):
                             state.pos += 2
                         else:
-                            raise ParseError('\r\n')
+                            raise ParseError("\r\n")
                         matched6 = True
                         state.ok()
                     except ParseError:
@@ -2176,10 +2815,10 @@ def _parse_newline() -> Callable[[State], Pairs]:
                 if not matched6:
                     state.checkpoint()
                     try:
-                        if state.input.startswith('\r', state.pos):
+                        if state.input.startswith("\r", state.pos):
                             state.pos += 1
                         else:
-                            raise ParseError('\r')
+                            raise ParseError("\r")
                         matched6 = True
                         state.ok()
                     except ParseError:
@@ -2199,21 +2838,33 @@ def _parse_newline() -> Callable[[State], Pairs]:
                 state.pos = trivia_pos4
                 break
         if count3 < 1:
-            raise ParseError('Expected at least one match')
+            raise ParseError("Expected at least one match")
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_newline = _parse_newline()
 
+
 def _parse_unicode() -> Callable[[State], Pairs]:
-    RE2 = re.compile('\\p{XID_Start}', re.VERSION1)
-    RE5 = re.compile('\\p{XID_Continue}', re.VERSION1)
-    
-    rule_frame = RuleFrame('unicode', 0)
-    
+    RE2 = re.compile("\\p{XID_Start}", re.VERSION1)
+    RE5 = re.compile("\\p{XID_Continue}", re.VERSION1)
+
+    rule_frame = RuleFrame("unicode", 0)
+
     def inner(state: State) -> Pairs:
         """Parse unicode."""
         pos1 = state.pos
@@ -2250,17 +2901,29 @@ def _parse_unicode() -> Callable[[State], Pairs]:
                 break
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_unicode = _parse_unicode()
 
+
 def _parse_han() -> Callable[[State], Pairs]:
-    RE5 = re.compile('\\p{Script=Han}', re.VERSION1)
-    
-    rule_frame = RuleFrame('han', 0)
-    
+    RE5 = re.compile("\\p{Script=Han}", re.VERSION1)
+
+    rule_frame = RuleFrame("han", 0)
+
     def inner(state: State) -> Pairs:
         """Parse han."""
         pos1 = state.pos
@@ -2290,20 +2953,32 @@ def _parse_han() -> Callable[[State], Pairs]:
                 state.pos = trivia_pos4
                 break
         if count3 < 1:
-            raise ParseError('Expected at least one match')
+            raise ParseError("Expected at least one match")
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_han = _parse_han()
 
+
 def _parse_hangul() -> Callable[[State], Pairs]:
-    RE5 = re.compile('\\p{Script=Hangul}', re.VERSION1)
-    
-    rule_frame = RuleFrame('hangul', 0)
-    
+    RE5 = re.compile("\\p{Script=Hangul}", re.VERSION1)
+
+    rule_frame = RuleFrame("hangul", 0)
+
     def inner(state: State) -> Pairs:
         """Parse hangul."""
         pos1 = state.pos
@@ -2333,20 +3008,32 @@ def _parse_hangul() -> Callable[[State], Pairs]:
                 state.pos = trivia_pos4
                 break
         if count3 < 1:
-            raise ParseError('Expected at least one match')
+            raise ParseError("Expected at least one match")
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_hangul = _parse_hangul()
 
+
 def _parse_hiragana() -> Callable[[State], Pairs]:
-    RE5 = re.compile('\\p{Script=Hiragana}', re.VERSION1)
-    
-    rule_frame = RuleFrame('hiragana', 0)
-    
+    RE5 = re.compile("\\p{Script=Hiragana}", re.VERSION1)
+
+    rule_frame = RuleFrame("hiragana", 0)
+
     def inner(state: State) -> Pairs:
         """Parse hiragana."""
         pos1 = state.pos
@@ -2376,20 +3063,32 @@ def _parse_hiragana() -> Callable[[State], Pairs]:
                 state.pos = trivia_pos4
                 break
         if count3 < 1:
-            raise ParseError('Expected at least one match')
+            raise ParseError("Expected at least one match")
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_hiragana = _parse_hiragana()
 
+
 def _parse_arabic() -> Callable[[State], Pairs]:
-    RE5 = re.compile('\\p{Script=Arabic}', re.VERSION1)
-    
-    rule_frame = RuleFrame('arabic', 0)
-    
+    RE5 = re.compile("\\p{Script=Arabic}", re.VERSION1)
+
+    rule_frame = RuleFrame("arabic", 0)
+
     def inner(state: State) -> Pairs:
         """Parse arabic."""
         pos1 = state.pos
@@ -2419,20 +3118,32 @@ def _parse_arabic() -> Callable[[State], Pairs]:
                 state.pos = trivia_pos4
                 break
         if count3 < 1:
-            raise ParseError('Expected at least one match')
+            raise ParseError("Expected at least one match")
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_arabic = _parse_arabic()
 
+
 def _parse_emoji() -> Callable[[State], Pairs]:
-    RE5 = re.compile('\\p{Emoji}', re.VERSION1)
-    
-    rule_frame = RuleFrame('emoji', 0)
-    
+    RE5 = re.compile("\\p{Emoji}", re.VERSION1)
+
+    rule_frame = RuleFrame("emoji", 0)
+
     def inner(state: State) -> Pairs:
         """Parse emoji."""
         pos1 = state.pos
@@ -2462,39 +3173,53 @@ def _parse_emoji() -> Callable[[State], Pairs]:
                 state.pos = trivia_pos4
                 break
         if count3 < 1:
-            raise ParseError('Expected at least one match')
+            raise ParseError("Expected at least one match")
         state.rule_stack.pop()
         state.atomic_depth.restore()
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs,)])
-    
+        return Pairs(
+            [
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    pairs,
+                )
+            ]
+        )
+
     return inner
-    
+
+
 parse_emoji = _parse_emoji()
 
+
 def _parse_WHITESPACE() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('WHITESPACE', 2)
-    
+    rule_frame = RuleFrame("WHITESPACE", 2)
+
     def inner(state: State) -> Pairs:
         """Parse WHITESPACE."""
         state.rule_stack.push(rule_frame)
         state.atomic_depth.snapshot()
         pairs: list[Pair] = []
-        if state.input.startswith(' ', state.pos):
+        if state.input.startswith(" ", state.pos):
             state.pos += 1
         else:
-            raise ParseError(' ')
+            raise ParseError(" ")
         state.rule_stack.pop()
         state.atomic_depth.restore()
         # Silent rule WHITESPACE
         return Pairs(pairs)
-    
+
     return inner
-    
+
+
 parse_WHITESPACE = _parse_WHITESPACE()
 
+
 def _parse_COMMENT() -> Callable[[State], Pairs]:
-    rule_frame = RuleFrame('COMMENT', 2)
-    
+    rule_frame = RuleFrame("COMMENT", 2)
+
     def inner(state: State) -> Pairs:
         """Parse COMMENT."""
         state.rule_stack.push(rule_frame)
@@ -2507,10 +3232,10 @@ def _parse_COMMENT() -> Callable[[State], Pairs]:
         while True:
             state.checkpoint()
             try:
-                if state.input.startswith('$', state.pos):
+                if state.input.startswith("$", state.pos):
                     state.pos += 1
                 else:
-                    raise ParseError('$')
+                    raise ParseError("$")
                 count3 += 1
                 state.ok()
                 pairs.extend(children2)
@@ -2522,15 +3247,17 @@ def _parse_COMMENT() -> Callable[[State], Pairs]:
                 state.pos = trivia_pos4
                 break
         if count3 < 1:
-            raise ParseError('Expected at least one match')
+            raise ParseError("Expected at least one match")
         state.rule_stack.pop()
         state.atomic_depth.restore()
         # Silent rule COMMENT
         return Pairs(pairs)
-    
+
     return inner
-    
+
+
 parse_COMMENT = _parse_COMMENT()
+
 
 def parse_trivia(state: State, pairs: list[Pair]) -> None:
     if state.atomic_depth > 0:
@@ -2544,7 +3271,7 @@ def parse_trivia(state: State, pairs: list[Pair]) -> None:
             matched = True
         except ParseError:
             state.restore()
-        if not state.rule_stack or state.rule_stack[-1].name != 'COMMENT':
+        if not state.rule_stack or state.rule_stack[-1].name != "COMMENT":
             state.checkpoint()
             try:
                 pairs.extend(parse_COMMENT(state))
@@ -2555,72 +3282,81 @@ def parse_trivia(state: State, pairs: list[Pair]) -> None:
         if not matched:
             break
 
+
 _RULE_MAP: dict[str, Callable[[State], Pairs]] = {
-    'SYMBOL': parse_SYMBOL,
-    'EOI': parse_EOI,
-    'string': parse_string,
-    'insensitive': parse_insensitive,
-    'range': parse_range,
-    'ident': parse_ident,
-    'pos_pred': parse_pos_pred,
-    'neg_pred': parse_neg_pred,
-    'double_neg_pred': parse_double_neg_pred,
-    'sequence': parse_sequence,
-    'sequence_compound': parse_sequence_compound,
-    'sequence_atomic': parse_sequence_atomic,
-    'sequence_non_atomic': parse_sequence_non_atomic,
-    'sequence_atomic_compound': parse_sequence_atomic_compound,
-    'sequence_nested': parse_sequence_nested,
-    'sequence_compound_nested': parse_sequence_compound_nested,
-    'node_tag': parse_node_tag,
-    'choice': parse_choice,
-    'choice_prefix': parse_choice_prefix,
-    'optional': parse_optional,
-    'repeat': parse_repeat,
-    'repeat_atomic': parse_repeat_atomic,
-    'repeat_once': parse_repeat_once,
-    'repeat_once_atomic': parse_repeat_once_atomic,
-    'repeat_min_max': parse_repeat_min_max,
-    'repeat_min_max_atomic': parse_repeat_min_max_atomic,
-    'repeat_exact': parse_repeat_exact,
-    'repeat_min': parse_repeat_min,
-    'repeat_min_atomic': parse_repeat_min_atomic,
-    'repeat_max': parse_repeat_max,
-    'repeat_max_atomic': parse_repeat_max_atomic,
-    'soi_at_start': parse_soi_at_start,
-    'repeat_mutate_stack': parse_repeat_mutate_stack,
-    'repeat_mutate_stack_pop_all': parse_repeat_mutate_stack_pop_all,
-    'will_fail': parse_will_fail,
-    'stack_resume_after_fail': parse_stack_resume_after_fail,
-    'peek_': parse_peek_,
-    'peek_all': parse_peek_all,
-    'peek_slice_23': parse_peek_slice_23,
-    'pop_': parse_pop_,
-    'pop_all': parse_pop_all,
-    'pop_fail': parse_pop_fail,
-    'checkpoint_restore': parse_checkpoint_restore,
-    'ascii_digits': parse_ascii_digits,
-    'ascii_nonzero_digits': parse_ascii_nonzero_digits,
-    'ascii_bin_digits': parse_ascii_bin_digits,
-    'ascii_oct_digits': parse_ascii_oct_digits,
-    'ascii_hex_digits': parse_ascii_hex_digits,
-    'ascii_alpha_lowers': parse_ascii_alpha_lowers,
-    'ascii_alpha_uppers': parse_ascii_alpha_uppers,
-    'ascii_alphas': parse_ascii_alphas,
-    'ascii_alphanumerics': parse_ascii_alphanumerics,
-    'asciis': parse_asciis,
-    'newline': parse_newline,
-    'unicode': parse_unicode,
-    'han': parse_han,
-    'hangul': parse_hangul,
-    'hiragana': parse_hiragana,
-    'arabic': parse_arabic,
-    'emoji': parse_emoji,
-    'WHITESPACE': parse_WHITESPACE,
-    'COMMENT': parse_COMMENT,
+    "SYMBOL": parse_SYMBOL,
+    "EOI": parse_EOI,
+    "string": parse_string,
+    "insensitive": parse_insensitive,
+    "range": parse_range,
+    "ident": parse_ident,
+    "pos_pred": parse_pos_pred,
+    "neg_pred": parse_neg_pred,
+    "double_neg_pred": parse_double_neg_pred,
+    "sequence": parse_sequence,
+    "sequence_compound": parse_sequence_compound,
+    "sequence_atomic": parse_sequence_atomic,
+    "sequence_non_atomic": parse_sequence_non_atomic,
+    "sequence_atomic_compound": parse_sequence_atomic_compound,
+    "sequence_nested": parse_sequence_nested,
+    "sequence_compound_nested": parse_sequence_compound_nested,
+    "node_tag": parse_node_tag,
+    "choice": parse_choice,
+    "choice_prefix": parse_choice_prefix,
+    "optional": parse_optional,
+    "repeat": parse_repeat,
+    "repeat_atomic": parse_repeat_atomic,
+    "repeat_once": parse_repeat_once,
+    "repeat_once_atomic": parse_repeat_once_atomic,
+    "repeat_min_max": parse_repeat_min_max,
+    "repeat_min_max_atomic": parse_repeat_min_max_atomic,
+    "repeat_exact": parse_repeat_exact,
+    "repeat_min": parse_repeat_min,
+    "repeat_min_atomic": parse_repeat_min_atomic,
+    "repeat_max": parse_repeat_max,
+    "repeat_max_atomic": parse_repeat_max_atomic,
+    "soi_at_start": parse_soi_at_start,
+    "repeat_mutate_stack": parse_repeat_mutate_stack,
+    "repeat_mutate_stack_pop_all": parse_repeat_mutate_stack_pop_all,
+    "will_fail": parse_will_fail,
+    "stack_resume_after_fail": parse_stack_resume_after_fail,
+    "peek_": parse_peek_,
+    "peek_all": parse_peek_all,
+    "peek_slice_23": parse_peek_slice_23,
+    "pop_": parse_pop_,
+    "pop_all": parse_pop_all,
+    "pop_fail": parse_pop_fail,
+    "checkpoint_restore": parse_checkpoint_restore,
+    "ascii_digits": parse_ascii_digits,
+    "ascii_nonzero_digits": parse_ascii_nonzero_digits,
+    "ascii_bin_digits": parse_ascii_bin_digits,
+    "ascii_oct_digits": parse_ascii_oct_digits,
+    "ascii_hex_digits": parse_ascii_hex_digits,
+    "ascii_alpha_lowers": parse_ascii_alpha_lowers,
+    "ascii_alpha_uppers": parse_ascii_alpha_uppers,
+    "ascii_alphas": parse_ascii_alphas,
+    "ascii_alphanumerics": parse_ascii_alphanumerics,
+    "asciis": parse_asciis,
+    "newline": parse_newline,
+    "unicode": parse_unicode,
+    "han": parse_han,
+    "hangul": parse_hangul,
+    "hiragana": parse_hiragana,
+    "arabic": parse_arabic,
+    "emoji": parse_emoji,
+    "WHITESPACE": parse_WHITESPACE,
+    "COMMENT": parse_COMMENT,
 }
+
 
 def parse(start_rule: str, input_: str, *, start_pos: int = 0) -> Pairs:
     """Parse `input_` starting from `rule`."""
     state = State(input_, start_pos)
-    return _RULE_MAP[start_rule](state)
+    try:
+        return _RULE_MAP[start_rule](state)
+    except ParseError as err:
+        pos = state.pos
+        line = state.input.count("\n", 0, pos) + 1
+        col = pos - state.input.rfind("\n", 0, pos)
+        found = state.input[pos : pos + 10] or "end of input"
+        raise PestParsingError(str(err), [], [], state.pos, "", (line, col)) from err

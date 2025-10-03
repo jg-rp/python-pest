@@ -32,10 +32,10 @@ with open("tmp.py", "w") as fd:
 
 
 # pairs = g_parser.parse("Command", "select * from table")
-from tmp import parse_string
+from tmp import parse_peek_slice_23
 from pest.grammar.codegen.state import State
 
-pairs = parse_string(State("abc"))
+pairs = parse_peek_slice_23(State("0123412"))
 print(json.dumps(pairs.as_list(), indent=2))
 
 # TODO: Attach rule tags in generated code
