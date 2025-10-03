@@ -1517,11 +1517,11 @@ def _parse_repeat_mutate_stack_pop_all() -> Callable[[State], Pairs]:
         parse_trivia(state, pairs)
         # PopAll: POP_ALL
         pos6 = state.pos
-        for peek7 in state.peek_slice():
+        for peek7 in reversed(state.user_stack):
             if state.input.startswith(peek7, pos6):
                 pos6 += len(peek7)
             else:
-                raise ParseError("expected {peek7!r}")
+                raise ParseError(f"expected {peek7!r}")
         state.user_stack.clear()
         state.pos = pos6
         state.rule_stack.pop()
@@ -1893,11 +1893,11 @@ def _parse_pop_all() -> Callable[[State], Pairs]:
         parse_trivia(state, pairs)
         # PopAll: POP_ALL
         pos4 = state.pos
-        for peek5 in state.peek_slice():
+        for peek5 in reversed(state.user_stack):
             if state.input.startswith(peek5, pos4):
                 pos4 += len(peek5)
             else:
-                raise ParseError("expected {peek5!r}")
+                raise ParseError(f"expected {peek5!r}")
         state.user_stack.clear()
         state.pos = pos4
         state.rule_stack.pop()

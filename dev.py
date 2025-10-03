@@ -17,25 +17,25 @@ class GeneratedParser:
         return self._parse(start_rule, input_, start_pos=start_pos)
 
 
-with open("tests/grammars/grammar.pest", encoding="utf-8") as fd:
-    grammar = fd.read()
+# with open("tests/grammars/grammar.pest", encoding="utf-8") as fd:
+#     grammar = fd.read()
 
 
-parser = Parser.from_grammar(grammar, optimizer=None)
+# parser = Parser.from_grammar(grammar, optimizer=None)
 
 # print(parser.tree_view())
 
-with open("tmp.py", "w") as fd:
-    fd.write(parser.generate())
+# with open("tmp.py", "w") as fd:
+#     fd.write(parser.generate())
 
 # g_parser = GeneratedParser(parser.generate())
 
 
 # pairs = g_parser.parse("Command", "select * from table")
-from tmp import parse_peek_slice_23
+from tmp import parse_checkpoint_restore
 from pest.grammar.codegen.state import State
 
-pairs = parse_peek_slice_23(State("0123412"))
+pairs = parse_checkpoint_restore(State("a"))
 print(json.dumps(pairs.as_list(), indent=2))
 
 # TODO: Attach rule tags in generated code

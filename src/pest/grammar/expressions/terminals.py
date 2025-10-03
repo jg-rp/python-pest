@@ -303,14 +303,14 @@ class PopAll(Terminal):
         pos = gen.new_temp("pos")
         gen.writeln(f"{pos} = state.pos")
         peeked = gen.new_temp("peek")
-        gen.writeln(f"for {peeked} in state.peek_slice():")
+        gen.writeln(f"for {peeked} in reversed(state.user_stack):")
         with gen.block():
             gen.writeln(f"if state.input.startswith({peeked}, {pos}):")
             with gen.block():
                 gen.writeln(f"{pos} += len({peeked})")
             gen.writeln("else:")
             with gen.block():
-                gen.writeln(f"raise ParseError('expected {{{peeked}!r}}')")
+                gen.writeln(f"raise ParseError(f'expected {{{peeked}!r}}')")
         gen.writeln("state.user_stack.clear()")
         gen.writeln(f"state.pos = {pos}")
 
