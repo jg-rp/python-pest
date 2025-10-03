@@ -48,9 +48,9 @@ def generate_module(rules: dict[str, Rule]) -> str:
         functions and trivia parsing logic.
     """
     generated_rules = "\n\n".join(
-        generate_rule(rule)
-        for rule in rules.values()
-        if not isinstance(rule, BuiltInRule) or rule.name == "EOI"
+        generate_rule(name, rules)
+        for name, rule in rules.items()
+        if not isinstance(rule, BuiltInRule) or name == "EOI"
     )
     return "\n\n".join(
         [
@@ -64,7 +64,7 @@ def generate_module(rules: dict[str, Rule]) -> str:
     )
 
 
-def generate_rule(rule: Rule) -> str:
+def generate_rule(name: str, rules: dict[str, Rule]) -> str:
     """Generate the full parser function for a single grammar rule.
 
     Returns the source of a top-level assignment:
@@ -76,13 +76,15 @@ def generate_rule(rule: Rule) -> str:
       - the inner parser function implementing the rule body
 
     Args:
-        rule: The Rule object to generate code for.
+        name: The name of the rule to generate.
+        rules: A dictionary mapping rule names to Rule objects.
 
     Returns:
         The generated Python source code for the rule as a string.
     """
+    rule = rules[name]
     # First, generate the inner function body
-    inner_gen = Builder()
+    inner_gen = Builder(rules=rules)
     rule.generate(inner_gen, "")
 
     # Now build the outer closure
@@ -93,8 +95,8 @@ def generate_rule(rule: Rule) -> str:
     with gen.block():
         # Emit rule-scoped constants (regexes, tables, etc.)
         if inner_gen.rule_constants:
-            for name, expr in inner_gen.rule_constants:
-                gen.writeln(f"{name} = {expr}")
+            for const_name, expr in inner_gen.rule_constants:
+                gen.writeln(f"{const_name} = {expr}")
             gen.writeln("")  # spacer after constants
 
         # Each closure has its own RuleFrame
@@ -221,7 +223,7 @@ def generate_parse_entry_point() -> str:
         # TODO: improve doc comment
         gen.writeln('"""Parse `input_` starting from `rule`."""')
         gen.writeln("state = State(input_, start_pos)")
-        # TODO: error handling
+        # TODO: error handling!!
         gen.writeln("return _RULE_MAP[start_rule](state)")
 
     return gen.render()

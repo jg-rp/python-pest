@@ -575,3 +575,6 @@ class SkipUntil(Terminal):
         gen.writeln(f"if {index_var} is not None:")
         with gen.block():
             gen.writeln(f"state.pos = {index_var}")
+        gen.writeln("else:")
+        with gen.block():
+            gen.writeln("state.pos = len(state.input)")

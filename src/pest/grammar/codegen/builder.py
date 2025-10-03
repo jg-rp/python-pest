@@ -3,7 +3,12 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from typing import Iterator
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+    from pest.grammar.rule import Rule
 
 
 class Builder:
@@ -14,13 +19,14 @@ class Builder:
     rendering the final code as a string.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, rules: dict[str, Rule] | None = None) -> None:
         """Initialize a new Builder with empty code and zero indentation."""
         self.lines: list[str] = []
         self.indent = 0
         self.counter = 0
         self.module_constants: list[tuple[str, str]] = []
         self.rule_constants: list[tuple[str, str]] = []
+        self.rules = rules
 
     def writeln(self, line: str = "") -> None:
         """Append a line to the code, respecting the current indentation level.

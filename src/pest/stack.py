@@ -7,10 +7,16 @@ https://github.com/pest-parser/pest/blob/3da954b0034643533e597ae0dffa6e31193af47
 See LICENSE_PEST.txt
 """
 
+from __future__ import annotations
+
 from collections.abc import Sequence
-from typing import Iterator
+from typing import TYPE_CHECKING
 from typing import TypeVar
 from typing import overload
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
 
 T = TypeVar("T")
 
