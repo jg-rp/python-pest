@@ -60,7 +60,7 @@ class Expression(ABC):
         """
 
     @abstractmethod
-    def generate(self, gen: Builder, pairs_var: str) -> None:
+    def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python source code that implements this grammar expression.
 
         This method is the *code generation backend* for the expression tree.
@@ -70,6 +70,8 @@ class Expression(ABC):
 
         Args:
             gen: Code builder that accumulates the generated source.
+            matched_var: Name of the Boolean variable which indicates if the
+                    expression succeeded or failed.
             pairs_var: Name of the list variable to which new `Pair` instances
                     should be appended.
 
@@ -171,7 +173,7 @@ class RegexExpression(Terminal):
             return [Match(None, match.end())]
         return None
 
-    def generate(self, gen: Builder, pairs_var: str) -> None:
+    def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:  # noqa: ARG002
         """Emit Python code for a regex expression."""
         gen.writeln("# ChoiceRegex:")
         re_var = gen.constant("RE", f"re.compile({self.pattern!r}, re.VERSION1)")
@@ -179,6 +181,7 @@ class RegexExpression(Terminal):
         gen.writeln(f"if match := {re_var}.match(state.input, state.pos):")
         with gen.block():
             gen.writeln("state.pos = match.end()")
+            gen.writeln(f"{matched_var} = True")
         gen.writeln("else:")
         with gen.block():
-            gen.writeln(f'raise ParseError("expected {self.pattern!r}")')
+            gen.writeln(f"{matched_var} = False")

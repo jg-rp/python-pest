@@ -84,15 +84,16 @@ def generate_rule(name: str, rules: dict[str, Rule]) -> str:
         The generated Python source code for the rule as a string.
     """
     rule = rules[name]
-    # First, generate the inner function body
-    inner_gen = Builder(rules=rules)
-    rule.generate(inner_gen, "")
+    inner_gen = Builder()
+    pairs_var = "pairs"
+    matched_var = "matched"
+    inner_gen.writeln(f"{matched_var} = False")
+    rule.generate(inner_gen, matched_var, pairs_var)
 
-    # Now build the outer closure
     gen = Builder()
     func_name = f"parse_{rule.name}"
 
-    gen.writeln(f"def _{func_name}() -> Callable[[State], Pairs]:")
+    gen.writeln(f"def _{func_name}() -> Callable[[State, list[Pair]], bool]:")
     with gen.block():
         # Emit rule-scoped constants (regexes, tables, etc.)
         if inner_gen.rule_constants:

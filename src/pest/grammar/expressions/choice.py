@@ -49,34 +49,28 @@ class Choice(Expression):
             state.restore()
         return None
 
-    def generate(self, gen: Builder, pairs_var: str) -> None:
+    def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python code for a choice expression."""
         gen.writeln("# Choice: expression | expression")
         tmp_pairs = gen.new_temp("children")
-        matched = gen.new_temp("matched")
 
         gen.writeln(f"{tmp_pairs}: list[Pair] = []")
-        gen.writeln(f"{matched} = False")
+        gen.writeln(f"{matched_var} = False")
 
         for branch in self.expressions:
-            gen.writeln(f"if not {matched}:")
+            gen.writeln(f"if not {matched_var}:")
             with gen.block():
                 gen.writeln("state.checkpoint()")
-                gen.writeln("try:")
+                branch.generate(gen, matched_var, tmp_pairs)
+
+                gen.writeln(f"if {matched_var}:")
                 with gen.block():
-                    branch.generate(gen, tmp_pairs)
-                    gen.writeln(f"{matched} = True")
                     gen.writeln("state.ok()")
-                gen.writeln("except ParseError:")
+                    gen.writeln(f"{pairs_var}.extend({tmp_pairs})")
+                gen.writeln("else:")
                 with gen.block():
                     gen.writeln("state.restore()")
                     gen.writeln(f"{tmp_pairs}.clear()")
-
-        gen.writeln(f"if not {matched}:")
-        with gen.block():
-            gen.writeln('raise ParseError("no choice matched")')
-
-        gen.writeln(f"{pairs_var}.extend({tmp_pairs})")
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""
@@ -144,7 +138,7 @@ class LazyChoiceRegex(Expression):
             return [Match(None, match.end())]
         return None
 
-    def generate(self, gen: Builder, _pairs_var: str) -> None:
+    def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python code for an optimized regex choice expression."""
         gen.writeln("# ChoiceRegex:")
         pattern = self.build_optimized_pattern()
@@ -153,10 +147,10 @@ class LazyChoiceRegex(Expression):
         gen.writeln(f"if match := {re_var}.match(state.input, state.pos):")
         with gen.block():
             gen.writeln("state.pos = match.end()")
+            gen.writeln(f"{matched_var} = True")
         gen.writeln("else:")
         with gen.block():
-            # TODO: pretty print choices
-            gen.writeln('raise ParseError("expected one of choice")')
+            gen.writeln(f"{matched_var} = False")
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""
@@ -210,7 +204,7 @@ def build_optimized_pattern(choices: list[ChoiceChoice]) -> str:  # noqa: PLR091
             case _:
                 raise ValueError(f"Unrecognized choice: {choice}")
 
-    parts = []
+    parts: list[str] = []
     if multi_sensitive:
         parts.extend(multi_sensitive)
     if insensitive_parts:

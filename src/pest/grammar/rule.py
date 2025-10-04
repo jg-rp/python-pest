@@ -137,28 +137,34 @@ class Rule(Expression):
             )
         ]
 
-    def generate(self, gen: Builder, pairs_var: str) -> None:
+    def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python source code that implements this grammar expression."""
         gen.writeln("def inner(state: State) -> Pairs:")
         with gen.block():
             gen.writeln(f'"""Parse {self.name}."""')
+
             start_pos = gen.new_temp("pos")
             if not self.modifier & SILENT:
                 gen.writeln(f"{start_pos} = state.pos")
+
             # `rule_frame` is defined in the closure by `generate_rule`.
             gen.writeln("state.rule_stack.push(rule_frame)")
 
             pairs_var = "pairs"
             gen.writeln(f"{pairs_var}: list[Pair] = []")
 
-            gen.writeln("with state.atomic_checkpoint():")
-            with gen.block():
-                if self.modifier & (ATOMIC | COMPOUND):
+            if self.modifier & (ATOMIC | COMPOUND):
+                gen.writeln("with state.atomic_checkpoint():")
+                with gen.block():
                     gen.writeln("state.atomic_depth += 1")
-                elif self.modifier & NONATOMIC:
+                    self.expression.generate(gen, matched_var, pairs_var)
+            elif self.modifier & NONATOMIC:
+                gen.writeln("with state.atomic_checkpoint():")
+                with gen.block():
                     gen.writeln("state.atomic_depth.zero()")
-
-                self.expression.generate(gen, pairs_var)
+                    self.expression.generate(gen, matched_var, pairs_var)
+            else:
+                self.expression.generate(gen, matched_var, pairs_var)
 
             gen.writeln("state.rule_stack.pop()")
 
@@ -217,9 +223,9 @@ class BuiltInRule(Rule):
     def __str__(self) -> str:
         return self.name
 
-    def generate(self, gen: Builder, pairs_var: str) -> None:
+    def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python source code that implements this grammar expression."""
         if self.name == "EOI":
-            super().generate(gen, pairs_var)
+            super().generate(gen, matched_var, pairs_var)
         else:
-            self.expression.generate(gen, pairs_var)
+            self.expression.generate(gen, matched_var, pairs_var)

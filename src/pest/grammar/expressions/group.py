@@ -42,14 +42,14 @@ class Group(Expression):
         # A group might have a tag.
         return state.parse(self.expression, start, self.tag)
 
-    def generate(self, gen: Builder, pairs_var: str) -> None:
+    def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python source code that implements this grammar expression."""
         if self.tag:
             gen.writeln(f"with state.tag({self.tag!r}):")
             with gen.block():
-                self.expression.generate(gen, pairs_var)
+                self.expression.generate(gen, matched_var, pairs_var)
         else:
-            self.expression.generate(gen, pairs_var)
+            self.expression.generate(gen, matched_var, pairs_var)
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""

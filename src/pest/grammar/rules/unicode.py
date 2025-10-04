@@ -41,7 +41,7 @@ def _make_registry(
             - for "gc" or "Binary": dict {NAME_IN_PEST: UnicodePropertyValue}
             - for "Script": list of Unicode script names (CamelCase)
     """
-    registry = {}
+    registry: dict[str, UnicodePropertyRule] = {}
 
     if prop_type in {"gc", "Binary"}:
         assert isinstance(mapping_or_list, dict)

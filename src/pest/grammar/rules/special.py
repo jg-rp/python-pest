@@ -41,14 +41,15 @@ class _Any(Expression):
             return [Match(None, start + 1)]
         return None
 
-    def generate(self, gen: Builder, _pairs_var: str) -> None:
+    def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python source code that implements this grammar expression."""
         gen.writeln("if state.pos < len(state.input):")
         with gen.block():
             gen.writeln("state.pos += 1")
+            gen.writeln(f"{matched_var} = True")
         gen.writeln("else:")
         with gen.block():
-            gen.writeln("raise ParseError('unexpected end of input')")
+            gen.writeln(f"{matched_var} = False")
 
     def children(self) -> list[Expression]:
         """Return this expressions children."""
@@ -80,17 +81,20 @@ class _SOI(Expression):
     def __str__(self) -> str:
         return "SOI"
 
-    def parse(self, _state: ParserState, start: int) -> list[Match] | None:
+    def parse(self, state: ParserState, start: int) -> list[Match] | None:
         """Attempt to match this expression against the input at `start`."""
         if start == 0:
             return [Match(None, 0)]
         return None
 
-    def generate(self, gen: Builder, _pairs_var: str) -> None:
+    def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python source code that implements this grammar expression."""
-        gen.writeln("if state.pos != 0:")
+        gen.writeln("if state.pos == 0:")
         with gen.block():
-            gen.writeln("raise ParseError('expected start of input')")
+            gen.writeln(f"{matched_var} = True")
+        gen.writeln("else:")
+        with gen.block():
+            gen.writeln(f"{matched_var} = False")
 
     def children(self) -> list[Expression]:
         """Return this expressions children."""
@@ -128,11 +132,14 @@ class _EOI(Expression):
             return [Match(None, start)]
         return None
 
-    def generate(self, gen: Builder, _pairs_var: str) -> None:
+    def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python source code that implements this grammar expression."""
         gen.writeln("if state.pos != len(state.input):")
         with gen.block():
-            gen.writeln("raise ParseError('expected end of input')")
+            gen.writeln(f"{matched_var} = False")
+        gen.writeln("else:")
+        with gen.block():
+            gen.writeln(f"{matched_var} = True")
 
     def children(self) -> list[Expression]:
         """Return this expressions children."""
