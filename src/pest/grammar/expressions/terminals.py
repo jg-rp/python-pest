@@ -379,7 +379,12 @@ class Identifier(Expression):
 
     def generate(self, gen: Builder, pairs_var: str) -> None:
         """Emit Python code for calling another rule."""
-        gen.writeln(f"{pairs_var}.extend(parse_{self.value}(state))")
+        if self.tag:
+            gen.writeln(f"with state.tag({self.tag!r}):")
+            with gen.block():
+                gen.writeln(f"{pairs_var}.extend(parse_{self.value}(state))")
+        else:
+            gen.writeln(f"{pairs_var}.extend(parse_{self.value}(state))")
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""

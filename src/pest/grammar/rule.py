@@ -157,9 +157,19 @@ class Rule(Expression):
                     gen.writeln("state.atomic_depth += 1")
                 elif self.modifier & NONATOMIC:
                     gen.writeln("state.atomic_depth.zero()")
+
                 self.expression.generate(gen, pairs_var)
 
             gen.writeln("state.rule_stack.pop()")
+
+            # Tag child pairs with the last tag on the stack
+            tag_var = gen.new_temp("tag")
+            gen.writeln("if state.tag_stack:")
+            with gen.block():
+                gen.writeln(f"{tag_var}: str | None = state.tag_stack.pop()")
+            gen.writeln("else:")
+            with gen.block():
+                gen.writeln(f"{tag_var} = None")
 
             children: str = pairs_var
 
@@ -182,7 +192,8 @@ class Rule(Expression):
 
                 pair = (
                     f"Pair("
-                    f"state.input, {start_pos}, state.pos, rule_frame, {children},"
+                    f"state.input, {start_pos}, state.pos, "
+                    f"rule_frame, {children}, {tag_var}"
                     ")"
                 )
                 gen.writeln(f"return Pairs([{pair}])")

@@ -41,6 +41,7 @@ class State:
         self.rule_stack = Stack[RuleFrame]()
         self._pos_history: list[int] = []  # TODO: better
         self.atomic_depth = SnapshottingInt()
+        self.tag_stack: list[str] = []
 
     def checkpoint(self) -> None:
         """Take a snapshot of the current state for potential backtracking.
@@ -122,6 +123,16 @@ class State:
             yield self
         finally:
             self.atomic_depth.restore()
+
+    @contextmanager
+    def tag(self, tag_: str) -> Iterator[State]:
+        """A context manager that removes `tag_` on exit."""
+        self.tag_stack.append(tag_)
+        try:
+            yield self
+        finally:
+            if self.tag_stack:
+                self.tag_stack.pop()
 
 
 class RuleFrame:

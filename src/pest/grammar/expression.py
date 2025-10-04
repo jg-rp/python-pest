@@ -5,13 +5,14 @@ from __future__ import annotations
 from abc import ABC
 from abc import abstractmethod
 from typing import TYPE_CHECKING
-from typing import Callable
 from typing import NamedTuple
 from typing import Self
 
 import regex as re
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from pest.pairs import Pair
     from pest.state import ParserState
 
@@ -76,7 +77,6 @@ class Expression(ABC):
             PestParserError: Generated code may raise this at runtime when the
             expression fails to match.
         """
-        raise NotImplementedError(self.__class__.__name__)
 
     @abstractmethod
     def children(self) -> list[Expression]:
@@ -88,7 +88,7 @@ class Expression(ABC):
 
     def tag_str(self) -> str:
         """Return a string representation of this expressions tag."""
-        return f"{self.tag} = " if self.tag else ""
+        return f"#{self.tag}=" if self.tag else ""
 
     def is_pure(self, rules: dict[str, Rule], seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
@@ -111,7 +111,7 @@ class Expression(ABC):
     def tree_view(self) -> str:
         """Return an ASCII tree view of this expression and its children."""
         # Collect nodes: (prefix, connector, class_name, repr_value)
-        nodes = []
+        nodes: list[tuple[str, str, str, str]] = []
 
         def collect(
             node: Expression, prefix: str = "", *, is_last: bool = True
@@ -130,7 +130,7 @@ class Expression(ABC):
         max_width = max(widths) if widths else 0
 
         # Build aligned lines
-        lines = []
+        lines: list[str] = []
         for (prefix, connector, cls, val), width in zip(nodes, widths, strict=True):
             left = prefix + connector + cls
             padding = " " * (max_width - width + 4)  # +4 for spacing column
@@ -171,7 +171,7 @@ class RegexExpression(Terminal):
             return [Match(None, match.end())]
         return None
 
-    def generate(self, gen: Builder, _pairs_var: str) -> None:
+    def generate(self, gen: Builder, pairs_var: str) -> None:
         """Emit Python code for a regex expression."""
         gen.writeln("# ChoiceRegex:")
         re_var = gen.constant("RE", f"re.compile({self.pattern!r}, re.VERSION1)")
