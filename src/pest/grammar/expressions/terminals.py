@@ -187,10 +187,10 @@ class Peek(Terminal):
         )
         with gen.block():
             gen.writeln(f"state.pos += len({peeked})")
-            gen.writeln(f"{matched_var} = True)")
+            gen.writeln(f"{matched_var} = True")
         gen.writeln("else:")
         with gen.block():
-            gen.writeln(f"{matched_var} = False)")
+            gen.writeln(f"{matched_var} = False")
 
         gen.writeln("# </Peek>")
 
@@ -238,11 +238,11 @@ class PeekAll(Terminal):
 
         gen.writeln("for i, literal in enumerate(reversed(state.user_stack)):")
         with gen.block():
-            gen.writeln("if state.input.startswith(_literal, state.pos):")
+            gen.writeln("if state.input.startswith(literal, state.pos):")
             with gen.block():
-                gen.writeln("state.pos += len(_literal)")
+                gen.writeln("state.pos += len(literal)")
                 gen.writeln(f"{matched_var} = True")
-                gen.writeln("if _i < len(state.user_stack):")
+                gen.writeln("if i < len(state.user_stack):")
                 with gen.block():
                     gen.writeln(f"parse_trivia(state, {tmp_pairs})")
             gen.writeln("else:")
@@ -565,7 +565,7 @@ class Range(Terminal):
         with gen.block():
             gen.writeln(f"{matched_var} = False")
 
-        gen.writeln("# <Range>")
+        gen.writeln("# </Range>")
 
 
 class SkipUntil(Terminal):

@@ -168,15 +168,6 @@ class Rule(Expression):
 
             gen.writeln("state.rule_stack.pop()")
 
-            # Tag child pairs with the last tag on the stack
-            tag_var = gen.new_temp("tag")
-            gen.writeln("if state.tag_stack:")
-            with gen.block():
-                gen.writeln(f"{tag_var}: str | None = state.tag_stack.pop()")
-            gen.writeln("else:")
-            with gen.block():
-                gen.writeln(f"{tag_var} = None")
-
             children: str = inner_pairs
 
             if self.modifier & SILENT:
@@ -184,6 +175,15 @@ class Rule(Expression):
                 gen.writeln(f"{pairs_var}.extend({children})")
                 gen.writeln(f"return {matched_var}")
             else:
+                # Tag child pairs with the last tag on the stack
+                tag_var = gen.new_temp("tag")
+                gen.writeln("if state.tag_stack:")
+                with gen.block():
+                    gen.writeln(f"{tag_var}: str | None = state.tag_stack.pop()")
+                gen.writeln("else:")
+                with gen.block():
+                    gen.writeln(f"{tag_var} = None")
+
                 if self.modifier & ATOMIC:
                     gen.writeln(f"# Atomic rule: {self.name!r}")
                     assert gen.rules is not None
@@ -204,7 +204,9 @@ class Rule(Expression):
                     ")"
                 )
 
-                gen.writeln(f"{pairs_var}.append({pair})")
+                gen.writeln(f"if {matched_var}:")
+                with gen.block():
+                    gen.writeln(f"{pairs_var}.append({pair})")
                 gen.writeln(f"return {matched_var}")
 
     def children(self) -> list[Expression]:

@@ -27,8 +27,13 @@ class Rule(StrEnum):
     """Grammar rules."""
 
     EOI = auto()
-    EXPR = auto()
-    C = auto()
+    ITEM = auto()
+    LISTS = auto()
+    LINES = auto()
+    TOP_FIRST = auto()
+    TOP_CONTINUE = auto()
+    INDENTATION = auto()
+    CHILDREN = auto()
 
 
 def _parse_EOI() -> Callable[[State, list[Pair]], bool]:
@@ -48,7 +53,10 @@ def _parse_EOI() -> Callable[[State, list[Pair]], bool]:
             tag3: str | None = state.tag_stack.pop()
         else:
             tag3 = None
-        pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag3))
+        if matched:
+            pairs.append(
+                Pair(state.input, pos1, state.pos, rule_frame, children2, tag3)
+            )
         return matched
 
     return inner
@@ -57,100 +65,552 @@ def _parse_EOI() -> Callable[[State, list[Pair]], bool]:
 parse_EOI = _parse_EOI()
 
 
-def _parse_expr() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("expr", 0)
+def _parse_item() -> Callable[[State, list[Pair]], bool]:
+    rule_frame = RuleFrame("item", 0)
 
     def inner(state: State, pairs: list[Pair]) -> bool:
-        """Parse expr."""
+        """Parse item."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
-        # <Choice>
+        # <Repeat>
+        trivia_pos4 = state.pos
         children3: list[Pair] = []
-        matched = False
-        if not matched:
+        while True:
             state.checkpoint()
-            # <String>
-            if state.input.startswith("a", state.pos):
-                state.pos += 1
+            # <Group>
+            # <Sequence>
+            all_ok6 = True
+            if all_ok6:
+                matched5 = False
+                # <NegativePredicate>
+                children7: list[Pair] = []
+                state.checkpoint()
+                # <String>
+                if state.input.startswith("\n", state.pos):
+                    state.pos += 1
+                    matched5 = True
+                else:
+                    matched5 = False
+                # </String>
+                if not matched5:
+                    state.restore()
+                    children7.clear()  # discard lookahead children
+                    matched5 = True
+                else:
+                    state.restore()
+                    matched5 = False
+                # </NegativePredicate>
+                if not matched5:
+                    all_ok6 = False
+                if all_ok6:
+                    parse_trivia(state, children3)
+            if all_ok6:
+                matched5 = False
+                if state.pos < len(state.input):
+                    state.pos += 1
+                    matched5 = True
+                else:
+                    matched5 = False
+                if not matched5:
+                    all_ok6 = False
+            matched = all_ok6
+            # </Sequence>
+            # </Group>
+            if matched:
+                state.ok()
+                children2.extend(children3)
+                children3.clear()
+                trivia_pos4 = state.pos
+                parse_trivia(state, children3)
+            else:
+                state.restore()
+                state.pos = trivia_pos4
                 matched = True
-            else:
-                matched = False
-            # </String>
-            if matched:
-                state.ok()
-                children2.extend(children3)
-            else:
-                state.restore()
-                children3.clear()
-        if not matched:
-            state.checkpoint()
-            # <String>
-            if state.input.startswith("b", state.pos):
-                state.pos += 1
-                matched = True
-            else:
-                matched = False
-            # </String>
-            if matched:
-                state.ok()
-                children2.extend(children3)
-            else:
-                state.restore()
-                children3.clear()
-        if not matched:
-            state.checkpoint()
-            # <Identifier>
-            matched = parse_c(state, children3)
-            # </Identifier>
-            if matched:
-                state.ok()
-                children2.extend(children3)
-            else:
-                state.restore()
-                children3.clear()
-        # </Choice>
+                break
+        # </Repeat>
         state.rule_stack.pop()
         if state.tag_stack:
-            tag4: str | None = state.tag_stack.pop()
+            tag8: str | None = state.tag_stack.pop()
         else:
-            tag4 = None
-        pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag4))
+            tag8 = None
+        if matched:
+            pairs.append(
+                Pair(state.input, pos1, state.pos, rule_frame, children2, tag8)
+            )
         return matched
 
     return inner
 
 
-parse_expr = _parse_expr()
+parse_item = _parse_item()
 
 
-def _parse_c() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("c", 2)
+def _parse_lists() -> Callable[[State, list[Pair]], bool]:
+    rule_frame = RuleFrame("lists", 2)
 
     def inner(state: State, pairs: list[Pair]) -> bool:
-        """Parse c."""
+        """Parse lists."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
-        # <String>
-        if state.input.startswith("c", state.pos):
-            state.pos += 1
-            matched = True
-        else:
-            matched = False
-        # </String>
+        # <Sequence>
+        all_ok4 = True
+        if all_ok4:
+            matched3 = False
+            # <Identifier>
+            matched3 = parse_lines(state, children2)
+            # </Identifier>
+            if not matched3:
+                all_ok4 = False
+            if all_ok4:
+                parse_trivia(state, children2)
+        if all_ok4:
+            matched3 = False
+            # <Identifier>
+            matched3 = parse_EOI(state, children2)
+            # </Identifier>
+            if not matched3:
+                all_ok4 = False
+        matched = all_ok4
+        # </Sequence>
         state.rule_stack.pop()
-        if state.tag_stack:
-            tag3: str | None = state.tag_stack.pop()
-        else:
-            tag3 = None
-        # Silent rule 'c'
+        # Silent rule 'lists'
         pairs.extend(children2)
         return matched
 
     return inner
 
 
-parse_c = _parse_c()
+parse_lists = _parse_lists()
+
+
+def _parse_lines() -> Callable[[State, list[Pair]], bool]:
+    rule_frame = RuleFrame("lines", 2)
+
+    def inner(state: State, pairs: list[Pair]) -> bool:
+        """Parse lines."""
+        state.rule_stack.push(rule_frame)
+        children2: list[Pair] = []
+        # <Sequence>
+        all_ok4 = True
+        if all_ok4:
+            matched3 = False
+            # <Identifier>
+            matched3 = parse_top_first(state, children2)
+            # </Identifier>
+            if not matched3:
+                all_ok4 = False
+            if all_ok4:
+                parse_trivia(state, children2)
+        if all_ok4:
+            matched3 = False
+            # <Repeat>
+            trivia_pos6 = state.pos
+            children5: list[Pair] = []
+            while True:
+                state.checkpoint()
+                # <Group>
+                # <Sequence>
+                all_ok8 = True
+                if all_ok8:
+                    matched7 = False
+                    # <String>
+                    if state.input.startswith("\n", state.pos):
+                        state.pos += 1
+                        matched7 = True
+                    else:
+                        matched7 = False
+                    # </String>
+                    if not matched7:
+                        all_ok8 = False
+                    if all_ok8:
+                        parse_trivia(state, children5)
+                if all_ok8:
+                    matched7 = False
+                    # <Identifier>
+                    matched7 = parse_top_continue(state, children5)
+                    # </Identifier>
+                    if not matched7:
+                        all_ok8 = False
+                matched3 = all_ok8
+                # </Sequence>
+                # </Group>
+                if matched3:
+                    state.ok()
+                    children2.extend(children5)
+                    children5.clear()
+                    trivia_pos6 = state.pos
+                    parse_trivia(state, children5)
+                else:
+                    state.restore()
+                    state.pos = trivia_pos6
+                    matched3 = True
+                    break
+            # </Repeat>
+            if not matched3:
+                all_ok4 = False
+        matched = all_ok4
+        # </Sequence>
+        state.rule_stack.pop()
+        # Silent rule 'lines'
+        pairs.extend(children2)
+        return matched
+
+    return inner
+
+
+parse_lines = _parse_lines()
+
+
+def _parse_top_first() -> Callable[[State, list[Pair]], bool]:
+    rule_frame = RuleFrame("top_first", 2)
+
+    def inner(state: State, pairs: list[Pair]) -> bool:
+        """Parse top_first."""
+        state.rule_stack.push(rule_frame)
+        children2: list[Pair] = []
+        # <Sequence>
+        all_ok4 = True
+        if all_ok4:
+            matched3 = False
+            # <String>
+            if state.input.startswith("- ", state.pos):
+                state.pos += 2
+                matched3 = True
+            else:
+                matched3 = False
+            # </String>
+            if not matched3:
+                all_ok4 = False
+            if all_ok4:
+                parse_trivia(state, children2)
+        if all_ok4:
+            matched3 = False
+            # <Identifier>
+            matched3 = parse_item(state, children2)
+            # </Identifier>
+            if not matched3:
+                all_ok4 = False
+            if all_ok4:
+                parse_trivia(state, children2)
+        if all_ok4:
+            matched3 = False
+            # <Optional>
+            children5: list[Pair] = []
+            state.checkpoint()
+            # <Group>
+            # <Sequence>
+            all_ok7 = True
+            if all_ok7:
+                matched6 = False
+                # <String>
+                if state.input.startswith("\n", state.pos):
+                    state.pos += 1
+                    matched6 = True
+                else:
+                    matched6 = False
+                # </String>
+                if not matched6:
+                    all_ok7 = False
+                if all_ok7:
+                    parse_trivia(state, children5)
+            if all_ok7:
+                matched6 = False
+                # <Identifier>
+                matched6 = parse_children(state, children5)
+                # </Identifier>
+                if not matched6:
+                    all_ok7 = False
+            matched3 = all_ok7
+            # </Sequence>
+            # </Group>
+            if matched3:
+                state.ok()
+                children2.extend(children5)
+            else:
+                state.restore()
+                children5.clear()
+            matched3 = True
+            # </Optional>
+            if not matched3:
+                all_ok4 = False
+        matched = all_ok4
+        # </Sequence>
+        state.rule_stack.pop()
+        # Silent rule 'top_first'
+        pairs.extend(children2)
+        return matched
+
+    return inner
+
+
+parse_top_first = _parse_top_first()
+
+
+def _parse_top_continue() -> Callable[[State, list[Pair]], bool]:
+    rule_frame = RuleFrame("top_continue", 2)
+
+    def inner(state: State, pairs: list[Pair]) -> bool:
+        """Parse top_continue."""
+        state.rule_stack.push(rule_frame)
+        children2: list[Pair] = []
+        # <Sequence>
+        all_ok4 = True
+        if all_ok4:
+            matched3 = False
+            # <PeekAll>
+            start5 = state.pos
+            pairs6: list[Pair] = []
+            for i, literal in enumerate(reversed(state.user_stack)):
+                if state.input.startswith(literal, state.pos):
+                    state.pos += len(literal)
+                    matched3 = True
+                    if i < len(state.user_stack):
+                        parse_trivia(state, pairs6)
+                else:
+                    state.pos = start5
+                    matched3 = False
+                    break
+            # </PeekAll>
+            if not matched3:
+                all_ok4 = False
+            if all_ok4:
+                parse_trivia(state, children2)
+        if all_ok4:
+            matched3 = False
+            # <String>
+            if state.input.startswith("- ", state.pos):
+                state.pos += 2
+                matched3 = True
+            else:
+                matched3 = False
+            # </String>
+            if not matched3:
+                all_ok4 = False
+            if all_ok4:
+                parse_trivia(state, children2)
+        if all_ok4:
+            matched3 = False
+            # <Identifier>
+            matched3 = parse_item(state, children2)
+            # </Identifier>
+            if not matched3:
+                all_ok4 = False
+            if all_ok4:
+                parse_trivia(state, children2)
+        if all_ok4:
+            matched3 = False
+            # <Optional>
+            children7: list[Pair] = []
+            state.checkpoint()
+            # <Group>
+            # <Sequence>
+            all_ok9 = True
+            if all_ok9:
+                matched8 = False
+                # <String>
+                if state.input.startswith("\n", state.pos):
+                    state.pos += 1
+                    matched8 = True
+                else:
+                    matched8 = False
+                # </String>
+                if not matched8:
+                    all_ok9 = False
+                if all_ok9:
+                    parse_trivia(state, children7)
+            if all_ok9:
+                matched8 = False
+                # <Identifier>
+                matched8 = parse_children(state, children7)
+                # </Identifier>
+                if not matched8:
+                    all_ok9 = False
+            matched3 = all_ok9
+            # </Sequence>
+            # </Group>
+            if matched3:
+                state.ok()
+                children2.extend(children7)
+            else:
+                state.restore()
+                children7.clear()
+            matched3 = True
+            # </Optional>
+            if not matched3:
+                all_ok4 = False
+        matched = all_ok4
+        # </Sequence>
+        state.rule_stack.pop()
+        # Silent rule 'top_continue'
+        pairs.extend(children2)
+        return matched
+
+    return inner
+
+
+parse_top_continue = _parse_top_continue()
+
+
+def _parse_indentation() -> Callable[[State, list[Pair]], bool]:
+    rule_frame = RuleFrame("indentation", 2)
+
+    def inner(state: State, pairs: list[Pair]) -> bool:
+        """Parse indentation."""
+        state.rule_stack.push(rule_frame)
+        children2: list[Pair] = []
+        # <RepeatOnce>
+        trivia_pos6 = state.pos
+        children3: list[Pair] = []
+        item_children4: list[Pair] = []
+        count5 = 0
+        while True:
+            state.checkpoint()
+            # <Group>
+            # <Choice>
+            children7: list[Pair] = []
+            matched = False
+            if not matched:
+                state.checkpoint()
+                # <String>
+                if state.input.startswith(" ", state.pos):
+                    state.pos += 1
+                    matched = True
+                else:
+                    matched = False
+                # </String>
+                if matched:
+                    state.ok()
+                    item_children4.extend(children7)
+                else:
+                    state.restore()
+                    children7.clear()
+            if not matched:
+                state.checkpoint()
+                # <String>
+                if state.input.startswith("\t", state.pos):
+                    state.pos += 1
+                    matched = True
+                else:
+                    matched = False
+                # </String>
+                if matched:
+                    state.ok()
+                    item_children4.extend(children7)
+                else:
+                    state.restore()
+                    children7.clear()
+            # </Choice>
+            # </Group>
+            if matched:
+                count5 += 1
+                state.ok()
+                children3.extend(item_children4)
+                item_children4.clear()
+                trivia_pos6 = state.pos
+                parse_trivia(state, item_children4)
+            else:
+                state.restore()
+                state.pos = trivia_pos6
+                break
+        if count5 < 1:
+            matched = False
+        else:
+            children2.extend(children3)
+            matched = True
+        # </RepeatOnce>
+        state.rule_stack.pop()
+        # Silent rule 'indentation'
+        pairs.extend(children2)
+        return matched
+
+    return inner
+
+
+parse_indentation = _parse_indentation()
+
+
+def _parse_children() -> Callable[[State, list[Pair]], bool]:
+    rule_frame = RuleFrame("children", 0)
+
+    def inner(state: State, pairs: list[Pair]) -> bool:
+        """Parse children."""
+        pos1 = state.pos
+        state.rule_stack.push(rule_frame)
+        children2: list[Pair] = []
+        # <Sequence>
+        all_ok4 = True
+        if all_ok4:
+            matched3 = False
+            # <PeekAll>
+            start5 = state.pos
+            pairs6: list[Pair] = []
+            for i, literal in enumerate(reversed(state.user_stack)):
+                if state.input.startswith(literal, state.pos):
+                    state.pos += len(literal)
+                    matched3 = True
+                    if i < len(state.user_stack):
+                        parse_trivia(state, pairs6)
+                else:
+                    state.pos = start5
+                    matched3 = False
+                    break
+            # </PeekAll>
+            if not matched3:
+                all_ok4 = False
+            if all_ok4:
+                parse_trivia(state, children2)
+        if all_ok4:
+            matched3 = False
+            # <Push>
+            start7 = state.pos
+            # <Identifier>
+            matched3 = parse_indentation(state, children2)
+            # </Identifier>
+            if matched3:
+                state.push(state.input[start7 : state.pos])
+            # </Push>
+            if not matched3:
+                all_ok4 = False
+            if all_ok4:
+                parse_trivia(state, children2)
+        if all_ok4:
+            matched3 = False
+            # <Identifier>
+            matched3 = parse_lines(state, children2)
+            # </Identifier>
+            if not matched3:
+                all_ok4 = False
+            if all_ok4:
+                parse_trivia(state, children2)
+        if all_ok4:
+            matched3 = False
+            # <Drop>
+            if not state.user_stack.empty():
+                state.user_stack.pop()
+                matched3 = True
+            else:
+                matched3 = False
+            # <Drop>
+            if not matched3:
+                all_ok4 = False
+        matched = all_ok4
+        # </Sequence>
+        state.rule_stack.pop()
+        if state.tag_stack:
+            tag8: str | None = state.tag_stack.pop()
+        else:
+            tag8 = None
+        if matched:
+            pairs.append(
+                Pair(state.input, pos1, state.pos, rule_frame, children2, tag8)
+            )
+        return matched
+
+    return inner
+
+
+parse_children = _parse_children()
 
 
 def parse_trivia(state: State, pairs: list[Pair]) -> bool:
@@ -159,8 +619,13 @@ def parse_trivia(state: State, pairs: list[Pair]) -> bool:
 
 _RULE_MAP: dict[str, Callable[[State, list[Pair]], bool]] = {
     "EOI": parse_EOI,
-    "expr": parse_expr,
-    "c": parse_c,
+    "item": parse_item,
+    "lists": parse_lists,
+    "lines": parse_lines,
+    "top_first": parse_top_first,
+    "top_continue": parse_top_continue,
+    "indentation": parse_indentation,
+    "children": parse_children,
 }
 
 
@@ -174,5 +639,4 @@ def parse(start_rule: str, input_: str, *, start_pos: int = 0) -> Pairs:
     pos = state.pos
     line = state.input.count("\n", 0, pos) + 1
     col = pos - state.input.rfind("\n", 0, pos)
-    found = state.input[pos : pos + 10] or "end of input"
     raise PestParsingError("did not match", [], [], state.pos, "", (line, col))

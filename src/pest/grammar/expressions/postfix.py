@@ -63,6 +63,7 @@ class Optional(Expression):
             gen.writeln("state.restore()")
             gen.writeln(f"{tmp_pairs}.clear()")
 
+        gen.writeln(f"{matched_var} = True")
         gen.writeln("# </Optional>")
 
     def children(self) -> list[Expression]:
@@ -220,10 +221,12 @@ class RepeatOnce(Expression):
         tmp_pairs = gen.new_temp("item_children")
         count_var = gen.new_temp("count")
         trivia_pos = gen.new_temp("trivia_pos")
-        gen.writeln(f"{trivia_pos} = state.pos")
-        gen.writeln(f"{tmp_pairs}: list[Pair] = []")
 
+        gen.writeln(f"{trivia_pos} = state.pos")
+        gen.writeln(f"{acc_pairs}: list[Pair] = []")
+        gen.writeln(f"{tmp_pairs}: list[Pair] = []")
         gen.writeln(f"{count_var} = 0")
+
         gen.writeln("while True:")
         with gen.block():
             gen.writeln("state.checkpoint()")
@@ -450,9 +453,12 @@ class RepeatMin(Expression):
         with gen.block():
             gen.writeln(f"state.pos = {start_pos}")
             gen.writeln(f"{matched_var} = False")
+        gen.writeln("else:")
+        with gen.block():
+            gen.writeln(f"{matched_var} = True")
+            # Append successful children to the parent pair list
+            gen.writeln(f"{pairs_var}.extend({tmp_pairs})")
 
-        # Append successful children to the parent pair list
-        gen.writeln(f"{pairs_var}.extend({tmp_pairs})")
         gen.writeln("# </RepeatMin>")
 
     def children(self) -> list[Expression]:
@@ -506,6 +512,7 @@ class RepeatMax(Expression):
             state.ok()
             return matches
 
+        # TODO: Always succeed?
         state.restore()
         return None
 
@@ -537,6 +544,7 @@ class RepeatMax(Expression):
                 gen.writeln("state.restore()")
                 gen.writeln("break")
 
+        gen.writeln(f"{matched_var} = True")
         # Append successful children to the parent pair list
         gen.writeln(f"{pairs_var}.extend({tmp_pairs})")
         gen.writeln("# </RepeatMax>")
@@ -631,9 +639,12 @@ class RepeatMinMax(Expression):
         with gen.block():
             gen.writeln(f"state.pos = {start_pos}")
             gen.writeln(f"{matched_var} = False")
+        gen.writeln("else:")
+        with gen.block():
+            gen.writeln(f"{matched_var} = True")
+            # Append successful children to the parent pair list
+            gen.writeln(f"{pairs_var}.extend({tmp_pairs})")
 
-        # Append successful children to the parent pair list
-        gen.writeln(f"{pairs_var}.extend({tmp_pairs})")
         gen.writeln("# </RepeatMinMax>")
 
     def children(self) -> list[Expression]:

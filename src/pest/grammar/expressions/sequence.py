@@ -63,34 +63,34 @@ class Sequence(Expression):
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python code for a sequence expression (A ~ B ~ ...).
 
-        The sequence succeeds if *all* child expressions match in order.
-        This node does not manage backtracking or state restoration directly;
-        that is the responsibility of its enclosing rule, choice, or repetition.
-
-        Implicit trivia (e.g., WHITESPACE/COMMENT) is parsed between expressions.
+        Each sub-expression is attempted in order. If any one fails, the entire
+        sequence fails immediately. Implicit trivia is parsed between items.
         """
         gen.writeln("# <Sequence>")
 
         inner_matched = gen.new_temp("matched")
-        sequence_flags = gen.new_temp("seq_flags")
+        all_ok = gen.new_temp("all_ok")
+        gen.writeln(f"{all_ok} = True")
 
-        gen.writeln(f"{inner_matched} = False")
-        gen.writeln(f"{sequence_flags}: list[bool] = []")
-
+        # Enumerate sub-expressions in order
         for i, child in enumerate(self.expressions):
-            # Generate code for the child expression
-            child.generate(gen, inner_matched, pairs_var)
+            # Only continue if all previous succeeded
+            gen.writeln(f"if {all_ok}:")
+            with gen.block():
+                gen.writeln(f"{inner_matched} = False")
+                child.generate(gen, inner_matched, pairs_var)
+                gen.writeln(f"if not {inner_matched}:")
+                with gen.block():
+                    gen.writeln(f"{all_ok} = False")
 
-            # Record whether this child matched
-            gen.writeln(f"{sequence_flags}.append({inner_matched})")
+                # Insert trivia except after last expression
+                if i < len(self.expressions) - 1:
+                    gen.writeln(f"if {all_ok}:")
+                    with gen.block():
+                        gen.writeln(f"parse_trivia(state, {pairs_var})")
 
-            # Insert implicit whitespace/comments, except after the last child
-            if i < len(self.expressions) - 1:
-                gen.writeln(f"parse_trivia(state, {pairs_var})")
-
-        # The entire sequence succeeds only if all flags are True
-        gen.writeln(f"{matched_var} = all({sequence_flags})")
-
+        # Sequence succeeds only if all parts matched
+        gen.writeln(f"{matched_var} = {all_ok}")
         gen.writeln("# </Sequence>")
 
     def children(self) -> list[Expression]:

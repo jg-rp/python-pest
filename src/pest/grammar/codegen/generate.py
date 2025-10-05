@@ -83,7 +83,7 @@ def generate_rule(name: str, rules: dict[str, Rule]) -> str:
         The generated Python source code for the rule as a string.
     """
     rule = rules[name]
-    inner_gen = Builder()
+    inner_gen = Builder(rules)
     pairs_var = "pairs"
     rule.generate(inner_gen, "matched", pairs_var)
 
@@ -161,7 +161,8 @@ def generate_parse_trivia(rules: dict[str, Rule]) -> str:
                 gen.writeln("if matched:")
                 with gen.block():
                     gen.writeln("state.ok()")
-                gen.writeln("else")
+                    gen.writeln("continue")
+                gen.writeln("else:")
                 with gen.block():
                     gen.writeln("state.restore()")
 
@@ -176,7 +177,7 @@ def generate_parse_trivia(rules: dict[str, Rule]) -> str:
                     gen.writeln("if matched:")
                     with gen.block():
                         gen.writeln("state.ok()")
-                    gen.writeln("else")
+                    gen.writeln("else:")
                     with gen.block():
                         gen.writeln("state.restore()")
 
@@ -184,7 +185,7 @@ def generate_parse_trivia(rules: dict[str, Rule]) -> str:
             with gen.block():
                 gen.writeln("break")
 
-            gen.writeln("return True")
+        gen.writeln("return True")
 
     return gen.render()
 
@@ -236,7 +237,7 @@ def generate_parse_entry_point() -> str:
         gen.writeln("pos = state.pos")
         gen.writeln('line = state.input.count("\\n", 0, pos) + 1')
         gen.writeln('col = pos - state.input.rfind("\\n", 0, pos)')
-        gen.writeln('found = state.input[pos : pos + 10] or "end of input"')
+        # gen.writeln('found = state.input[pos : pos + 10] or "end of input"')
         gen.writeln(
             "raise PestParsingError("
             "'did not match', [], [], state.pos, '', (line, col))"
