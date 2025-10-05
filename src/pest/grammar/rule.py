@@ -139,7 +139,7 @@ class Rule(Expression):
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python source code that implements this grammar expression."""
-        gen.writeln("def inner(state: State) -> Pairs:")
+        gen.writeln("def inner(state: State, pairs: list[Pair]) -> bool:")
         with gen.block():
             gen.writeln(f'"""Parse {self.name}."""')
 
@@ -150,21 +150,21 @@ class Rule(Expression):
             # `rule_frame` is defined in the closure by `generate_rule`.
             gen.writeln("state.rule_stack.push(rule_frame)")
 
-            pairs_var = "pairs"
-            gen.writeln(f"{pairs_var}: list[Pair] = []")
+            inner_pairs = gen.new_temp("children")
+            gen.writeln(f"{inner_pairs}: list[Pair] = []")
 
             if self.modifier & (ATOMIC | COMPOUND):
                 gen.writeln("with state.atomic_checkpoint():")
                 with gen.block():
                     gen.writeln("state.atomic_depth += 1")
-                    self.expression.generate(gen, matched_var, pairs_var)
+                    self.expression.generate(gen, matched_var, inner_pairs)
             elif self.modifier & NONATOMIC:
                 gen.writeln("with state.atomic_checkpoint():")
                 with gen.block():
                     gen.writeln("state.atomic_depth.zero()")
-                    self.expression.generate(gen, matched_var, pairs_var)
+                    self.expression.generate(gen, matched_var, inner_pairs)
             else:
-                self.expression.generate(gen, matched_var, pairs_var)
+                self.expression.generate(gen, matched_var, inner_pairs)
 
             gen.writeln("state.rule_stack.pop()")
 
@@ -177,11 +177,12 @@ class Rule(Expression):
             with gen.block():
                 gen.writeln(f"{tag_var} = None")
 
-            children: str = pairs_var
+            children: str = inner_pairs
 
             if self.modifier & SILENT:
-                gen.writeln(f"# Silent rule {self.name}")
-                gen.writeln(f"return Pairs({children})")
+                gen.writeln(f"# Silent rule {self.name!r}")
+                gen.writeln(f"{pairs_var}.extend({children})")
+                gen.writeln(f"return {matched_var}")
             else:
                 if self.modifier & ATOMIC:
                     gen.writeln(f"# Atomic rule: {self.name!r}")
@@ -202,7 +203,9 @@ class Rule(Expression):
                     f"rule_frame, {children}, {tag_var}"
                     ")"
                 )
-                gen.writeln(f"return Pairs([{pair}])")
+
+                gen.writeln(f"{pairs_var}.append({pair})")
+                gen.writeln(f"return {matched_var}")
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""
@@ -225,6 +228,8 @@ class BuiltInRule(Rule):
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python source code that implements this grammar expression."""
+        # XXX: bit of a hack
+        # TODO: maybe class LoudBuiltInRule(BuiltInRule)
         if self.name == "EOI":
             super().generate(gen, matched_var, pairs_var)
         else:

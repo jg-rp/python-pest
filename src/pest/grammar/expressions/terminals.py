@@ -152,7 +152,7 @@ class PeekSlice(Terminal):
                 gen.writeln(f"{matched_var} = False")
         gen.writeln(f"state.pos = {pos}")
 
-        gen.writeln("# <PeekSlice>")
+        gen.writeln("# </PeekSlice>")
 
     def is_pure(self, rules: dict[str, Rule], seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
@@ -177,17 +177,22 @@ class Peek(Terminal):
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python code for a PEEK expression."""
-        gen.writeln("# Peek: PEEK")
+        gen.writeln("# <Peek>")
+
         peeked = gen.new_temp("peek")
         gen.writeln(f"{peeked} = state.peek()")
+
         gen.writeln(
             f"if {peeked} is not None and state.input.startswith({peeked}, state.pos):"
         )
         with gen.block():
             gen.writeln(f"state.pos += len({peeked})")
+            gen.writeln(f"{matched_var} = True)")
         gen.writeln("else:")
         with gen.block():
-            gen.writeln(f"raise ParseError('expected {{{peeked}!r}}')")
+            gen.writeln(f"{matched_var} = False)")
+
+        gen.writeln("# </Peek>")
 
     def is_pure(self, rules: dict[str, Rule], seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
@@ -223,25 +228,30 @@ class PeekAll(Terminal):
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python code for a PEEK_ALL expression."""
-        gen.writeln("# PeekAll: PEEK_ALL")
+        gen.writeln("# <PeekAll>")
+
         start_var = gen.new_temp("start")
         tmp_pairs = gen.new_temp("pairs")
+
         gen.writeln(f"{start_var} = state.pos")
         gen.writeln(f"{tmp_pairs}: list[Pair] = []")
-        # TODO: new_temp for i and literal?
-        gen.writeln("for _i, _literal in enumerate(reversed(state.user_stack)):")
+
+        gen.writeln("for i, literal in enumerate(reversed(state.user_stack)):")
         with gen.block():
             gen.writeln("if state.input.startswith(_literal, state.pos):")
             with gen.block():
                 gen.writeln("state.pos += len(_literal)")
+                gen.writeln(f"{matched_var} = True")
                 gen.writeln("if _i < len(state.user_stack):")
                 with gen.block():
                     gen.writeln(f"parse_trivia(state, {tmp_pairs})")
             gen.writeln("else:")
             with gen.block():
-                # Restore state.pos
                 gen.writeln(f"state.pos = {start_var}")
-                gen.writeln("raise ParseError(f'expected {_literal!r}')")
+                gen.writeln(f"{matched_var} = False")
+                gen.writeln("break")
+
+        gen.writeln("# </PeekAll>")
 
     def is_pure(self, rules: dict[str, Rule], seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
@@ -267,18 +277,23 @@ class Pop(Terminal):
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python code for a PEEK expression."""
-        gen.writeln("# Pop: POP")
+        gen.writeln("# <Pop>")
+
         peeked = gen.new_temp("peek")
         gen.writeln(f"{peeked} = state.peek()")
+
         gen.writeln(
             f"if {peeked} is not None and state.input.startswith({peeked}, state.pos):"
         )
         with gen.block():
             gen.writeln("state.user_stack.pop()")
             gen.writeln(f"state.pos += len({peeked})")
+            gen.writeln(f"{matched_var} = True")
         gen.writeln("else:")
         with gen.block():
-            gen.writeln(f"raise ParseError('expected {{{peeked}!r}}')")
+            gen.writeln(f"{matched_var} = False")
+
+        gen.writeln("# </Pop>")
 
     def is_pure(self, rules: dict[str, Rule], seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
@@ -314,20 +329,26 @@ class PopAll(Terminal):
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python code for a POP_ALL expression."""
-        gen.writeln("# PopAll: POP_ALL")
+        gen.writeln("# <PopAll>")
+
         pos = gen.new_temp("pos")
         gen.writeln(f"{pos} = state.pos")
+
         peeked = gen.new_temp("peek")
         gen.writeln(f"for {peeked} in reversed(state.user_stack):")
         with gen.block():
             gen.writeln(f"if state.input.startswith({peeked}, {pos}):")
             with gen.block():
                 gen.writeln(f"{pos} += len({peeked})")
+                gen.writeln(f"{matched_var} = True")
             gen.writeln("else:")
             with gen.block():
-                gen.writeln(f"raise ParseError(f'expected {{{peeked}!r}}')")
+                gen.writeln(f"{matched_var} = False")
+
         gen.writeln("state.user_stack.clear()")
         gen.writeln(f"state.pos = {pos}")
+
+        gen.writeln("# </PopAll>")
 
     def is_pure(self, rules: dict[str, Rule], seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
@@ -351,13 +372,17 @@ class Drop(Terminal):
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python code for a Drop expression."""
-        gen.writeln("# Drop: DROP")
+        gen.writeln("# <Drop>")
+
         gen.writeln("if not state.user_stack.empty():")
         with gen.block():
             gen.writeln("state.user_stack.pop()")
+            gen.writeln(f"{matched_var} = True")
         gen.writeln("else:")
         with gen.block():
-            gen.writeln("raise ParseError('drop from empty stack')")
+            gen.writeln(f"{matched_var} = False")
+
+        gen.writeln("# <Drop>")
 
     def is_pure(self, rules: dict[str, Rule], seen: set[str] | None = None) -> bool:
         """True if the expression has no side effects and is safe for memoization."""
@@ -390,12 +415,16 @@ class Identifier(Expression):
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python code for calling another rule."""
+        gen.writeln("# <Identifier>")
+
         if self.tag:
             gen.writeln(f"with state.tag({self.tag!r}):")
             with gen.block():
-                gen.writeln(f"{pairs_var}.extend(parse_{self.value}(state))")
+                gen.writeln(f"{matched_var} = parse_{self.value}(state, {pairs_var})")
         else:
-            gen.writeln(f"{pairs_var}.extend(parse_{self.value}(state))")
+            gen.writeln(f"{matched_var} = parse_{self.value}(state, {pairs_var})")
+
+        gen.writeln("# </Identifier>")
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""
@@ -442,13 +471,18 @@ class String(Terminal):
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python source code that implements this grammar expression."""
+        gen.writeln("# <String>")
+
         lit_repr = repr(self.value)
         gen.writeln(f"if state.input.startswith({lit_repr}, state.pos):")
         with gen.block():
             gen.writeln(f"state.pos += {len(self.value)}")
+            gen.writeln(f"{matched_var} = True")
         gen.writeln("else:")
         with gen.block():
-            gen.writeln(f"raise ParseError({lit_repr})")
+            gen.writeln(f"{matched_var} = False")
+
+        gen.writeln("# </String>")
 
 
 class CIString(Terminal):
@@ -480,16 +514,20 @@ class CIString(Terminal):
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python code for a case insensitive string literal."""
-        gen.writeln('# CIString: ^"literal"')
+        gen.writeln("# <CIString>")
+
         pattern = re.escape(self.value)
         re_var = gen.constant("RE", f"re.compile({pattern!r}, re.I)")
 
         gen.writeln(f"if match := {re_var}.match(state.input, state.pos):")
         with gen.block():
             gen.writeln("state.pos = match.end()")
+            gen.writeln(f"{matched_var} = True")
         gen.writeln("else:")
         with gen.block():
-            gen.writeln(f'raise ParseError("expected {self.value!r}")')
+            gen.writeln(f"{matched_var} = False")
+
+        gen.writeln("# </CIString>")
 
 
 class Range(Terminal):
@@ -514,16 +552,20 @@ class Range(Terminal):
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python code for a character range."""
-        gen.writeln("# Range: start..stop")
+        gen.writeln("# <Range>")
+
         pattern = rf"[{re.escape(self.start)}-{re.escape(self.stop)}]"
         re_var = gen.constant("RE", f"re.compile({pattern!r}, re.I)")
 
         gen.writeln(f"if match := {re_var}.match(state.input, state.pos):")
         with gen.block():
             gen.writeln("state.pos = match.end()")
+            gen.writeln(f"{matched_var} = True")
         gen.writeln("else:")
         with gen.block():
-            gen.writeln(f'raise ParseError("expected {self.start!r}..{self.stop!r}")')
+            gen.writeln(f"{matched_var} = False")
+
+        gen.writeln("# <Range>")
 
 
 class SkipUntil(Terminal):
@@ -572,7 +614,8 @@ class SkipUntil(Terminal):
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python code for an optimized rep/neg-pred/any expression."""
-        gen.writeln("# SkipUntil:")
+        gen.writeln("# <SkipUntil>")
+
         subs_var = gen.constant("SUBS", str(self.subs))
         sub_var = gen.new_temp("sub")
         index_var = gen.new_temp("idx")
@@ -598,3 +641,6 @@ class SkipUntil(Terminal):
         gen.writeln("else:")
         with gen.block():
             gen.writeln("state.pos = len(state.input)")
+
+        gen.writeln(f"{matched_var} = True")
+        gen.writeln("# </SkipUntil>")

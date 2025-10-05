@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING
 import regex as re
 
 from pest.exceptions import PestParsingError
-from pest.grammar.codegen.state import ParseError
 from pest.grammar.codegen.state import RuleFrame
 from pest.grammar.codegen.state import State
 from pest.pairs import Pair
@@ -32,23 +31,25 @@ class Rule(StrEnum):
     C = auto()
 
 
-def _parse_EOI() -> Callable[[State], Pairs]:
+def _parse_EOI() -> Callable[[State, list[Pair]], bool]:
     rule_frame = RuleFrame("EOI", 0)
 
-    def inner(state: State) -> Pairs:
+    def inner(state: State, pairs: list[Pair]) -> bool:
         """Parse EOI."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
-        pairs: list[Pair] = []
-        with state.atomic_checkpoint():
-            if state.pos != len(state.input):
-                raise ParseError("expected end of input")
+        children2: list[Pair] = []
+        if state.pos != len(state.input):
+            matched = False
+        else:
+            matched = True
         state.rule_stack.pop()
         if state.tag_stack:
-            tag2: str | None = state.tag_stack.pop()
+            tag3: str | None = state.tag_stack.pop()
         else:
-            tag2 = None
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs, tag2)])
+            tag3 = None
+        pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag3))
+        return matched
 
     return inner
 
@@ -56,60 +57,66 @@ def _parse_EOI() -> Callable[[State], Pairs]:
 parse_EOI = _parse_EOI()
 
 
-def _parse_expr() -> Callable[[State], Pairs]:
+def _parse_expr() -> Callable[[State, list[Pair]], bool]:
     rule_frame = RuleFrame("expr", 0)
 
-    def inner(state: State) -> Pairs:
+    def inner(state: State, pairs: list[Pair]) -> bool:
         """Parse expr."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
-        pairs: list[Pair] = []
-        with state.atomic_checkpoint():
-            # Choice: expression | expression
-            children2: list[Pair] = []
-            matched3 = False
-            if not matched3:
-                state.checkpoint()
-                try:
-                    if state.input.startswith("a", state.pos):
-                        state.pos += 1
-                    else:
-                        raise ParseError("a")
-                    matched3 = True
-                    state.ok()
-                except ParseError:
-                    state.restore()
-                    children2.clear()
-            if not matched3:
-                state.checkpoint()
-                try:
-                    if state.input.startswith("b", state.pos):
-                        state.pos += 1
-                    else:
-                        raise ParseError("b")
-                    matched3 = True
-                    state.ok()
-                except ParseError:
-                    state.restore()
-                    children2.clear()
-            if not matched3:
-                state.checkpoint()
-                try:
-                    children2.extend(parse_c(state))
-                    matched3 = True
-                    state.ok()
-                except ParseError:
-                    state.restore()
-                    children2.clear()
-            if not matched3:
-                raise ParseError("no choice matched")
-            pairs.extend(children2)
+        children2: list[Pair] = []
+        # <Choice>
+        children3: list[Pair] = []
+        matched = False
+        if not matched:
+            state.checkpoint()
+            # <String>
+            if state.input.startswith("a", state.pos):
+                state.pos += 1
+                matched = True
+            else:
+                matched = False
+            # </String>
+            if matched:
+                state.ok()
+                children2.extend(children3)
+            else:
+                state.restore()
+                children3.clear()
+        if not matched:
+            state.checkpoint()
+            # <String>
+            if state.input.startswith("b", state.pos):
+                state.pos += 1
+                matched = True
+            else:
+                matched = False
+            # </String>
+            if matched:
+                state.ok()
+                children2.extend(children3)
+            else:
+                state.restore()
+                children3.clear()
+        if not matched:
+            state.checkpoint()
+            # <Identifier>
+            matched = parse_c(state, children3)
+            # </Identifier>
+            if matched:
+                state.ok()
+                children2.extend(children3)
+            else:
+                state.restore()
+                children3.clear()
+        # </Choice>
         state.rule_stack.pop()
         if state.tag_stack:
             tag4: str | None = state.tag_stack.pop()
         else:
             tag4 = None
-        return Pairs([Pair(state.input, pos1, state.pos, rule_frame, pairs, tag4)])
+        pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag4))
+        return matched
 
     return inner
 
@@ -117,25 +124,28 @@ def _parse_expr() -> Callable[[State], Pairs]:
 parse_expr = _parse_expr()
 
 
-def _parse_c() -> Callable[[State], Pairs]:
+def _parse_c() -> Callable[[State, list[Pair]], bool]:
     rule_frame = RuleFrame("c", 2)
 
-    def inner(state: State) -> Pairs:
+    def inner(state: State, pairs: list[Pair]) -> bool:
         """Parse c."""
         state.rule_stack.push(rule_frame)
-        pairs: list[Pair] = []
-        with state.atomic_checkpoint():
-            if state.input.startswith("c", state.pos):
-                state.pos += 1
-            else:
-                raise ParseError("c")
+        children2: list[Pair] = []
+        # <String>
+        if state.input.startswith("c", state.pos):
+            state.pos += 1
+            matched = True
+        else:
+            matched = False
+        # </String>
         state.rule_stack.pop()
         if state.tag_stack:
-            tag2: str | None = state.tag_stack.pop()
+            tag3: str | None = state.tag_stack.pop()
         else:
-            tag2 = None
-        # Silent rule c
-        return Pairs(pairs)
+            tag3 = None
+        # Silent rule 'c'
+        pairs.extend(children2)
+        return matched
 
     return inner
 
@@ -143,11 +153,11 @@ def _parse_c() -> Callable[[State], Pairs]:
 parse_c = _parse_c()
 
 
-def parse_trivia(state: State, pairs: list[Pair]) -> None:
-    pass
+def parse_trivia(state: State, pairs: list[Pair]) -> bool:
+    return True
 
 
-_RULE_MAP: dict[str, Callable[[State], Pairs]] = {
+_RULE_MAP: dict[str, Callable[[State, list[Pair]], bool]] = {
     "EOI": parse_EOI,
     "expr": parse_expr,
     "c": parse_c,
@@ -157,11 +167,12 @@ _RULE_MAP: dict[str, Callable[[State], Pairs]] = {
 def parse(start_rule: str, input_: str, *, start_pos: int = 0) -> Pairs:
     """Parse `input_` starting from `rule`."""
     state = State(input_, start_pos)
-    try:
-        return _RULE_MAP[start_rule](state)
-    except ParseError as err:
-        pos = state.pos
-        line = state.input.count("\n", 0, pos) + 1
-        col = pos - state.input.rfind("\n", 0, pos)
-        found = state.input[pos : pos + 10] or "end of input"
-        raise PestParsingError(str(err), [], [], state.pos, "", (line, col)) from err
+    pairs: list[Pair] = []
+    matched = _RULE_MAP[start_rule](state, pairs)
+    if matched:
+        return Pairs(pairs)
+    pos = state.pos
+    line = state.input.count("\n", 0, pos) + 1
+    col = pos - state.input.rfind("\n", 0, pos)
+    found = state.input[pos : pos + 10] or "end of input"
+    raise PestParsingError("did not match", [], [], state.pos, "", (line, col))

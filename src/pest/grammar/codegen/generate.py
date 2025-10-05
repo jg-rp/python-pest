@@ -25,7 +25,6 @@ from typing import TYPE_CHECKING
 import regex as re
 
 from pest.exceptions import PestParsingError
-from pest.grammar.codegen.state import ParseError
 from pest.grammar.codegen.state import RuleFrame
 from pest.grammar.codegen.state import State
 from pest.pairs import Pair
@@ -86,9 +85,7 @@ def generate_rule(name: str, rules: dict[str, Rule]) -> str:
     rule = rules[name]
     inner_gen = Builder()
     pairs_var = "pairs"
-    matched_var = "matched"
-    inner_gen.writeln(f"{matched_var} = False")
-    rule.generate(inner_gen, matched_var, pairs_var)
+    rule.generate(inner_gen, "matched", pairs_var)
 
     gen = Builder()
     func_name = f"parse_{rule.name}"
@@ -138,33 +135,33 @@ def generate_parse_trivia(rules: dict[str, Rule]) -> str:
     has_comment = "COMMENT" in rules
 
     gen = Builder()
-    gen.writeln("def parse_trivia(state: State, pairs: list[Pair]) -> None:")
+    gen.writeln("def parse_trivia(state: State, pairs: list[Pair]) -> bool:")
     with gen.block():
         if not (has_skip or has_ws or has_comment):
             # Nothing to do
-            gen.writeln("pass")
+            gen.writeln("return True")
             return gen.render()
 
         gen.writeln("if state.atomic_depth > 0:")
         with gen.block():
-            gen.writeln("return")
+            gen.writeln("return True")
 
         if has_skip:
-            gen.writeln("parse_SKIP(state, pairs)")
+            gen.writeln("return parse_SKIP(state, pairs)")
             return gen.render()
 
         gen.writeln("while True:")
         with gen.block():
+            # TODO: do we need a checkpoint here?
             gen.writeln("state.checkpoint()")
             gen.writeln("matched = False")
 
             if has_ws:
-                gen.writeln("try:")
+                gen.writeln("matched = parse_WHITESPACE(state, pairs)")
+                gen.writeln("if matched:")
                 with gen.block():
-                    gen.writeln("pairs.extend(parse_WHITESPACE(state))")
                     gen.writeln("state.ok()")
-                    gen.writeln("matched = True")
-                gen.writeln("except ParseError:")
+                gen.writeln("else")
                 with gen.block():
                     gen.writeln("state.restore()")
 
@@ -173,19 +170,21 @@ def generate_parse_trivia(rules: dict[str, Rule]) -> str:
                     "if not state.rule_stack or state.rule_stack[-1].name != 'COMMENT':"
                 )
                 with gen.block():
+                    # TODO: do we need a checkpoint here?
                     gen.writeln("state.checkpoint()")
-                    gen.writeln("try:")
+                    gen.writeln("matched = parse_COMMENT(state, pairs)")
+                    gen.writeln("if matched:")
                     with gen.block():
-                        gen.writeln("pairs.extend(parse_COMMENT(state))")
                         gen.writeln("state.ok()")
-                        gen.writeln("matched = True")
-                    gen.writeln("except ParseError:")
+                    gen.writeln("else")
                     with gen.block():
                         gen.writeln("state.restore()")
 
             gen.writeln("if not matched:")
             with gen.block():
                 gen.writeln("break")
+
+            gen.writeln("return True")
 
     return gen.render()
 
@@ -206,7 +205,7 @@ def generate_rule_enum(rules: dict[str, Rule]) -> str:
 def generate_rule_map(rules: dict[str, Rule]) -> str:
     """Generate a dictionary mapping rule names to `parse_*` callables."""
     gen = Builder()
-    gen.writeln("_RULE_MAP: dict[str, Callable[[State], Pairs]] = {")
+    gen.writeln("_RULE_MAP: dict[str, Callable[[State, list[Pair]], bool]] = {")
     with gen.block():
         for name, rule in rules.items():
             if not isinstance(rule, BuiltInRule) or rule.name == "EOI":
@@ -225,19 +224,22 @@ def generate_parse_entry_point() -> str:
         # TODO: improve doc comment
         gen.writeln('"""Parse `input_` starting from `rule`."""')
         gen.writeln("state = State(input_, start_pos)")
-        gen.writeln("try:")
+
+        gen.writeln("pairs: list[Pair] = []")
+        gen.writeln("matched = _RULE_MAP[start_rule](state, pairs)")
+
+        gen.writeln("if matched:")
         with gen.block():
-            gen.writeln("return _RULE_MAP[start_rule](state)")
-        gen.writeln("except ParseError as err:")
+            gen.writeln("return Pairs(pairs)")
+
         # TODO: Better error messages
-        with gen.block():
-            gen.writeln("pos = state.pos")
-            gen.writeln('line = state.input.count("\\n", 0, pos) + 1')
-            gen.writeln('col = pos - state.input.rfind("\\n", 0, pos)')
-            gen.writeln('found = state.input[pos : pos + 10] or "end of input"')
-            gen.writeln(
-                "raise PestParsingError("
-                "str(err), [], [], state.pos, '', (line, col)) from err"
-            )
+        gen.writeln("pos = state.pos")
+        gen.writeln('line = state.input.count("\\n", 0, pos) + 1')
+        gen.writeln('col = pos - state.input.rfind("\\n", 0, pos)')
+        gen.writeln('found = state.input[pos : pos + 10] or "end of input"')
+        gen.writeln(
+            "raise PestParsingError("
+            "'did not match', [], [], state.pos, '', (line, col))"
+        )
 
     return gen.render()

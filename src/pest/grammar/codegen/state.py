@@ -146,7 +146,3 @@ class RuleFrame:
 
     def __repr__(self) -> str:
         return f"RuleFrame({self.name!r}, {self.modifier})"
-
-
-class ParseError(Exception):
-    """"""

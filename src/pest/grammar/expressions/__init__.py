@@ -5,8 +5,8 @@ from .postfix import Repeat
 from .postfix import RepeatExact
 from .postfix import RepeatMax
 from .postfix import RepeatMin
-from .postfix import RepeatOnce
 from .postfix import RepeatMinMax
+from .postfix import RepeatOnce
 from .prefix import NegativePredicate
 from .prefix import PositivePredicate
 from .sequence import Sequence
