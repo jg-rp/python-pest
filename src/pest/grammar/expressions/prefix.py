@@ -42,22 +42,26 @@ class PositivePredicate(Expression):
             return [Match(None, start)]
         return None
 
-    def generate(self, gen: Builder, _pairs_var: str) -> None:
+    def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:  # noqa: ARG002
         """Emit Python code for a positive lookahead (&E)."""
-        gen.writeln("# PositivePredicate: &expression")
+        gen.writeln("# <PositivePredicate>")
+
         tmp_pairs = gen.new_temp("children")
         gen.writeln(f"{tmp_pairs}: list[Pair] = []")
+
         gen.writeln("state.checkpoint()")
-        gen.writeln("try:")
+        self.expression.generate(gen, matched_var, tmp_pairs)
+
+        gen.writeln(f"if {matched_var}:")
         with gen.block():
-            self.expression.generate(gen, tmp_pairs)
             # Always restore, even on success
             gen.writeln("state.restore()")
             gen.writeln(f"{tmp_pairs}.clear()  # discard lookahead children")
-        gen.writeln("except ParseError:")
+        gen.writeln("else:")
         with gen.block():
             gen.writeln("state.restore()")
-            gen.writeln("raise")
+
+        gen.writeln("# </PositivePredicate>")
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""
@@ -98,27 +102,29 @@ class NegativePredicate(Expression):
 
         return None
 
-    def generate(self, gen: Builder, _pairs_var: str) -> None:
+    def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:  # noqa: ARG002
         """Emit Python code for a negative lookahead (!E)."""
-        gen.writeln("# NegativePredicate: !expression")
+        gen.writeln("# <NegativePredicate>")
+
         tmp_pairs = gen.new_temp("children")
         gen.writeln(f"{tmp_pairs}: list[Pair] = []")
+
         gen.writeln("state.checkpoint()")
-        gen.writeln("try:")
-        with gen.block():
-            self.expression.generate(gen, tmp_pairs)
-        gen.writeln("except ParseError:")
+        self.expression.generate(gen, matched_var, tmp_pairs)
+
+        gen.writeln(f"if not {matched_var}:")
         with gen.block():
             # Inner failed, so the negative predicate succeeds.
             gen.writeln("state.restore()")
             gen.writeln(f"{tmp_pairs}.clear()  # discard lookahead children")
+            gen.writeln(f"{matched_var} = True")
         gen.writeln("else:")
         with gen.block():
             # Inner matched, so the negative predicate fails.
             gen.writeln("state.restore()")
-            gen.writeln(
-                f"raise ParseError('unexpected {self.expression.__class__.__name__}')"
-            )
+            gen.writeln(f"{matched_var} = False")
+
+        gen.writeln("# </NegativePredicate>")
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""

@@ -50,27 +50,46 @@ class Choice(Expression):
         return None
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
-        """Emit Python code for a choice expression."""
-        gen.writeln("# Choice: expression | expression")
+        """Emit Python code for a choice expression (A | B | ...).
+
+        Each branch is attempted in order until one succeeds.
+        On success, the matched branch's pairs are appended to `pairs_var`.
+        On failure, parser state is restored to the checkpoint taken before
+        that branch began.
+        """
+        gen.writeln("# <Choice>")
+
+        # Temporary list to collect results from each branch.
+        # This ensures that pairs produced by a failed branch do not leak.
         tmp_pairs = gen.new_temp("children")
 
         gen.writeln(f"{tmp_pairs}: list[Pair] = []")
         gen.writeln(f"{matched_var} = False")
 
+        # Generate code for each alternative in order.
         for branch in self.expressions:
+            # Only attempt another branch if none have succeeded yet.
             gen.writeln(f"if not {matched_var}:")
             with gen.block():
+                # Take a checkpoint so we can backtrack if this branch fails.
                 gen.writeln("state.checkpoint()")
+
+                # Generate code for the branch itself.
                 branch.generate(gen, matched_var, tmp_pairs)
 
+                # If the branch matched, commit and extend parent pairs.
                 gen.writeln(f"if {matched_var}:")
                 with gen.block():
                     gen.writeln("state.ok()")
                     gen.writeln(f"{pairs_var}.extend({tmp_pairs})")
+
+                # Otherwise, revert to the pre-branch state and clear partial results.
                 gen.writeln("else:")
                 with gen.block():
                     gen.writeln("state.restore()")
                     gen.writeln(f"{tmp_pairs}.clear()")
+
+        gen.writeln("# </Choice>")
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""
@@ -138,9 +157,10 @@ class LazyChoiceRegex(Expression):
             return [Match(None, match.end())]
         return None
 
-    def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
+    def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:  # noqa: ARG002
         """Emit Python code for an optimized regex choice expression."""
-        gen.writeln("# ChoiceRegex:")
+        gen.writeln("# <ChoiceRegex>")
+
         pattern = self.build_optimized_pattern()
         re_var = gen.constant("RE", f"re.compile({pattern!r}, re.VERSION1)")
 
@@ -151,6 +171,8 @@ class LazyChoiceRegex(Expression):
         gen.writeln("else:")
         with gen.block():
             gen.writeln(f"{matched_var} = False")
+
+        gen.writeln("# </ChoiceRegex>")
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""

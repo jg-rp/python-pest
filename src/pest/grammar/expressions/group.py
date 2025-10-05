@@ -44,12 +44,16 @@ class Group(Expression):
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python source code that implements this grammar expression."""
+        gen.writeln("# <Group>")
+
         if self.tag:
             gen.writeln(f"with state.tag({self.tag!r}):")
             with gen.block():
                 self.expression.generate(gen, matched_var, pairs_var)
         else:
             self.expression.generate(gen, matched_var, pairs_var)
+
+        gen.writeln("# </Group>")
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""
