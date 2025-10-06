@@ -110,6 +110,7 @@ class NegativePredicate(Expression):
         gen.writeln(f"{tmp_pairs}: list[Pair] = []")
 
         gen.writeln("state.checkpoint()")
+        gen.writeln("state.neg_pred_depth += 1")
         self.expression.generate(gen, matched_var, tmp_pairs)
 
         gen.writeln(f"if not {matched_var}:")
@@ -124,6 +125,7 @@ class NegativePredicate(Expression):
             gen.writeln("state.restore()")
             gen.writeln(f"{matched_var} = False")
 
+        gen.writeln("state.neg_pred_depth -= 1")
         gen.writeln("# </NegativePredicate>")
 
     def children(self) -> list[Expression]:

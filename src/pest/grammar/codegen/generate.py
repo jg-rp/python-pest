@@ -237,9 +237,11 @@ def generate_parse_entry_point() -> str:
         gen.writeln('line = state.input.count("\\n", 0, pos) + 1')
         gen.writeln('col = pos - state.input.rfind("\\n", 0, pos)')
         # gen.writeln('found = state.input[pos : pos + 10] or "end of input"')
+        gen.writeln('expected = " or ".join(state.furthest_expected)')
+        gen.writeln('stack = " > ".join(f.name for f in state.furthest_stack)')
         gen.writeln(
-            "raise PestParsingError("
-            "'did not match', [], [], state.pos, '', (line, col))"
+            'msg = f"Expected {expected} at line {line}, column {col} (in {stack})"'
         )
+        gen.writeln("raise PestParsingError(msg, [], [], state.pos, '', (line, col))")
 
     return gen.render()

@@ -200,7 +200,7 @@ class Rule(Expression):
                 pair = (
                     f"Pair("
                     f"state.input, {start_pos}, state.pos, "
-                    f"rule_frame, {children}, {tag_var}"
+                    f"rule_frame, {children}, {tag_var},"
                     ")"
                 )
 
@@ -231,7 +231,6 @@ class BuiltInRule(Rule):
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python source code that implements this grammar expression."""
         # XXX: bit of a hack
-        # TODO: maybe class LoudBuiltInRule(BuiltInRule)
         if self.name == "EOI":
             super().generate(gen, matched_var, pairs_var)
         else:

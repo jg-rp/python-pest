@@ -2,7 +2,7 @@ import json
 
 from pest import Parser
 
-with open("tests/grammars/lists.pest") as fd:
+with open("tests/grammars/reporting.pest") as fd:
     GRAMMAR = fd.read()
 
 parser = Parser.from_grammar(GRAMMAR, optimizer=None)
@@ -16,9 +16,5 @@ with open("tmp.py", "w") as fd:
 from tmp import Rule
 from tmp import parse
 
-pairs = parse(Rule.LISTS, "- a\n- b")
+pairs = parse(Rule.CHOICES, "x")
 print(json.dumps(pairs.as_list(), indent=2))
-
-# TODO: Tidy generated comments that delimit expressions.
-# TODO: include expression name in delimit comments
-# TODO: Introduce SilentBuiltInRule and move all but EOI to it

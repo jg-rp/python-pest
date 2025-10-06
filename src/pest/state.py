@@ -1,4 +1,4 @@
-"""Parser generator state."""
+"""Parser interpreter state."""
 
 from __future__ import annotations
 

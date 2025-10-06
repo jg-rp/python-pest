@@ -37,6 +37,15 @@ class State:
         """
         self.input = text
         self.pos = start_pos
+
+        # Negative predicate depth
+        self.neg_pred_depth = 0
+
+        # Failure tracking
+        self.furthest_pos = -1
+        self.furthest_expected: list[str] = []
+        self.furthest_stack: list[RuleFrame] = []
+
         self.user_stack = Stack[str]()  # PUSH/POP/PEEK/DROP
         self.rule_stack = Stack[RuleFrame]()
         self._pos_history: list[int] = []  # TODO: better
@@ -133,6 +142,20 @@ class State:
         finally:
             if self.tag_stack:
                 self.tag_stack.pop()
+
+    def fail(self, expected: str) -> None:
+        """Record a parsing failure at the current position."""
+        if self.neg_pred_depth > 0:
+            return  # failures in negative predicates are successes
+
+        if self.pos > self.furthest_pos:
+            self.furthest_pos = self.pos
+            self.furthest_expected = [expected]
+            self.furthest_stack = list(self.rule_stack)
+        elif self.pos == self.furthest_pos:
+            # multiple expected tokens at same position
+            if expected not in self.furthest_expected:
+                self.furthest_expected.append(expected)
 
 
 class RuleFrame:

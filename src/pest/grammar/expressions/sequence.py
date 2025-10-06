@@ -66,7 +66,7 @@ class Sequence(Expression):
         Each sub-expression is attempted in order. If any one fails, the entire
         sequence fails immediately. Implicit trivia is parsed between items.
         """
-        gen.writeln("# <Sequence>")
+        gen.writeln(f"# <Sequence n={len(self.expressions)}>")
 
         inner_matched = gen.new_temp("matched")
         all_ok = gen.new_temp("all_ok")
@@ -74,7 +74,7 @@ class Sequence(Expression):
 
         # Enumerate sub-expressions in order
         for i, child in enumerate(self.expressions):
-            # Only continue if all previous succeeded
+            # Only continue if previous subexpressions succeeded.
             gen.writeln(f"if {all_ok}:")
             with gen.block():
                 gen.writeln(f"{inner_matched} = False")

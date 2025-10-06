@@ -77,6 +77,9 @@ class Push(Expression):
 
         start_var = gen.new_temp("start")
         gen.writeln(f"{start_var} = state.pos")
+        # TODO: Can PUSH(<expr>) fail?
+        # TODO: snapshot and tmp_pairs?
+        # TODO: test for failed PUSH
         self.expression.generate(gen, matched_var, pairs_var)
 
         gen.writeln(f"if {matched_var}:")
@@ -150,7 +153,11 @@ class PeekSlice(Terminal):
                 gen.writeln(f"{matched_var} = True")
             gen.writeln("else:")
             with gen.block():
+                # TODO: test for failed PEEK slice
                 gen.writeln(f"{matched_var} = False")
+                gen.writeln(f"state.fail({peeked})")
+                gen.writeln("break")
+
         gen.writeln(f"state.pos = {pos}")
 
         gen.writeln("# </PeekSlice>")
@@ -192,6 +199,7 @@ class Peek(Terminal):
         gen.writeln("else:")
         with gen.block():
             gen.writeln(f"{matched_var} = False")
+            gen.writeln(f"state.fail({peeked})")
 
         gen.writeln("# </Peek>")
 
@@ -251,6 +259,7 @@ class PeekAll(Terminal):
             with gen.block():
                 gen.writeln(f"state.pos = {start_var}")
                 gen.writeln(f"{matched_var} = False")
+                gen.writeln("state.fail(literal)")
                 gen.writeln("break")
 
         gen.writeln("# </PeekAll>")
@@ -294,6 +303,7 @@ class Pop(Terminal):
         gen.writeln("else:")
         with gen.block():
             gen.writeln(f"{matched_var} = False")
+            gen.writeln(f"state.fail({peeked})")
 
         gen.writeln("# </Pop>")
 
@@ -346,6 +356,8 @@ class PopAll(Terminal):
             gen.writeln("else:")
             with gen.block():
                 gen.writeln(f"{matched_var} = False")
+                gen.writeln(f"state.fail({peeked})")
+                gen.writeln("break")
 
         gen.writeln("state.user_stack.clear()")
         gen.writeln(f"state.pos = {pos}")
@@ -383,6 +395,7 @@ class Drop(Terminal):
         gen.writeln("else:")
         with gen.block():
             gen.writeln(f"{matched_var} = False")
+            gen.writeln("state.fail('drop from empty stack')")
 
         gen.writeln("# <Drop>")
 
@@ -483,6 +496,7 @@ class String(Terminal):
         gen.writeln("else:")
         with gen.block():
             gen.writeln(f"{matched_var} = False")
+            gen.writeln(f"state.fail({str(self)!r})")
 
         gen.writeln("# </String>")
 
@@ -528,6 +542,7 @@ class CIString(Terminal):
         gen.writeln("else:")
         with gen.block():
             gen.writeln(f"{matched_var} = False")
+            gen.writeln(f"state.fail({str(self)!r})")
 
         gen.writeln("# </CIString>")
 
@@ -566,6 +581,7 @@ class Range(Terminal):
         gen.writeln("else:")
         with gen.block():
             gen.writeln(f"{matched_var} = False")
+            gen.writeln(f"state.fail({str(self)!r})")
 
         gen.writeln("# </Range>")
 
