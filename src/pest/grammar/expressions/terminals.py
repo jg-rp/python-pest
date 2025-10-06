@@ -39,6 +39,7 @@ class PushLiteral(Terminal):
         """Emit Python code for a PUSH expression."""
         gen.writeln("# <PushLiteral>")
         gen.writeln(f"state.push({self.value!r})")
+        gen.writeln(f"{matched_var} = True")
         gen.writeln("# </PushLiteral>")
 
     def is_pure(self, rules: dict[str, Rule], seen: set[str] | None = None) -> bool:
@@ -235,6 +236,7 @@ class PeekAll(Terminal):
 
         gen.writeln(f"{start_var} = state.pos")
         gen.writeln(f"{tmp_pairs}: list[Pair] = []")
+        gen.writeln(f"{matched_var} = True")
 
         gen.writeln("for i, literal in enumerate(reversed(state.user_stack)):")
         with gen.block():
