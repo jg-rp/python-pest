@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 import regex as re
 
 from pest.exceptions import PestParsingError
+from pest.exceptions import error_context
 from pest.grammar.codegen.state import RuleFrame
 from pest.grammar.codegen.state import State
 from pest.pairs import Pair
@@ -24,27 +25,25 @@ if TYPE_CHECKING:
 
 class Rule(StrEnum):
     """Grammar rules."""
-
-    EOI = "EOI"
-    A = "a"
-    B = "b"
-    C = "c"
-    D = "d"
-    CHOICES = "choices"
-    CHOICES_NO_PROGRESS = "choices_no_progress"
-    CHOICES_A_PROGRESS = "choices_a_progress"
-    CHOICES_B_PROGRESS = "choices_b_progress"
-    LEVEL1 = "level1"
-    LEVEL2 = "level2"
-    NEGATIVE = "negative"
-    NEGATIVE_MATCH = "negative_match"
-    MIXED = "mixed"
-    MIXED_PROGRESS = "mixed_progress"
-
+    EOI = 'EOI'
+    A = 'a'
+    B = 'b'
+    C = 'c'
+    D = 'd'
+    CHOICES = 'choices'
+    CHOICES_NO_PROGRESS = 'choices_no_progress'
+    CHOICES_A_PROGRESS = 'choices_a_progress'
+    CHOICES_B_PROGRESS = 'choices_b_progress'
+    LEVEL1 = 'level1'
+    LEVEL2 = 'level2'
+    NEGATIVE = 'negative'
+    NEGATIVE_MATCH = 'negative_match'
+    MIXED = 'mixed'
+    MIXED_PROGRESS = 'mixed_progress'
 
 def _parse_EOI() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("EOI", 0)
-
+    rule_frame = RuleFrame('EOI', 0)
+    
     def inner(state: State, pairs: list[Pair]) -> bool:
         """Parse EOI."""
         pos1 = state.pos
@@ -60,34 +59,23 @@ def _parse_EOI() -> Callable[[State, list[Pair]], bool]:
         else:
             tag3 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag3,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag3,))
         return matched
-
+    
     return inner
-
-
+    
 parse_EOI = _parse_EOI()
 
-
 def _parse_a() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("a", 0)
-
+    rule_frame = RuleFrame('a', 0)
+    
     def inner(state: State, pairs: list[Pair]) -> bool:
         """Parse a."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
         # <String>
-        if state.input.startswith("a", state.pos):
+        if state.input.startswith('a', state.pos):
             state.pos += 1
             matched = True
         else:
@@ -100,34 +88,23 @@ def _parse_a() -> Callable[[State, list[Pair]], bool]:
         else:
             tag3 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag3,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag3,))
         return matched
-
+    
     return inner
-
-
+    
 parse_a = _parse_a()
 
-
 def _parse_b() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("b", 0)
-
+    rule_frame = RuleFrame('b', 0)
+    
     def inner(state: State, pairs: list[Pair]) -> bool:
         """Parse b."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
         # <String>
-        if state.input.startswith("b", state.pos):
+        if state.input.startswith('b', state.pos):
             state.pos += 1
             matched = True
         else:
@@ -140,34 +117,23 @@ def _parse_b() -> Callable[[State, list[Pair]], bool]:
         else:
             tag3 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag3,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag3,))
         return matched
-
+    
     return inner
-
-
+    
 parse_b = _parse_b()
 
-
 def _parse_c() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("c", 0)
-
+    rule_frame = RuleFrame('c', 0)
+    
     def inner(state: State, pairs: list[Pair]) -> bool:
         """Parse c."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
         # <String>
-        if state.input.startswith("c", state.pos):
+        if state.input.startswith('c', state.pos):
             state.pos += 1
             matched = True
         else:
@@ -180,27 +146,16 @@ def _parse_c() -> Callable[[State, list[Pair]], bool]:
         else:
             tag3 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag3,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag3,))
         return matched
-
+    
     return inner
-
-
+    
 parse_c = _parse_c()
 
-
 def _parse_d() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("d", 0)
-
+    rule_frame = RuleFrame('d', 0)
+    
     def inner(state: State, pairs: list[Pair]) -> bool:
         """Parse d."""
         pos1 = state.pos
@@ -217,27 +172,16 @@ def _parse_d() -> Callable[[State, list[Pair]], bool]:
         else:
             tag3 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag3,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag3,))
         return matched
-
+    
     return inner
-
-
+    
 parse_d = _parse_d()
 
-
 def _parse_choices() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("choices", 2)
-
+    rule_frame = RuleFrame('choices', 2)
+    
     def inner(state: State, pairs: list[Pair]) -> bool:
         """Parse choices."""
         state.rule_stack.push(rule_frame)
@@ -283,16 +227,14 @@ def _parse_choices() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'choices'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_choices = _parse_choices()
 
-
 def _parse_choices_no_progress() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("choices_no_progress", 0)
-
+    rule_frame = RuleFrame('choices_no_progress', 0)
+    
     def inner(state: State, pairs: list[Pair]) -> bool:
         """Parse choices_no_progress."""
         pos1 = state.pos
@@ -341,27 +283,16 @@ def _parse_choices_no_progress() -> Callable[[State, list[Pair]], bool]:
         else:
             tag4 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag4,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag4,))
         return matched
-
+    
     return inner
-
-
+    
 parse_choices_no_progress = _parse_choices_no_progress()
 
-
 def _parse_choices_a_progress() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("choices_a_progress", 0)
-
+    rule_frame = RuleFrame('choices_a_progress', 0)
+    
     def inner(state: State, pairs: list[Pair]) -> bool:
         """Parse choices_a_progress."""
         pos1 = state.pos
@@ -427,27 +358,16 @@ def _parse_choices_a_progress() -> Callable[[State, list[Pair]], bool]:
         else:
             tag6 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag6,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag6,))
         return matched
-
+    
     return inner
-
-
+    
 parse_choices_a_progress = _parse_choices_a_progress()
 
-
 def _parse_choices_b_progress() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("choices_b_progress", 0)
-
+    rule_frame = RuleFrame('choices_b_progress', 0)
+    
     def inner(state: State, pairs: list[Pair]) -> bool:
         """Parse choices_b_progress."""
         pos1 = state.pos
@@ -513,27 +433,16 @@ def _parse_choices_b_progress() -> Callable[[State, list[Pair]], bool]:
         else:
             tag6 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag6,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag6,))
         return matched
-
+    
     return inner
-
-
+    
 parse_choices_b_progress = _parse_choices_b_progress()
 
-
 def _parse_level1() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("level1", 2)
-
+    rule_frame = RuleFrame('level1', 2)
+    
     def inner(state: State, pairs: list[Pair]) -> bool:
         """Parse level1."""
         state.rule_stack.push(rule_frame)
@@ -545,16 +454,14 @@ def _parse_level1() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'level1'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_level1 = _parse_level1()
 
-
 def _parse_level2() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("level2", 2)
-
+    rule_frame = RuleFrame('level2', 2)
+    
     def inner(state: State, pairs: list[Pair]) -> bool:
         """Parse level2."""
         state.rule_stack.push(rule_frame)
@@ -600,16 +507,14 @@ def _parse_level2() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'level2'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_level2 = _parse_level2()
 
-
 def _parse_negative() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("negative", 2)
-
+    rule_frame = RuleFrame('negative', 2)
+    
     def inner(state: State, pairs: list[Pair]) -> bool:
         """Parse negative."""
         state.rule_stack.push(rule_frame)
@@ -634,16 +539,14 @@ def _parse_negative() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'negative'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_negative = _parse_negative()
 
-
 def _parse_negative_match() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("negative_match", 2)
-
+    rule_frame = RuleFrame('negative_match', 2)
+    
     def inner(state: State, pairs: list[Pair]) -> bool:
         """Parse negative_match."""
         state.rule_stack.push(rule_frame)
@@ -685,16 +588,14 @@ def _parse_negative_match() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'negative_match'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_negative_match = _parse_negative_match()
 
-
 def _parse_mixed() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("mixed", 2)
-
+    rule_frame = RuleFrame('mixed', 2)
+    
     def inner(state: State, pairs: list[Pair]) -> bool:
         """Parse mixed."""
         state.rule_stack.push(rule_frame)
@@ -742,16 +643,14 @@ def _parse_mixed() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'mixed'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_mixed = _parse_mixed()
 
-
 def _parse_mixed_progress() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("mixed_progress", 2)
-
+    rule_frame = RuleFrame('mixed_progress', 2)
+    
     def inner(state: State, pairs: list[Pair]) -> bool:
         """Parse mixed_progress."""
         state.rule_stack.push(rule_frame)
@@ -829,35 +728,31 @@ def _parse_mixed_progress() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'mixed_progress'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_mixed_progress = _parse_mixed_progress()
-
 
 def parse_trivia(state: State, pairs: list[Pair]) -> bool:
     return True
 
-
 _RULE_MAP: dict[str, Callable[[State, list[Pair]], bool]] = {
-    "EOI": parse_EOI,
-    "a": parse_a,
-    "b": parse_b,
-    "c": parse_c,
-    "d": parse_d,
-    "choices": parse_choices,
-    "choices_no_progress": parse_choices_no_progress,
-    "choices_a_progress": parse_choices_a_progress,
-    "choices_b_progress": parse_choices_b_progress,
-    "level1": parse_level1,
-    "level2": parse_level2,
-    "negative": parse_negative,
-    "negative_match": parse_negative_match,
-    "mixed": parse_mixed,
-    "mixed_progress": parse_mixed_progress,
+    'EOI': parse_EOI,
+    'a': parse_a,
+    'b': parse_b,
+    'c': parse_c,
+    'd': parse_d,
+    'choices': parse_choices,
+    'choices_no_progress': parse_choices_no_progress,
+    'choices_a_progress': parse_choices_a_progress,
+    'choices_b_progress': parse_choices_b_progress,
+    'level1': parse_level1,
+    'level2': parse_level2,
+    'negative': parse_negative,
+    'negative_match': parse_negative_match,
+    'mixed': parse_mixed,
+    'mixed_progress': parse_mixed_progress,
 }
-
 
 def parse(start_rule: str, input_: str, *, start_pos: int = 0) -> Pairs:
     """Parse `input_` starting from `rule`."""
@@ -866,10 +761,4 @@ def parse(start_rule: str, input_: str, *, start_pos: int = 0) -> Pairs:
     matched = _RULE_MAP[start_rule](state, pairs)
     if matched:
         return Pairs(pairs)
-    pos = state.pos
-    line = state.input.count("\n", 0, pos) + 1
-    col = pos - state.input.rfind("\n", 0, pos)
-    expected = " or ".join(state.furthest_expected)
-    stack = " > ".join(f.name for f in state.furthest_stack)
-    msg = f"Expected {expected} at line {line}, column {col} (in {stack})"
-    raise PestParsingError(msg, [], [], state.pos, "", (line, col))
+    raise PestParsingError(state.furthest_stack, list(state.furthest_expected), [], state.furthest_pos, *error_context(state.input, state.furthest_pos),)

@@ -43,7 +43,7 @@ class State:
 
         # Failure tracking
         self.furthest_pos = -1
-        self.furthest_expected: list[str] = []
+        self.furthest_expected: dict[str, int] = {}
         self.furthest_stack: list[RuleFrame] = []
 
         self.user_stack = Stack[str]()  # PUSH/POP/PEEK/DROP
@@ -150,12 +150,11 @@ class State:
 
         if self.pos > self.furthest_pos:
             self.furthest_pos = self.pos
-            self.furthest_expected = [expected]
+            self.furthest_expected = {expected: 1}
             self.furthest_stack = list(self.rule_stack)
         elif self.pos == self.furthest_pos:
             # multiple expected tokens at same position
-            if expected not in self.furthest_expected:
-                self.furthest_expected.append(expected)
+            self.furthest_expected[expected] = 1
 
 
 class RuleFrame:

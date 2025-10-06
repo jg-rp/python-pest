@@ -8,6 +8,7 @@ from typing import Never
 
 from .checkpoint_int import SnapshottingInt
 from .exceptions import PestParsingError
+from .exceptions import error_context
 from .grammar.expression import Match
 from .grammar.rule import Rule
 from .stack import Stack
@@ -90,31 +91,9 @@ class ParserState:
 
     def raise_failure(self) -> Never:
         """Return a PestParsingError populated with context info."""
-        if not self.furthest_failure:
-            raise PestParsingError("no parse attempts recorded", [], [], -1, "", (0, 0))
-
         pos, expr = self.furthest_failure
-
-        # if not attempts:
-        #     raise PestParsingError(
-        #         f"error at {pos}: unknown failure", [], [], pos, "", (0, 0)
-        #     )
-
-        # positive = furthest.positive
-
-        line = self.input.count("\n", 0, pos) + 1
-        col = pos - self.input.rfind("\n", 0, pos)
-        found = self.input[pos : pos + 10] or "end of input"
-
-        context = "expected"  # if positive else "unexpected"
-
-        msg = (
-            f"error at {line}:{col} in {expr.name}: "
-            f"{context} {expr.expression}, found {found!r}"
-        )
-
-        # TODO: current line
-        raise PestParsingError(msg, [], [], pos, "", (line, col))
+        # TODO: pass rule_stack and positives
+        raise PestParsingError([], [], [], pos, *error_context(self.input, pos))
 
     def parse_implicit_rules(self, pos: int) -> Iterator[Match]:
         """Parse any implicit rules (`WHITESPACE` and `COMMENT`) starting at `pos`.

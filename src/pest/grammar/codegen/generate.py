@@ -24,6 +24,7 @@ from typing import TYPE_CHECKING
 import regex as re
 
 from pest.exceptions import PestParsingError
+from pest.exceptions import error_context
 from pest.grammar.codegen.state import RuleFrame
 from pest.grammar.codegen.state import State
 from pest.pairs import Pair
@@ -232,16 +233,12 @@ def generate_parse_entry_point() -> str:
         with gen.block():
             gen.writeln("return Pairs(pairs)")
 
-        # TODO: Better error messages
-        gen.writeln("pos = state.pos")
-        gen.writeln('line = state.input.count("\\n", 0, pos) + 1')
-        gen.writeln('col = pos - state.input.rfind("\\n", 0, pos)')
-        # gen.writeln('found = state.input[pos : pos + 10] or "end of input"')
-        gen.writeln('expected = " or ".join(state.furthest_expected)')
-        gen.writeln('stack = " > ".join(f.name for f in state.furthest_stack)')
         gen.writeln(
-            'msg = f"Expected {expected} at line {line}, column {col} (in {stack})"'
+            "raise PestParsingError("
+            "state.furthest_stack, "
+            "list(state.furthest_expected), [], "
+            "state.furthest_pos, "
+            "*error_context(state.input, state.furthest_pos),)"
         )
-        gen.writeln("raise PestParsingError(msg, [], [], state.pos, '', (line, col))")
 
     return gen.render()
