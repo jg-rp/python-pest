@@ -42,6 +42,7 @@ class Rule(StrEnum):
     FAC = "fac"
     PRIMARY = "primary"
     INT = "int"
+    IDENT = "ident"
 
 
 def _parse_EOI() -> Callable[[State, list[Pair]], bool]:
@@ -268,6 +269,17 @@ def _parse_expr() -> Callable[[State, list[Pair]], bool]:
                 else:
                     state.restore()
                     children7.clear()
+            if not matched3:
+                state.checkpoint()
+                # <Identifier>
+                matched3 = parse_ident(state, children7)
+                # </Identifier>
+                if matched3:
+                    state.ok()
+                    children2.extend(children7)
+                else:
+                    state.restore()
+                    children7.clear()
             # </Choice>
             if not matched3:
                 all_ok4 = False
@@ -457,6 +469,17 @@ def _parse_expr() -> Callable[[State, list[Pair]], bool]:
                                 all_ok21 = False
                         matched14 = all_ok21
                         # </Sequence>
+                        if matched14:
+                            state.ok()
+                            children12.extend(children19)
+                        else:
+                            state.restore()
+                            children19.clear()
+                    if not matched14:
+                        state.checkpoint()
+                        # <Identifier>
+                        matched14 = parse_ident(state, children19)
+                        # </Identifier>
                         if matched14:
                             state.ok()
                             children12.extend(children19)
@@ -1002,6 +1025,17 @@ def _parse_primary() -> Callable[[State, list[Pair]], bool]:
             else:
                 state.restore()
                 children3.clear()
+        if not matched:
+            state.checkpoint()
+            # <Identifier>
+            matched = parse_ident(state, children3)
+            # </Identifier>
+            if matched:
+                state.ok()
+                children2.extend(children3)
+            else:
+                state.restore()
+                children3.clear()
         # </Choice>
         state.rule_stack.pop()
         # Silent rule 'primary'
@@ -1153,6 +1187,89 @@ def _parse_int() -> Callable[[State, list[Pair]], bool]:
 parse_int = _parse_int()
 
 
+def _parse_ident() -> Callable[[State, list[Pair]], bool]:
+    RE5 = re.compile("[A-Za-z]", re.VERSION1)
+    RE8 = re.compile("[A-Za-z]", re.VERSION1)
+
+    rule_frame = RuleFrame("ident", 4)
+
+    def inner(state: State, pairs: list[Pair]) -> bool:
+        """Parse ident."""
+        pos1 = state.pos
+        state.rule_stack.push(rule_frame)
+        children2: list[Pair] = []
+        with state.atomic_checkpoint():
+            state.atomic_depth += 1
+            # <Sequence n=2>
+            all_ok4 = True
+            if all_ok4:
+                matched3 = False
+                # <ChoiceRegex>
+                if match := RE5.match(state.input, state.pos):
+                    state.pos = match.end()
+                    matched3 = True
+                else:
+                    matched3 = False
+                # </ChoiceRegex>
+                if not matched3:
+                    all_ok4 = False
+                if all_ok4:
+                    parse_trivia(state, children2)
+            if all_ok4:
+                matched3 = False
+                # <Repeat>
+                trivia_pos7 = state.pos
+                children6: list[Pair] = []
+                while True:
+                    state.checkpoint()
+                    # <ChoiceRegex>
+                    if match := RE8.match(state.input, state.pos):
+                        state.pos = match.end()
+                        matched3 = True
+                    else:
+                        matched3 = False
+                    # </ChoiceRegex>
+                    if matched3:
+                        state.ok()
+                        children2.extend(children6)
+                        children6.clear()
+                        trivia_pos7 = state.pos
+                        parse_trivia(state, children6)
+                    else:
+                        state.restore()
+                        state.pos = trivia_pos7
+                        matched3 = True
+                        break
+                # </Repeat>
+                if not matched3:
+                    all_ok4 = False
+            matched = all_ok4
+            # </Sequence>
+        state.rule_stack.pop()
+        if state.tag_stack:
+            tag9: str | None = state.tag_stack.pop()
+        else:
+            tag9 = None
+        # Atomic rule: 'ident'
+        if matched:
+            pairs.append(
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    [],
+                    tag9,
+                )
+            )
+        return matched
+
+    return inner
+
+
+parse_ident = _parse_ident()
+
+
 def parse_trivia(state: State, pairs: list[Pair]) -> bool:
     if state.atomic_depth > 0:
         return True
@@ -1187,6 +1304,7 @@ _RULE_MAP: dict[str, Callable[[State, list[Pair]], bool]] = {
     "fac": parse_fac,
     "primary": parse_primary,
     "int": parse_int,
+    "ident": parse_ident,
 }
 
 
