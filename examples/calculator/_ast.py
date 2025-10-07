@@ -29,13 +29,13 @@ class IntExpr(Expression):
 
 
 class PrefixExpr(Expression):
-    def __init__(self, op: Callable[[int], int], expr: Expression) -> None:
+    def __init__(self, op: Callable[[int], int], right: Expression) -> None:
         super().__init__()
         self.op = op
-        self.expr = expr
+        self.right = right
 
     def evaluate(self, variables: dict[str, int]) -> int:
-        return self.op(self.expr.evaluate(variables))
+        return self.op(self.right.evaluate(variables))
 
 
 class InfixExpr(Expression):

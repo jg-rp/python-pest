@@ -150,7 +150,7 @@ class Pair:
         return str(self)
 
     def __iter__(self) -> Iterator[Pair]:
-        return iter(Pairs(self.children))
+        return iter(self.children)
 
     def inner(self) -> Pairs:
         """Return inner pairs between this token pair."""
