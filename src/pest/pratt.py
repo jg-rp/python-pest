@@ -60,8 +60,8 @@ class PrattParser(ABC, Generic[ExprT]):
             raise SyntaxError("Unexpected end of expression")
 
         # Handle prefix operators or primary expression
-        if token.rule.name in self.PREFIX_OPS:
-            prec = self.PREFIX_OPS[token.rule.name]
+        if token.name in self.PREFIX_OPS:
+            prec = self.PREFIX_OPS[token.name]
             rhs = self.parse_expr(stream, prec)
             left: ExprT = self.parse_prefix(token, rhs)
         else:
@@ -74,14 +74,14 @@ class PrattParser(ABC, Generic[ExprT]):
                 break
 
             # Postfix operator
-            if next_token.rule.name in self.POSTFIX_OPS:
+            if next_token.name in self.POSTFIX_OPS:
                 stream.next()
                 left = self.parse_postfix(left, next_token)
                 continue
 
             # Infix operator
-            if next_token.rule.name in self.INFIX_OPS:
-                prec, right_assoc = self.INFIX_OPS[next_token.rule.name]
+            if next_token.name in self.INFIX_OPS:
+                prec, right_assoc = self.INFIX_OPS[next_token.name]
                 if prec < min_prec:
                     break
                 stream.next()

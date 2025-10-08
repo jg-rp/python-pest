@@ -286,6 +286,6 @@ class Stream:
 
     def peek(self) -> Pair | None:
         """Return the next pair without advancing the stream."""
-        if self.pos < len(self.pairs) - 1:
-            return self.pairs[self.pos + 1]
+        if self.pos < len(self.pairs):
+            return self.pairs[self.pos]
         return None

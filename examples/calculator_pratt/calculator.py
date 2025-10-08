@@ -31,6 +31,8 @@ from ._ast import VarExpr
 from .parser import Rule
 from .parser import parse
 
+# TODO: test me
+
 
 class CalculatorParser(PrattParser[Expression]):
     """Example Pratt parser for a calculator grammar."""
@@ -49,7 +51,7 @@ class CalculatorParser(PrattParser[Expression]):
 
     def parse(self, program: str) -> Expression:
         pairs = parse(Rule.PROGRAM, program)
-        # TODO:
+        return self.parse_expr(pairs.first().inner().first().stream())
 
     def parse_primary(self, pair: Pair) -> Expression:
         match pair:
@@ -86,3 +88,13 @@ class CalculatorParser(PrattParser[Expression]):
                 return InfixExpr(pow, lhs, rhs)
             case _:
                 raise SyntaxError(f"Unknown infix operator {op.text!r}")
+
+
+def example() -> None:
+    parser = CalculatorParser()
+    expr = parser.parse("x + y")
+    print(expr.evaluate({"x": 4, "y": 5}))
+
+
+if __name__ == "__main__":
+    example()
