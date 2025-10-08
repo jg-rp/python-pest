@@ -6,8 +6,6 @@ from abc import ABC
 from abc import abstractmethod
 from typing import TYPE_CHECKING
 from typing import Generic
-from typing import List
-from typing import Sequence
 from typing import TypeVar
 
 from .exceptions import JSONPathTypeError
@@ -16,6 +14,8 @@ from .serialize import canonical_string
 from .types import ExpressionType
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from pest import Pair
 
     from .function_extensions import FilterFunction
@@ -118,7 +118,7 @@ class FilterExpressionLiteral(Expression, Generic[LITERAL_T]):
     def __hash__(self) -> int:
         return hash(self.value)
 
-    def evaluate(self, _: FilterContext) -> LITERAL_T:
+    def evaluate(self, context: FilterContext) -> LITERAL_T:  # noqa: ARG002
         """Return the value associated with this literal."""
         return self.value
 
@@ -216,7 +216,6 @@ class LogicalExpression(Expression):
 
     def evaluate(self, context: FilterContext) -> bool:
         """Evaluate the filter expression in the given _context_."""
-        # TODO: sort circuit eval of right if left is false
         return _compare(
             self.left.evaluate(context), self.operator, self.right.evaluate(context)
         )
@@ -291,7 +290,7 @@ class RelativeFilterQuery(FilterQuery):
                 return context.current
             return JSONPathNodeList()
 
-        return JSONPathNodeList(self.query.find(context.current))
+        return JSONPathNodeList(self.query.find(context.current))  # type: ignore
 
 
 class RootFilterQuery(FilterQuery):
@@ -323,7 +322,6 @@ class FunctionExtension(Expression):
         self.name = name
         self.args = args
         self.func = func
-        # TODO: assert well typed
 
     def __str__(self) -> str:
         args = [str(arg) for arg in self.args]
@@ -342,9 +340,9 @@ class FunctionExtension(Expression):
         return self.func(*self._unpack_node_lists(self.func, args))
 
     def _unpack_node_lists(
-        self, func: FilterFunction, args: List[object]
-    ) -> List[object]:
-        _args: List[object] = []
+        self, func: FilterFunction, args: list[object]
+    ) -> list[object]:
+        _args: list[object] = []
         for idx, arg in enumerate(args):
             if func.arg_types[idx] != ExpressionType.NODES and isinstance(
                 arg, JSONPathNodeList

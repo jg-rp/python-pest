@@ -11,7 +11,7 @@ def grammar() -> str:
 
 def test_select(parser: Parser) -> None:
     pairs = parser.parse("Command", "select * from table")
-    assert pairs.as_list() == [
+    assert pairs.dump() == [
         {
             "rule": "Query",
             "span": {"str": "select * from table", "start": 0, "end": 19},
@@ -78,7 +78,7 @@ def test_create_user(parser: Parser) -> None:
     pairs = parser.parse(
         "Command", """create user "my_user" with password 'strong_password123'"""
     )
-    assert pairs.as_list() == [
+    assert pairs.dump() == [
         {
             "rule": "CreateUser",
             "span": {
@@ -122,7 +122,7 @@ def test_insert_from_select(parser: Parser) -> None:
                   where "age" > 15
                   group by "age"''',
     )
-    assert pairs.as_list() == [
+    assert pairs.dump() == [
         {
             "rule": "Query",
             "span": {

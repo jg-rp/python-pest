@@ -18,7 +18,7 @@ def grammar() -> str:
 
 def test_item(parser: Parser) -> None:
     pairs = parser.parse("lists", "- a")
-    assert pairs.as_list() == [
+    assert pairs.dump() == [
         {"rule": "item", "span": {"str": "a", "start": 2, "end": 3}, "inner": []},
         {"rule": "EOI", "span": {"str": "", "start": 3, "end": 3}, "inner": []},
     ]
@@ -26,7 +26,7 @@ def test_item(parser: Parser) -> None:
 
 def test_items(parser: Parser) -> None:
     pairs = parser.parse("lists", "- a\n- b")
-    assert pairs.as_list() == [
+    assert pairs.dump() == [
         {"rule": "item", "span": {"str": "a", "start": 2, "end": 3}, "inner": []},
         {"rule": "item", "span": {"str": "b", "start": 6, "end": 7}, "inner": []},
         {"rule": "EOI", "span": {"str": "", "start": 7, "end": 7}, "inner": []},
@@ -35,7 +35,7 @@ def test_items(parser: Parser) -> None:
 
 def test_children(parser: Parser) -> None:
     pairs = parser.parse("children", "  - b")
-    assert pairs.as_list() == [
+    assert pairs.dump() == [
         {
             "rule": "children",
             "span": {"str": "  - b", "start": 0, "end": 5},
@@ -52,7 +52,7 @@ def test_children(parser: Parser) -> None:
 
 def test_nested_item(parser: Parser) -> None:
     pairs = parser.parse("lists", "- a\n  - b")
-    assert pairs.as_list() == [
+    assert pairs.dump() == [
         {"rule": "item", "span": {"str": "a", "start": 2, "end": 3}, "inner": []},
         {
             "rule": "children",
@@ -71,7 +71,7 @@ def test_nested_item(parser: Parser) -> None:
 
 def test_nested_items(parser: Parser) -> None:
     pairs = parser.parse("lists", "- a\n  - b\n  - c")
-    assert pairs.as_list() == [
+    assert pairs.dump() == [
         {"rule": "item", "span": {"str": "a", "start": 2, "end": 3}, "inner": []},
         {
             "rule": "children",
@@ -95,7 +95,7 @@ def test_nested_items(parser: Parser) -> None:
 
 def test_nested_two_levels(parser: Parser) -> None:
     pairs = parser.parse("lists", "- a\n  - b\n    - c")
-    assert pairs.as_list() == [
+    assert pairs.dump() == [
         {"rule": "item", "span": {"str": "a", "start": 2, "end": 3}, "inner": []},
         {
             "rule": "children",
@@ -125,7 +125,7 @@ def test_nested_two_levels(parser: Parser) -> None:
 
 def test_nested_then_not(parser: Parser) -> None:
     pairs = parser.parse("lists", "- a\n  - b\n- c")
-    assert pairs.as_list() == [
+    assert pairs.dump() == [
         {"rule": "item", "span": {"str": "a", "start": 2, "end": 3}, "inner": []},
         {
             "rule": "children",

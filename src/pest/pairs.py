@@ -79,8 +79,6 @@ class Span(NamedTuple):
         end_line_number, _ = self.end_pos().line_col()
         return lines[start_line_number - 1 : end_line_number]
 
-    # TODO: lines_span()?
-
 
 class Position(NamedTuple):
     """A position in a string as a Unicode codepoint offset."""
@@ -171,7 +169,7 @@ class Pair:
         """Return the (start, end) span of this node as a named tuple."""
         return Span(self.input, self.start, self.end)
 
-    def as_dict(self) -> dict[str, object]:
+    def dump(self) -> dict[str, object]:
         """Return a pest-debug-like JSON structure."""
         d: dict[str, object] = {
             "rule": self.rule.name,
@@ -180,7 +178,7 @@ class Pair:
                 "start": self.start,
                 "end": self.end,
             },
-            "inner": [child.as_dict() for child in self.children],
+            "inner": [child.dump() for child in self.children],
         }
 
         if self.tag is not None:
@@ -235,10 +233,9 @@ class Pairs(Sequence[Pair]):
         """Return pairs as a stream that can be stepped through."""
         return Stream(self._pairs)
 
-    # TODO: rename to "serialize" or "dump" or "dumps"
-    def as_list(self) -> list[dict[str, object]]:
+    def dump(self) -> list[dict[str, object]]:
         """Return list of pest-debug-like JSON dicts."""
-        return [pair.as_dict() for pair in self._pairs]
+        return [pair.dump() for pair in self._pairs]
 
     def flatten(self) -> Iterator[Pair]:
         """Generate a flat stream of pairs."""

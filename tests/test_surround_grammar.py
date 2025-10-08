@@ -18,7 +18,7 @@ def grammar() -> str:
 
 def test_item(parser: Parser) -> None:
     pairs = parser.parse("Quote", "(abc)")
-    assert pairs.as_list() == [
+    assert pairs.dump() == [
         {
             "rule": "QuoteChars",
             "span": {"str": "abc", "start": 1, "end": 4},

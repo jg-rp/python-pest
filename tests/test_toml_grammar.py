@@ -11,14 +11,14 @@ def grammar() -> str:
 
 def test_boolean_rule(parser: Parser) -> None:
     pairs = parser.parse("boolean", "true")
-    assert pairs.as_list() == [
+    assert pairs.dump() == [
         {"rule": "boolean", "span": {"str": "true", "start": 0, "end": 4}, "inner": []}
     ]
 
 
 def test_integer_rule(parser: Parser) -> None:
     pairs = parser.parse("integer", "+1_000_0")
-    assert pairs.as_list() == [
+    assert pairs.dump() == [
         {
             "rule": "integer",
             "span": {"str": "+1_000_0", "start": 0, "end": 8},
@@ -29,7 +29,7 @@ def test_integer_rule(parser: Parser) -> None:
 
 def test_float_rule(parser: Parser) -> None:
     pairs = parser.parse("float", "+1_0.0_1e+100")
-    assert pairs.as_list() == [
+    assert pairs.dump() == [
         {
             "rule": "float",
             "span": {"str": "+1_0.0_1e+100", "start": 0, "end": 13},
@@ -40,7 +40,7 @@ def test_float_rule(parser: Parser) -> None:
 
 def test_partial_time_rule(parser: Parser) -> None:
     pairs = parser.parse("partial_time", "12:34:56.000")
-    assert pairs.as_list() == [
+    assert pairs.dump() == [
         {
             "rule": "partial_time",
             "span": {"str": "12:34:56.000", "start": 0, "end": 12},
@@ -72,7 +72,7 @@ def test_partial_time_rule(parser: Parser) -> None:
 
 def test_full_date_rule(parser: Parser) -> None:
     pairs = parser.parse("full_date", "2001-12-13")
-    assert pairs.as_list() == [
+    assert pairs.dump() == [
         {
             "rule": "full_date",
             "span": {"str": "2001-12-13", "start": 0, "end": 10},
@@ -99,7 +99,7 @@ def test_full_date_rule(parser: Parser) -> None:
 
 def test_local_date_time_rule(parser: Parser) -> None:
     pairs = parser.parse("local_date_time", "2001-12-13T12:34:56.000")
-    assert pairs.as_list() == [
+    assert pairs.dump() == [
         {
             "rule": "local_date_time",
             "span": {"str": "2001-12-13T12:34:56.000", "start": 0, "end": 23},
@@ -158,7 +158,7 @@ def test_local_date_time_rule(parser: Parser) -> None:
 
 def test_date_time_rule(parser: Parser) -> None:
     pairs = parser.parse("date_time", "2001-12-13T12:34:56.000Z")
-    assert pairs.as_list() == [
+    assert pairs.dump() == [
         {
             "rule": "date_time",
             "span": {"str": "2001-12-13T12:34:56.000Z", "start": 0, "end": 24},
@@ -228,14 +228,14 @@ def test_date_time_rule(parser: Parser) -> None:
 
 def test_literal_rule(parser: Parser) -> None:
     pairs = parser.parse("literal", "'\"'")
-    assert pairs.as_list() == [
+    assert pairs.dump() == [
         {"rule": "literal", "span": {"str": "'\"'", "start": 0, "end": 3}, "inner": []}
     ]
 
 
 def test_multi_line_literal_rule(parser: Parser) -> None:
     pairs = parser.parse("multi_line_literal", "'''\"'''")
-    assert pairs.as_list() == [
+    assert pairs.dump() == [
         {
             "rule": "multi_line_literal",
             "span": {"str": "'''\"'''", "start": 0, "end": 7},
@@ -246,14 +246,14 @@ def test_multi_line_literal_rule(parser: Parser) -> None:
 
 def test_string_rule(parser: Parser) -> None:
     pairs = parser.parse("string", '"\\n"')
-    assert pairs.as_list() == [
+    assert pairs.dump() == [
         {"rule": "string", "span": {"str": '"\\n"', "start": 0, "end": 4}, "inner": []}
     ]
 
 
 def test_multi_line_string_rule(parser: Parser) -> None:
     pairs = parser.parse("multi_line_string", '""" \\n """')
-    assert pairs.as_list() == [
+    assert pairs.dump() == [
         {
             "rule": "multi_line_string",
             "span": {"str": '""" \\n """', "start": 0, "end": 10},
@@ -264,14 +264,14 @@ def test_multi_line_string_rule(parser: Parser) -> None:
 
 def test_empty_array(parser: Parser) -> None:
     pairs = parser.parse("array", "[ ]")
-    assert pairs.as_list() == [
+    assert pairs.dump() == [
         {"rule": "array", "span": {"str": "[ ]", "start": 0, "end": 3}, "inner": []}
     ]
 
 
 def test_array_rule(parser: Parser) -> None:
     pairs = parser.parse("array", "['', 2017-08-09, 20.0]")
-    assert pairs.as_list() == [
+    assert pairs.dump() == [
         {
             "rule": "array",
             "span": {"str": "['', 2017-08-09, 20.0]", "start": 0, "end": 22},
@@ -314,7 +314,7 @@ def test_array_rule(parser: Parser) -> None:
 
 def test_inline_table_rule(parser: Parser) -> None:
     pairs = parser.parse("inline_table", "{ a = 'b' }")
-    assert pairs.as_list() == [
+    assert pairs.dump() == [
         {
             "rule": "inline_table",
             "span": {"str": "{ a = 'b' }", "start": 0, "end": 11},
@@ -342,7 +342,7 @@ def test_inline_table_rule(parser: Parser) -> None:
 
 def test_table_rule(parser: Parser) -> None:
     pairs = parser.parse("table", "[a.b]\nc = 'd'")
-    assert pairs.as_list() == [
+    assert pairs.dump() == [
         {
             "rule": "table",
             "span": {"str": "[a.b]\nc = 'd'", "start": 0, "end": 13},
@@ -380,7 +380,7 @@ def test_table_rule(parser: Parser) -> None:
 
 def test_array_table_rule(parser: Parser) -> None:
     pairs = parser.parse("array_table", "[[a.b]]\nc = 'd'")
-    assert pairs.as_list() == [
+    assert pairs.dump() == [
         {
             "rule": "array_table",
             "span": {"str": "[[a.b]]\nc = 'd'", "start": 0, "end": 15},

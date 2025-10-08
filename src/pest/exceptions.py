@@ -35,7 +35,6 @@ class PestParsingError(Exception):
 
     def detailed_message(self) -> str:
         """Return an error message formatted with extra context info."""
-        # TODO: use rule_stack
         msg = self.args[0]
         pad = " " * len(str(self.lineno))
         pointer = (" " * self.col) + "^"
@@ -123,7 +122,7 @@ def join_with_limit(items: list[str], separator: str = ", ", limit: int = 80) ->
         return joined
 
     # Try to fit as many items as possible, then add suffix
-    result_parts = []
+    result_parts: list[str] = []
     current_length = 0
     for idx, item in enumerate(items):
         sep_len = len(separator) if result_parts else 0

@@ -196,7 +196,6 @@ class ParserState:
     def suppress(self, *, negative: bool = False) -> Iterator[ParserState]:
         """A context manager that resets parser state on exit."""
         self.user_stack.snapshot()
-        # TODO: rule stack too?
         self.atomic_depth.snapshot()
         if negative:
             self.neg_pred_depth += 1

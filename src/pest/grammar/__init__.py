@@ -1,4 +1,4 @@
-from typing import Mapping
+from collections.abc import Mapping
 
 from .expression import Expression
 from .expression import RegexExpression
@@ -9,8 +9,8 @@ from .expressions.postfix import Repeat
 from .expressions.postfix import RepeatExact
 from .expressions.postfix import RepeatMax
 from .expressions.postfix import RepeatMin
-from .expressions.postfix import RepeatOnce
 from .expressions.postfix import RepeatMinMax
+from .expressions.postfix import RepeatOnce
 from .expressions.prefix import NegativePredicate
 from .expressions.sequence import Sequence
 from .expressions.terminals import CIString

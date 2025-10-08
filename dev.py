@@ -17,4 +17,4 @@ from tmp import Rule
 from tmp import parse
 
 pairs = parse(Rule.CHOICES, "x")
-print(json.dumps(pairs.as_list(), indent=2))
+print(json.dumps(pairs.dump(), indent=2))

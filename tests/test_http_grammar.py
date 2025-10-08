@@ -11,28 +11,28 @@ def grammar() -> str:
 
 def test_method_rule(parser: Parser) -> None:
     pairs = parser.parse("method", "GET")
-    assert pairs.as_list() == [
+    assert pairs.dump() == [
         {"rule": "method", "span": {"str": "GET", "start": 0, "end": 3}, "inner": []}
     ]
 
 
 def test_uri_rule(parser: Parser) -> None:
     pairs = parser.parse("uri", "/")
-    assert pairs.as_list() == [
+    assert pairs.dump() == [
         {"rule": "uri", "span": {"str": "/", "start": 0, "end": 1}, "inner": []}
     ]
 
 
 def test_version_rule(parser: Parser) -> None:
     pairs = parser.parse("version", "1.1")
-    assert pairs.as_list() == [
+    assert pairs.dump() == [
         {"rule": "version", "span": {"str": "1.1", "start": 0, "end": 3}, "inner": []}
     ]
 
 
 def test_header(parser: Parser) -> None:
     pairs = parser.parse("header", "Connection: keep-alive\n")
-    assert pairs.as_list() == [
+    assert pairs.dump() == [
         {
             "rule": "header",
             "span": {"str": "Connection: keep-alive\n", "start": 0, "end": 23},
