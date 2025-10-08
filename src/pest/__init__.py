@@ -7,6 +7,7 @@ from .pairs import Pairs
 from .pairs import Stream
 from .pairs import Token
 from .parser import Parser
+from .pratt import PrattParser
 
 __all__ = (
     "DEFAULT_OPTIMIZER",
@@ -18,4 +19,5 @@ __all__ = (
     "Parser",
     "Stream",
     "Token",
+    "PrattParser",
 )

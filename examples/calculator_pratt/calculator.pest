@@ -14,3 +14,4 @@ program      =   { SOI ~ expr ~ EOI }
       fac    =   { "!" } // Factorial
     primary  =  _{ int | "(" ~ expr ~ ")" }
       int    =  @{ (ASCII_NONZERO_DIGIT ~ ASCII_DIGIT+ | ASCII_DIGIT) }
+      ident  =  @{ ASCII_ALPHA+ }

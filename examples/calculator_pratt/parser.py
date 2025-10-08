@@ -269,17 +269,6 @@ def _parse_expr() -> Callable[[State, list[Pair]], bool]:
                 else:
                     state.restore()
                     children7.clear()
-            if not matched3:
-                state.checkpoint()
-                # <Identifier>
-                matched3 = parse_ident(state, children7)
-                # </Identifier>
-                if matched3:
-                    state.ok()
-                    children2.extend(children7)
-                else:
-                    state.restore()
-                    children7.clear()
             # </Choice>
             if not matched3:
                 all_ok4 = False
@@ -469,17 +458,6 @@ def _parse_expr() -> Callable[[State, list[Pair]], bool]:
                                 all_ok21 = False
                         matched14 = all_ok21
                         # </Sequence>
-                        if matched14:
-                            state.ok()
-                            children12.extend(children19)
-                        else:
-                            state.restore()
-                            children19.clear()
-                    if not matched14:
-                        state.checkpoint()
-                        # <Identifier>
-                        matched14 = parse_ident(state, children19)
-                        # </Identifier>
                         if matched14:
                             state.ok()
                             children12.extend(children19)
@@ -1019,17 +997,6 @@ def _parse_primary() -> Callable[[State, list[Pair]], bool]:
                     all_ok5 = False
             matched = all_ok5
             # </Sequence>
-            if matched:
-                state.ok()
-                children2.extend(children3)
-            else:
-                state.restore()
-                children3.clear()
-        if not matched:
-            state.checkpoint()
-            # <Identifier>
-            matched = parse_ident(state, children3)
-            # </Identifier>
             if matched:
                 state.ok()
                 children2.extend(children3)
