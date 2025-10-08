@@ -156,6 +156,10 @@ class Pair:
         """Return inner pairs between this token pair."""
         return Pairs(self.children)
 
+    def stream(self) -> Stream:
+        """Return inner pairs as a stream."""
+        return Pairs(self.children).stream()
+
     def tokens(self) -> Iterator[Token]:
         """Yield start and end tokens for this pair and any children in between."""
         yield Start(self.rule, self.start)
@@ -227,6 +231,10 @@ class Pairs(Sequence[Pair]):
         for pair in self._pairs:
             yield from pair.tokens()
 
+    def stream(self) -> Stream:
+        """Return pairs as a stream that can be stepped through."""
+        return Stream(self._pairs)
+
     # TODO: rename to "serialize" or "dump" or "dumps"
     def as_list(self) -> list[dict[str, object]]:
         """Return list of pest-debug-like JSON dicts."""
@@ -257,3 +265,30 @@ class Pairs(Sequence[Pair]):
     def find_tagged(self, label: str) -> Iterator[Pair]:
         """Iterate over pairs tagged with `label`."""
         return (p for p in self.flatten() if p.tag == label)
+
+
+class Stream:
+    """Step through pairs of tokens."""
+
+    def __init__(self, pairs: list[Pair]):
+        self.pos = 0
+        self.pairs = pairs
+
+    def next(self) -> Pair | None:
+        """Return the next pair and advance the stream."""
+        if self.pos < len(self.pairs):
+            pair = self.pairs[self.pos]
+            self.pos += 1
+            return pair
+        return None
+
+    def backup(self) -> None:
+        """Go back one position in the stream."""
+        if self.pos > 0:
+            self.pos -= 1
+
+    def peek(self) -> Pair | None:
+        """Return the next pair without advancing the stream."""
+        if self.pos < len(self.pairs) - 1:
+            return self.pairs[self.pos + 1]
+        return None

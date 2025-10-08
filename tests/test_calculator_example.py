@@ -3,6 +3,15 @@ import sys
 
 import pytest
 
+from pest import Parser
+
+# Always regenerate the calculator parser before running tests.
+with open("examples/calculator/calculator.pest", encoding="utf-8") as fd:
+    parser = Parser.from_grammar(fd.read())
+
+with open("examples/calculator/parser.py", "w", encoding="utf-8") as fd:
+    fd.write(parser.generate())
+
 sys.path.append(os.getcwd())
 
 from examples.calculator._ast import Expression
@@ -11,19 +20,16 @@ from examples.calculator._ast import IntExpr
 from examples.calculator._ast import PostfixExpr
 from examples.calculator._ast import PrefixExpr
 from examples.calculator._ast import VarExpr
-from examples.calculator.calculator import CalculatorSyntaxError
-from examples.calculator.calculator import Pairs
-from examples.calculator.calculator import parse_expr
+from examples.calculator.calculator import parse_program
 from examples.calculator.parser import Rule
-from examples.calculator.parser import parse  # TODO: dynamically generate parser
+from examples.calculator.parser import parse
 from pest import PestParsingError
 
 
 def parse_expression(source: str) -> Expression:
     """Helper to parse a full expression string into an AST node."""
     pairs = parse(Rule.PROGRAM, source)
-    # TODO: update me
-    return parse_expr(Pairs(pairs.first().inner().first().children))
+    return parse_program(pairs)
 
 
 def eval_expr(source: str, env: dict[str, int] | None = None) -> int:

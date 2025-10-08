@@ -4,6 +4,7 @@ from .grammar.optimizer import DEFAULT_OPTIMIZER_PASSES
 from .grammar.optimizer import Optimizer
 from .pairs import Pair
 from .pairs import Pairs
+from .pairs import Stream
 from .pairs import Token
 from .parser import Parser
 
@@ -15,5 +16,6 @@ __all__ = (
     "Pair",
     "Pairs",
     "Parser",
+    "Stream",
     "Token",
 )

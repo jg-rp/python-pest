@@ -1,3 +1,3 @@
-from .calculator import main
+from .calculator import example
 
-main()
+example()
