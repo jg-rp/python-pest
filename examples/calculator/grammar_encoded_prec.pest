@@ -34,6 +34,6 @@ prefix      =  { (neg)* ~ postfix }
 postfix     =  { primary ~ (fac)* }
   fac       =  { "!" }
 
-primary     =  { int | ident | "(" ~ expr ~ ")" }
+primary     = _{ int | ident | "(" ~ expr ~ ")" }
   int       = @{ (ASCII_NONZERO_DIGIT ~ ASCII_DIGIT* | "0") }
   ident     = @{ ASCII_ALPHA+ }
