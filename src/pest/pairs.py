@@ -1,4 +1,4 @@
-"""A `Token` and `Pairs` interface to our internal `Node` data structure."""
+"""A `Token` and `Pairs` interface to our grammar parse tree."""
 
 from __future__ import annotations
 
@@ -33,12 +33,16 @@ class Token:
 class Start(Token):
     """A token indicating the start of a rule."""
 
+    __slots__ = ()
+
     def __repr__(self) -> str:
         return f"Start(rule={self.rule.name!r}, pos={self.pos})"
 
 
 class End(Token):
     """A token indicating the end of a rule."""
+
+    __slots__ = ()
 
     def __repr__(self) -> str:
         return f"End(rule={self.rule.name!r}, pos={self.pos})"
@@ -187,6 +191,32 @@ class Pair:
 
         return d
 
+    def dumps(self, indent: int = 0, *, new_line: bool = True) -> str:
+        """Return a string representation of this token pair and all its children.
+
+        Translated of the `format_pair` function found in the source for pest.rs.
+
+        https://github.com/pest-parser/site/blob/master/src/lib.rs.
+        """
+        n = len(self.children)
+        _indent = "  " * indent if new_line else ""
+        dash = "- " if new_line else ""
+        pair_tag = f"{self.tag} " if self.tag else ""
+
+        children = [
+            pair.dumps(indent + 1 if n > 1 else indent, new_line=n > 1)
+            for pair in self.children
+        ]
+
+        if n == 0:
+            return f"{_indent}{dash}{pair_tag}{self.name}: {json.dumps(self.text)}"
+
+        if n == 1:
+            return f"{_indent}{dash}{pair_tag}{self.name} > {children[0]}"
+
+        _children = "\n".join(children)
+        return f"{_indent}{dash}{pair_tag}{self.name}\n{_children}"
+
     def line_col(self) -> tuple[int, int]:
         """Return the line and column number of this pair's start position."""
         return self.span().start_pos().line_col()
@@ -203,7 +233,7 @@ class Pair:
 
 
 class Pairs(Sequence[Pair]):
-    """An iterable over instances of `Pair`."""
+    """An sequence of token pairs."""
 
     __slots__ = ("_pairs",)
 
@@ -235,15 +265,17 @@ class Pairs(Sequence[Pair]):
         return Stream(self._pairs)
 
     def dump(self) -> list[dict[str, object]]:
-        """Return list of pest-debug-like JSON dicts."""
+        """Return pairs as a JSON-like list of dicts."""
         return [pair.dump() for pair in self._pairs]
 
-    def dumps(self) -> str:
+    def dumps(self, *, compact: bool = True) -> str:
         """Return a JSON formatted string representation of this node."""
+        if compact:
+            return "\n".join(pair.dumps() for pair in self._pairs)
         return json.dumps(self.dump(), indent=2, sort_keys=False)
 
     def flatten(self) -> Iterator[Pair]:
-        """Generate a flat stream of pairs."""
+        """Generate a flat pairs iterator."""
 
         def _flatten(pair: Pair) -> Iterator[Pair]:
             yield pair
@@ -271,6 +303,8 @@ class Pairs(Sequence[Pair]):
 
 class Stream:
     """Step through pairs of tokens."""
+
+    __slots__ = ("pos", "pairs")
 
     def __init__(self, pairs: list[Pair]):
         self.pos = 0
