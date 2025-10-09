@@ -49,6 +49,8 @@ from .unescape import unescape_string
 with open("examples/jsonpath/jsonpath.pest", encoding="utf-8") as fd:
     grammar = fd.read()
 
+# TODO: convert to use generated parser
+
 
 class Rule(StrEnum):
     """JSONPath grammar rules."""

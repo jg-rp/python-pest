@@ -1,4 +1,8 @@
-"""A `Token` and `Pairs` interface to our grammar parse tree."""
+"""A `Token` and `Pair` interface to a grammar parse tree.
+
+This module provides classes for representing tokens, pairs, and sequences of pairs
+in a grammar parse tree, as well as utilities for traversing and inspecting the tree.
+"""
 
 from __future__ import annotations
 
@@ -49,7 +53,10 @@ class End(Token):
 
 
 class Span(NamedTuple):
-    """A half-open interval [start, end) into the input string."""
+    """A half-open interval [start, end) into the input string.
+
+    Represents a substring of the input, along with its start and end positions.
+    """
 
     text: str
     start: int
@@ -86,13 +93,20 @@ class Span(NamedTuple):
 
 
 class Position(NamedTuple):
-    """A position in a string as a Unicode codepoint offset."""
+    """A position in a string as a Unicode codepoint offset.
+
+    Provides utilities for determining line and column numbers.
+    """
 
     text: str
     pos: int
 
     def line_col(self) -> tuple[int, int]:
-        """Return the line an column number of this position."""
+        """Return the line and column number of this position.
+
+        Returns:
+            A tuple (line_number, column_number), both 1-based.
+        """
         lines = self.text.splitlines(keepends=True)
         cumulative_length = 0
         target_line_index = -1
@@ -120,7 +134,19 @@ class Position(NamedTuple):
 
 
 class Pair:
-    """A matching pair of Tokens and everything between them."""
+    """A matching pair of Tokens and everything between them.
+
+    Represents a node in the parse tree, corresponding to a matched rule and its
+    children.
+
+    Args:
+        input_: The input string.
+        start: Start position in the input.
+        end: End position in the input.
+        rule: The rule or rule frame this pair represents.
+        children: List of child pairs (subrules).
+        tag: Optional tag for this node.
+    """
 
     __slots__ = ("children", "end", "input", "name", "rule", "start", "tag")
     __match_args__ = ("name", "children", "start", "end")
@@ -171,11 +197,11 @@ class Pair:
         yield End(self.rule, self.end)
 
     def span(self) -> Span:
-        """Return the (start, end) span of this node as a named tuple."""
+        """Return the (start, end) span of this node."""
         return Span(self.input, self.start, self.end)
 
     def dump(self) -> dict[str, object]:
-        """Return a pest-debug-like JSON structure."""
+        """Return a pest-debug-like JSON structure representing this pair."""
         d: dict[str, object] = {
             "rule": self.rule.name,
             "span": {
@@ -194,7 +220,7 @@ class Pair:
     def dumps(self, indent: int = 0, *, new_line: bool = True) -> str:
         """Return a string representation of this token pair and all its children.
 
-        Translated of the `format_pair` function found in the source for pest.rs.
+        Translated from the `format_pair` function found in the source for pest.rs.
 
         https://github.com/pest-parser/site/blob/master/src/lib.rs.
         """
@@ -233,7 +259,13 @@ class Pair:
 
 
 class Pairs(Sequence[Pair]):
-    """An sequence of token pairs."""
+    """A sequence of token pairs.
+
+    Provides sequence and utility methods for working with lists of Pair objects.
+
+    Args:
+        pairs: List of Pair objects.
+    """
 
     __slots__ = ("_pairs",)
 
@@ -256,7 +288,7 @@ class Pairs(Sequence[Pair]):
         return self._pairs[index]
 
     def tokens(self) -> Iterator[Token]:
-        """Yield start and end tokens for each pair."""
+        """Yield start and end tokens for each pair in the sequence."""
         for pair in self._pairs:
             yield from pair.tokens()
 
@@ -269,13 +301,20 @@ class Pairs(Sequence[Pair]):
         return [pair.dump() for pair in self._pairs]
 
     def dumps(self, *, compact: bool = True) -> str:
-        """Return a JSON formatted string representation of this node."""
+        """Return a JSON formatted string representation of this node.
+
+        Args:
+            compact: If True, returns a compact string; otherwise, pretty-prints JSON.
+
+        Returns:
+            A string representation of the pairs.
+        """
         if compact:
             return "\n".join(pair.dumps() for pair in self._pairs)
         return json.dumps(self.dump(), indent=2, sort_keys=False)
 
     def flatten(self) -> Iterator[Pair]:
-        """Generate a flat pairs iterator."""
+        """Generate a flat iterator over all pairs and their descendants."""
 
         def _flatten(pair: Pair) -> Iterator[Pair]:
             yield pair
@@ -286,23 +325,44 @@ class Pairs(Sequence[Pair]):
             yield from _flatten(pair)
 
     def first(self) -> Pair:
-        """Return the single root pair."""
+        """Return the single root pair.
+
+        Returns:
+            The first Pair in the sequence.
+        """
         return self[0]
 
     def find_first_tagged(self, label: str) -> Pair | None:
-        """Finds the first pair that has its node tagged with `label`."""
+        """Finds the first pair that has its node tagged with `label`.
+
+        Args:
+            label: The tag to search for.
+
+        Returns:
+            The first Pair with the given tag, or None if not found.
+        """
         for pair in self.flatten():
             if pair.tag == label:
                 return pair
         return None
 
     def find_tagged(self, label: str) -> Iterator[Pair]:
-        """Iterate over pairs tagged with `label`."""
+        """Iterate over pairs tagged with `label`.
+
+        Args:
+            label: The tag to search for.
+
+        Returns:
+            An iterator over all Pairs with the given tag.
+        """
         return (p for p in self.flatten() if p.tag == label)
 
 
 class Stream:
-    """Step through pairs of tokens."""
+    """Step through pairs of tokens.
+
+    Provides a simple interface for sequential access to a list of Pair objects.
+    """
 
     __slots__ = ("pos", "pairs")
 
@@ -311,7 +371,11 @@ class Stream:
         self.pairs = pairs
 
     def next(self) -> Pair | None:
-        """Return the next pair and advance the stream."""
+        """Return the next pair and advance the stream.
+
+        Returns:
+            The next Pair, or None if at the end of the stream.
+        """
         if self.pos < len(self.pairs):
             pair = self.pairs[self.pos]
             self.pos += 1
@@ -319,12 +383,16 @@ class Stream:
         return None
 
     def backup(self) -> None:
-        """Go back one position in the stream."""
+        """Go back one position in the stream, if possible."""
         if self.pos > 0:
             self.pos -= 1
 
     def peek(self) -> Pair | None:
-        """Return the next pair without advancing the stream."""
+        """Return the next pair without advancing the stream.
+
+        Returns:
+            The next Pair, or None if at the end of the stream.
+        """
         if self.pos < len(self.pairs):
             return self.pairs[self.pos]
         return None

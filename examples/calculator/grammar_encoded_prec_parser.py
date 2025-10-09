@@ -42,10 +42,8 @@ class Rule(StrEnum):
     POW_OP = "pow_op"
     POW = "pow"
     PREFIX = "prefix"
-    PREFIX_OP = "prefix_op"
     NEG = "neg"
     POSTFIX = "postfix"
-    POSTFIX_OP = "postfix_op"
     FAC = "fac"
     PRIMARY = "primary"
     INT = "int"
@@ -703,54 +701,48 @@ def _parse_pow_expr() -> Callable[[State, list[Pair]], bool]:
                 parse_trivia(state, children2)
         if all_ok4:
             matched3 = False
-            # <Repeat>
-            trivia_pos6 = state.pos
+            # <Optional>
             children5: list[Pair] = []
-            while True:
-                state.checkpoint()
-                # <Group>
-                # <Sequence n=2>
-                all_ok8 = True
-                if all_ok8:
-                    matched7 = False
-                    # <Identifier>
-                    matched7 = parse_pow(state, children5)
-                    # </Identifier>
-                    if not matched7:
-                        all_ok8 = False
-                    if all_ok8:
-                        parse_trivia(state, children5)
-                if all_ok8:
-                    matched7 = False
-                    # <Identifier>
-                    matched7 = parse_prefix(state, children5)
-                    # </Identifier>
-                    if not matched7:
-                        all_ok8 = False
-                matched3 = all_ok8
-                # </Sequence>
-                # </Group>
-                if matched3:
-                    state.ok()
-                    children2.extend(children5)
-                    children5.clear()
-                    trivia_pos6 = state.pos
+            state.checkpoint()
+            # <Group>
+            # <Sequence n=2>
+            all_ok7 = True
+            if all_ok7:
+                matched6 = False
+                # <Identifier>
+                matched6 = parse_pow(state, children5)
+                # </Identifier>
+                if not matched6:
+                    all_ok7 = False
+                if all_ok7:
                     parse_trivia(state, children5)
-                else:
-                    state.restore()
-                    state.pos = trivia_pos6
-                    matched3 = True
-                    break
-            # </Repeat>
+            if all_ok7:
+                matched6 = False
+                # <Identifier>
+                matched6 = parse_pow_expr(state, children5)
+                # </Identifier>
+                if not matched6:
+                    all_ok7 = False
+            matched3 = all_ok7
+            # </Sequence>
+            # </Group>
+            if matched3:
+                state.ok()
+                children2.extend(children5)
+            else:
+                state.restore()
+                children5.clear()
+            matched3 = True
+            # </Optional>
             if not matched3:
                 all_ok4 = False
         matched = all_ok4
         # </Sequence>
         state.rule_stack.pop()
         if state.tag_stack:
-            tag9: str | None = state.tag_stack.pop()
+            tag8: str | None = state.tag_stack.pop()
         else:
-            tag9 = None
+            tag8 = None
         if matched:
             pairs.append(
                 Pair(
@@ -759,7 +751,7 @@ def _parse_pow_expr() -> Callable[[State, list[Pair]], bool]:
                     state.pos,
                     rule_frame,
                     children2,
-                    tag9,
+                    tag8,
                 )
             )
         return matched
@@ -848,9 +840,11 @@ def _parse_prefix() -> Callable[[State, list[Pair]], bool]:
             children5: list[Pair] = []
             while True:
                 state.checkpoint()
+                # <Group>
                 # <Identifier>
                 matched3 = parse_neg(state, children5)
                 # </Identifier>
+                # </Group>
                 if matched3:
                     state.ok()
                     children2.extend(children5)
@@ -898,27 +892,6 @@ def _parse_prefix() -> Callable[[State, list[Pair]], bool]:
 
 
 parse_prefix = _parse_prefix()
-
-
-def _parse_prefix_op() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("prefix_op", 2)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
-        """Parse prefix_op."""
-        state.rule_stack.push(rule_frame)
-        children2: list[Pair] = []
-        # <Identifier>
-        matched = parse_neg(state, children2)
-        # </Identifier>
-        state.rule_stack.pop()
-        # Silent rule 'prefix_op'
-        pairs.extend(children2)
-        return matched
-
-    return inner
-
-
-parse_prefix_op = _parse_prefix_op()
 
 
 def _parse_neg() -> Callable[[State, list[Pair]], bool]:
@@ -973,79 +946,9 @@ def _parse_postfix() -> Callable[[State, list[Pair]], bool]:
         all_ok4 = True
         if all_ok4:
             matched3 = False
-            # <Choice>
-            children5: list[Pair] = []
-            matched3 = False
-            if not matched3:
-                state.checkpoint()
-                # <Identifier>
-                matched3 = parse_int(state, children5)
-                # </Identifier>
-                if matched3:
-                    state.ok()
-                    children2.extend(children5)
-                else:
-                    state.restore()
-                    children5.clear()
-            if not matched3:
-                state.checkpoint()
-                # <Identifier>
-                matched3 = parse_ident(state, children5)
-                # </Identifier>
-                if matched3:
-                    state.ok()
-                    children2.extend(children5)
-                else:
-                    state.restore()
-                    children5.clear()
-            if not matched3:
-                state.checkpoint()
-                # <Sequence n=3>
-                all_ok7 = True
-                if all_ok7:
-                    matched6 = False
-                    # <String>
-                    if state.input.startswith("(", state.pos):
-                        state.pos += 1
-                        matched6 = True
-                    else:
-                        matched6 = False
-                        state.fail('"("')
-                    # </String>
-                    if not matched6:
-                        all_ok7 = False
-                    if all_ok7:
-                        parse_trivia(state, children5)
-                if all_ok7:
-                    matched6 = False
-                    # <Identifier>
-                    matched6 = parse_expr(state, children5)
-                    # </Identifier>
-                    if not matched6:
-                        all_ok7 = False
-                    if all_ok7:
-                        parse_trivia(state, children5)
-                if all_ok7:
-                    matched6 = False
-                    # <String>
-                    if state.input.startswith(")", state.pos):
-                        state.pos += 1
-                        matched6 = True
-                    else:
-                        matched6 = False
-                        state.fail('")"')
-                    # </String>
-                    if not matched6:
-                        all_ok7 = False
-                matched3 = all_ok7
-                # </Sequence>
-                if matched3:
-                    state.ok()
-                    children2.extend(children5)
-                else:
-                    state.restore()
-                    children5.clear()
-            # </Choice>
+            # <Identifier>
+            matched3 = parse_primary(state, children2)
+            # </Identifier>
             if not matched3:
                 all_ok4 = False
             if all_ok4:
@@ -1053,22 +956,24 @@ def _parse_postfix() -> Callable[[State, list[Pair]], bool]:
         if all_ok4:
             matched3 = False
             # <Repeat>
-            trivia_pos9 = state.pos
-            children8: list[Pair] = []
+            trivia_pos6 = state.pos
+            children5: list[Pair] = []
             while True:
                 state.checkpoint()
+                # <Group>
                 # <Identifier>
-                matched3 = parse_fac(state, children8)
+                matched3 = parse_fac(state, children5)
                 # </Identifier>
+                # </Group>
                 if matched3:
                     state.ok()
-                    children2.extend(children8)
-                    children8.clear()
-                    trivia_pos9 = state.pos
-                    parse_trivia(state, children8)
+                    children2.extend(children5)
+                    children5.clear()
+                    trivia_pos6 = state.pos
+                    parse_trivia(state, children5)
                 else:
                     state.restore()
-                    state.pos = trivia_pos9
+                    state.pos = trivia_pos6
                     matched3 = True
                     break
             # </Repeat>
@@ -1078,9 +983,9 @@ def _parse_postfix() -> Callable[[State, list[Pair]], bool]:
         # </Sequence>
         state.rule_stack.pop()
         if state.tag_stack:
-            tag10: str | None = state.tag_stack.pop()
+            tag7: str | None = state.tag_stack.pop()
         else:
-            tag10 = None
+            tag7 = None
         if matched:
             pairs.append(
                 Pair(
@@ -1089,7 +994,7 @@ def _parse_postfix() -> Callable[[State, list[Pair]], bool]:
                     state.pos,
                     rule_frame,
                     children2,
-                    tag10,
+                    tag7,
                 )
             )
         return matched
@@ -1098,27 +1003,6 @@ def _parse_postfix() -> Callable[[State, list[Pair]], bool]:
 
 
 parse_postfix = _parse_postfix()
-
-
-def _parse_postfix_op() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("postfix_op", 2)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
-        """Parse postfix_op."""
-        state.rule_stack.push(rule_frame)
-        children2: list[Pair] = []
-        # <Identifier>
-        matched = parse_fac(state, children2)
-        # </Identifier>
-        state.rule_stack.pop()
-        # Silent rule 'postfix_op'
-        pairs.extend(children2)
-        return matched
-
-    return inner
-
-
-parse_postfix_op = _parse_postfix_op()
 
 
 def _parse_fac() -> Callable[[State, list[Pair]], bool]:
@@ -1162,10 +1046,11 @@ parse_fac = _parse_fac()
 
 
 def _parse_primary() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("primary", 2)
+    rule_frame = RuleFrame("primary", 0)
 
     def inner(state: State, pairs: list[Pair]) -> bool:
         """Parse primary."""
+        pos1 = state.pos
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
         # <Choice>
@@ -1242,8 +1127,21 @@ def _parse_primary() -> Callable[[State, list[Pair]], bool]:
                 children3.clear()
         # </Choice>
         state.rule_stack.pop()
-        # Silent rule 'primary'
-        pairs.extend(children2)
+        if state.tag_stack:
+            tag6: str | None = state.tag_stack.pop()
+        else:
+            tag6 = None
+        if matched:
+            pairs.append(
+                Pair(
+                    state.input,
+                    pos1,
+                    state.pos,
+                    rule_frame,
+                    children2,
+                    tag6,
+                )
+            )
         return matched
 
     return inner
@@ -1255,8 +1153,6 @@ parse_primary = _parse_primary()
 def _parse_int() -> Callable[[State, list[Pair]], bool]:
     RE6 = re.compile("[1-9]", re.I)
     RE9 = re.compile("[0-9]", re.I)
-    RE12 = re.compile("[0-9]", re.I)
-    RE13 = re.compile("[0-9]", re.I)
 
     rule_frame = RuleFrame("int", 4)
 
@@ -1291,53 +1187,31 @@ def _parse_int() -> Callable[[State, list[Pair]], bool]:
                         parse_trivia(state, children3)
                 if all_ok5:
                     matched4 = False
-                    # <Sequence n=2>
-                    all_ok8 = True
-                    if all_ok8:
-                        matched7 = False
+                    # <Repeat>
+                    trivia_pos8 = state.pos
+                    children7: list[Pair] = []
+                    while True:
+                        state.checkpoint()
                         # <Range>
                         if match := RE9.match(state.input, state.pos):
                             state.pos = match.end()
-                            matched7 = True
+                            matched4 = True
                         else:
-                            matched7 = False
+                            matched4 = False
                             state.fail("''0''..''9''")
                         # </Range>
-                        if not matched7:
-                            all_ok8 = False
-                        if all_ok8:
-                            parse_trivia(state, children3)
-                    if all_ok8:
-                        matched7 = False
-                        # <Repeat>
-                        trivia_pos11 = state.pos
-                        children10: list[Pair] = []
-                        while True:
-                            state.checkpoint()
-                            # <Range>
-                            if match := RE12.match(state.input, state.pos):
-                                state.pos = match.end()
-                                matched7 = True
-                            else:
-                                matched7 = False
-                                state.fail("''0''..''9''")
-                            # </Range>
-                            if matched7:
-                                state.ok()
-                                children3.extend(children10)
-                                children10.clear()
-                                trivia_pos11 = state.pos
-                                parse_trivia(state, children10)
-                            else:
-                                state.restore()
-                                state.pos = trivia_pos11
-                                matched7 = True
-                                break
-                        # </Repeat>
-                        if not matched7:
-                            all_ok8 = False
-                    matched4 = all_ok8
-                    # </Sequence>
+                        if matched4:
+                            state.ok()
+                            children3.extend(children7)
+                            children7.clear()
+                            trivia_pos8 = state.pos
+                            parse_trivia(state, children7)
+                        else:
+                            state.restore()
+                            state.pos = trivia_pos8
+                            matched4 = True
+                            break
+                    # </Repeat>
                     if not matched4:
                         all_ok5 = False
                 matched = all_ok5
@@ -1350,14 +1224,14 @@ def _parse_int() -> Callable[[State, list[Pair]], bool]:
                     children3.clear()
             if not matched:
                 state.checkpoint()
-                # <Range>
-                if match := RE13.match(state.input, state.pos):
-                    state.pos = match.end()
+                # <String>
+                if state.input.startswith("0", state.pos):
+                    state.pos += 1
                     matched = True
                 else:
                     matched = False
-                    state.fail("''0''..''9''")
-                # </Range>
+                    state.fail('"0"')
+                # </String>
                 if matched:
                     state.ok()
                     children2.extend(children3)
@@ -1368,9 +1242,9 @@ def _parse_int() -> Callable[[State, list[Pair]], bool]:
             # </Group>
         state.rule_stack.pop()
         if state.tag_stack:
-            tag14: str | None = state.tag_stack.pop()
+            tag10: str | None = state.tag_stack.pop()
         else:
-            tag14 = None
+            tag10 = None
         # Atomic rule: 'int'
         if matched:
             pairs.append(
@@ -1380,7 +1254,7 @@ def _parse_int() -> Callable[[State, list[Pair]], bool]:
                     state.pos,
                     rule_frame,
                     [],
-                    tag14,
+                    tag10,
                 )
             )
         return matched
@@ -1508,10 +1382,8 @@ _RULE_MAP: dict[str, Callable[[State, list[Pair]], bool]] = {
     "pow_op": parse_pow_op,
     "pow": parse_pow,
     "prefix": parse_prefix,
-    "prefix_op": parse_prefix_op,
     "neg": parse_neg,
     "postfix": parse_postfix,
-    "postfix_op": parse_postfix_op,
     "fac": parse_fac,
     "primary": parse_primary,
     "int": parse_int,

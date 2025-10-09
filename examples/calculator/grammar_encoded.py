@@ -1,4 +1,4 @@
-"""Example grammar encoded parser for a calculator grammar.
+"""Example parser with grammar encoded precedence for a calculator grammar.
 
 If running this from the root of the Python pest repo, use
 `python -m examples.calculator.grammar_encoded`
@@ -42,93 +42,138 @@ def parse_expr(pair: Pair) -> Expression:
 
 def parse_add_sub(pair: Pair) -> Expression:
     match pair:
-        case Pair(Rule.ADD_SUB, [single]):
-            return parse_mul_div(single)
-        case Pair(Rule.ADD_SUB, [left, op, right, *rest]):
-            left_expr = InfixExpr(
-                add if op.name == "add" else sub,
-                parse_mul_div(left),
-                parse_mul_div(right),
-            )
-            # fold any remaining ops in sequence
-            while rest:
-                op, right, *rest = rest
-                func = add if op.name == "add" else sub
-                left_expr = InfixExpr(func, left_expr, parse_mul_div(right))
-            return left_expr
+        case Pair(Rule.ADD_SUB, [first, *rest]):
+            left = parse_mul_div(first)
+            return parse_add_sub_inner(left, rest)
         case _:
             raise SyntaxError(f"unexpected structure in add_sub: {pair}")
 
 
+def parse_add_sub_inner(left: Expression, pairs: list[Pair]) -> Expression:
+    match pairs:
+        case []:
+            return left
+        case [op, right, *tail]:
+            func = add if op.name == "add" else sub
+            right_expr = parse_mul_div(right)
+            new_left = InfixExpr(func, left, right_expr)
+            return parse_add_sub_inner(new_left, tail)
+        case _:
+            raise SyntaxError(f"unexpected remainder in add_sub: {pairs}")
+
+
 def parse_mul_div(pair: Pair) -> Expression:
     match pair:
-        case Pair(Rule.MUL_DIV, [single]):
-            return parse_pow_expr(single)
-        case Pair(Rule.MUL_DIV, [left, op, right, *rest]):
-            left_expr = InfixExpr(
-                mul if op.name == "mul" else floordiv,
-                parse_pow_expr(left),
-                parse_pow_expr(right),
-            )
-            while rest:
-                op, right, *rest = rest
-                func = mul if op.name == "mul" else floordiv
-                left_expr = InfixExpr(func, left_expr, parse_pow_expr(right))
-            return left_expr
+        case Pair(Rule.MUL_DIV, [first, *rest]):
+            left = parse_pow_expr(first)
+            return parse_mul_div_inner(left, rest)
         case _:
             raise SyntaxError(f"unexpected structure in mul_div: {pair}")
 
 
+def parse_mul_div_inner(left: Expression, pairs: list[Pair]) -> Expression:
+    match pairs:
+        case []:
+            return left
+        case [op, right, *tail]:
+            func = mul if op.name == "mul" else floordiv
+            right_expr = parse_pow_expr(right)
+            new_left = InfixExpr(func, left, right_expr)
+            return parse_mul_div_inner(new_left, tail)
+        case _:
+            raise SyntaxError(f"unexpected remainder in mul_div: {pairs}")
+
+
 def parse_pow_expr(pair: Pair) -> Expression:
     match pair:
-        case Pair("pow_expr", [prefix]):
-            return parse_prefix(prefix)
-        case Pair("pow_expr", [left, op, right]):
-            return InfixExpr(pow, parse_prefix(left), parse_pow_expr(right))
+        case Pair(Rule.POW_EXPR, [first, *rest]):
+            left = parse_prefix(first)
+            return parse_pow_expr_inner(left, rest)
         case _:
             raise SyntaxError(f"unexpected structure in pow_expr: {pair}")
 
 
+def parse_pow_expr_inner(left: Expression, pairs: list[Pair]) -> Expression:
+    match pairs:
+        case []:
+            # No further ^ operators — just return the left side.
+            return left
+
+        case [_op, right]:
+            # Exactly one remaining '^' pair: recurse on the right-hand expression.
+            right_expr = parse_pow_expr(right)
+            return InfixExpr(pow, left, right_expr)
+
+        case [_op, right, *tail]:
+            # Grammar shouldn't produce extra elements, but be defensive.
+            right_expr = parse_pow_expr(right)
+            expr = InfixExpr(pow, left, right_expr)
+            return parse_pow_expr_inner(expr, tail)
+
+        case _:
+            raise SyntaxError(f"unexpected remainder in pow_expr: {pairs}")
+
+
 def parse_prefix(pair: Pair) -> Expression:
+    print("**\n", pair.dumps())
     match pair:
-        case Pair("prefix", [postfix]):
-            return parse_postfix(postfix)
-        case Pair("prefix", [op, rest]):
-            expr = parse_prefix(rest)
-            if op.name == "neg":
-                return PrefixExpr(neg, expr)
-            raise SyntaxError(f"unknown prefix op {op.name}")
+        case Pair(Rule.PREFIX, [first, *rest]):
+            expr = parse_postfix(first)
+            return parse_prefix_inner(expr, rest)
         case _:
             raise SyntaxError(f"unexpected structure in prefix: {pair}")
 
 
+def parse_prefix_inner(expr: Expression, pairs: list[Pair]) -> Expression:
+    match pairs:
+        case []:
+            return expr
+        case [op, *tail]:
+            if op.name == "neg":
+                new_expr = PrefixExpr(neg, expr)
+                return parse_prefix_inner(new_expr, tail)
+            raise SyntaxError(f"unknown prefix operator {op.name}")
+        case _:
+            raise SyntaxError(f"unexpected remainder in prefix: {pairs}")
+
+
 def parse_postfix(pair: Pair) -> Expression:
     match pair:
-        case Pair("postfix", [primary]):
-            return parse_primary(primary)
-        case Pair("postfix", [inner, op]):
-            expr = parse_primary(inner)
-            if op.name == "fac":
-                return PostfixExpr(factorial, expr)
-            raise SyntaxError(f"unknown postfix op {op.name}")
+        case Pair(Rule.POSTFIX, [first, *rest]):
+            expr = parse_primary(first)
+            return parse_postfix_inner(expr, rest)
         case _:
-            raise SyntaxError(f"unexpected structure in postfix: {pair}")
+            raise SyntaxError(f"unexpected structure in postfix: {pair!r}")
+
+
+def parse_postfix_inner(expr: Expression, pairs: list[Pair]) -> Expression:
+    match pairs:
+        case []:
+            return expr
+        case [op, *tail]:
+            if op.name == "fac":
+                new_expr = PostfixExpr(factorial, expr)
+                return parse_postfix_inner(new_expr, tail)
+            raise SyntaxError(f"unknown postfix operator {op.name}")
+        case _:
+            raise SyntaxError(f"unexpected remainder in postfix: {pairs}")
 
 
 def parse_primary(pair: Pair) -> Expression:
     match pair:
-        case Pair("int", []):
+        case Pair(Rule.INT):
             return IntExpr(int(pair.text))
-        case Pair("ident", []):
+        case Pair(Rule.IDENT):
             return VarExpr(pair.text)
-        case Pair("expr", [inner]):
+        case Pair(Rule.EXPR, [inner]):
             return parse_add_sub(inner)
         case _:
             raise SyntaxError(f"unexpected structure in primary: {pair}")
 
 
 def example() -> None:
-    pairs = parse(Rule.PROGRAM, "1 + 2 + x")
+    pairs = parse(Rule.PROGRAM, "5")
+    print(pairs.dumps())
     prog = parse_program(pairs)
     print(prog.evaluate({"x": 42}))  # noqa: T201
 

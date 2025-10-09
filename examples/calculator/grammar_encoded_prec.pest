@@ -1,34 +1,39 @@
-// Precedence is encoded directly in rule hierarchy.
-// Highest precedence at the bottom (factorial, parentheses, literals).
+// Calculator grammar with operator precedence encoded in the grammar itself.
+// Compatible with the parse_* functions we discussed.
+//
+// Precedence (lowest → highest):
+//   1. + -      (add_sub)
+//   2. * /      (mul_div)
+//   3. ^        (pow_expr)
+//   4. prefix   (negation)
+//   5. postfix  (factorial)
+//   6. primary  (numbers, variables, parentheses)
 
-WHITESPACE   =  _{ " " | "\t" | NEWLINE }
+WHITESPACE  = _{ " " | "\t" | NEWLINE }
 
-program      =  { SOI ~ expr ~ EOI }
+program     =  { SOI ~ expr ~ EOI }
+expr        =  { add_sub }   // top-level expression
 
-expr         =  { add_sub }              // lowest precedence
+add_sub     =  { mul_div ~ (add_op ~ mul_div)* }
+add_op      = _{ add | sub }
+  add       =  { "+" }
+  sub       =  { "-" }
 
-add_sub      =  { mul_div ~ (add_op ~ mul_div)* }
-  add_op     =  _{ add | sub }
-    add      =  { "+" }
-    sub      =  { "-" }
+mul_div     =  { pow_expr ~ (mul_op ~ pow_expr)* }
+mul_op      = _{ mul | div }
+  mul       =  { "*" }
+  div       =  { "/" }
 
-mul_div      =  { pow_expr ~ (mul_op ~ pow_expr)* }
-  mul_op     =  _{ mul | div }
-    mul      =  { "*" }
-    div      =  { "/" }
+pow_expr    =  { prefix ~ (pow_op ~ pow_expr)? } // right-associative
+pow_op      = _{ pow }
+  pow       =  { "^" }
 
-pow_expr     =  { prefix ~ (pow_op ~ prefix)* }
-  pow_op     =  _{ pow }
-    pow      =  { "^" }
+prefix      =  { (neg)* ~ postfix }
+  neg       =  { "-" }
 
-prefix       =  { prefix_op* ~ postfix }
-  prefix_op  =  _{ neg }
-    neg      =  { "-" }
+postfix     =  { primary ~ (fac)* }
+  fac       =  { "!" }
 
-postfix      =  { primary ~ postfix_op* }
-  postfix_op =  _{ fac }
-    fac      =  { "!" }
-
-primary      =  _{ int | ident | "(" ~ expr ~ ")" }
-  int        =  @{ (ASCII_NONZERO_DIGIT ~ ASCII_DIGIT+ | ASCII_DIGIT) }
-  ident      =  @{ ASCII_ALPHA+ }
+primary     =  { int | ident | "(" ~ expr ~ ")" }
+  int       = @{ (ASCII_NONZERO_DIGIT ~ ASCII_DIGIT* | "0") }
+  ident     = @{ ASCII_ALPHA+ }
