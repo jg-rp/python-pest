@@ -31,7 +31,9 @@ from ._ast import VarExpr
 from .parser import Rule
 from .parser import parse
 
-# TODO: test me
+
+class CalculatorSyntaxError(Exception):
+    """Exception raised when there is a syntax error."""
 
 
 class CalculatorParser(PrattParser[Expression]):
@@ -62,17 +64,17 @@ class CalculatorParser(PrattParser[Expression]):
             case Pair(Rule.EXPR):
                 return self.parse_expr(pair.stream())
             case _:
-                raise SyntaxError(f"Unexpected {pair.text!r}")
+                raise CalculatorSyntaxError(f"unexpected {pair.text!r}")
 
     def parse_prefix(self, op: Pair, rhs: Expression) -> Expression:
         if op.rule.name == Rule.NEG:
             return PrefixExpr(neg, rhs)
-        raise SyntaxError(f"Unknown prefix operator {op.text!r}")
+        raise CalculatorSyntaxError(f"unknown prefix operator {op.text!r}")
 
     def parse_postfix(self, lhs: Expression, op: Pair) -> Expression:
         if op.rule.name == Rule.FAC:
             return PostfixExpr(factorial, lhs)
-        raise SyntaxError(f"Unknown postfix operator {op.text!r}")
+        raise CalculatorSyntaxError(f"unknown postfix operator {op.text!r}")
 
     def parse_infix(self, lhs: Expression, op: Pair, rhs: Expression) -> Expression:
         match op.rule.name:
@@ -87,7 +89,7 @@ class CalculatorParser(PrattParser[Expression]):
             case Rule.POW:
                 return InfixExpr(pow, lhs, rhs)
             case _:
-                raise SyntaxError(f"Unknown infix operator {op.text!r}")
+                raise CalculatorSyntaxError(f"unknown infix operator {op.text!r}")
 
 
 def example() -> None:

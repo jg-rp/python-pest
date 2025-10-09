@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 from typing import NamedTuple
@@ -236,6 +237,10 @@ class Pairs(Sequence[Pair]):
     def dump(self) -> list[dict[str, object]]:
         """Return list of pest-debug-like JSON dicts."""
         return [pair.dump() for pair in self._pairs]
+
+    def dumps(self) -> str:
+        """Return a JSON formatted string representation of this node."""
+        return json.dumps(self.dump(), indent=2, sort_keys=False)
 
     def flatten(self) -> Iterator[Pair]:
         """Generate a flat stream of pairs."""

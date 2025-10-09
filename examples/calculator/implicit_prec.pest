@@ -1,0 +1,34 @@
+// Precedence is encoded directly in rule hierarchy.
+// Highest precedence at the bottom (factorial, parentheses, literals).
+
+WHITESPACE   =  _{ " " | "\t" | NEWLINE }
+
+program      =  { SOI ~ expr ~ EOI }
+
+expr         =  { add_sub }              // lowest precedence
+
+add_sub      =  { mul_div ~ (add_op ~ mul_div)* }
+  add_op     =  _{ add | sub }
+    add      =  { "+" }
+    sub      =  { "-" }
+
+mul_div      =  { pow_expr ~ (mul_op ~ pow_expr)* }
+  mul_op     =  _{ mul | div }
+    mul      =  { "*" }
+    div      =  { "/" }
+
+pow_expr     =  { prefix ~ (pow_op ~ prefix)* }
+  pow_op     =  _{ pow }
+    pow      =  { "^" }
+
+prefix       =  { prefix_op* ~ postfix }
+  prefix_op  =  _{ neg }
+    neg      =  { "-" }
+
+postfix      =  { primary ~ postfix_op* }
+  postfix_op =  _{ fac }
+    fac      =  { "!" }
+
+primary      =  _{ int | ident | "(" ~ expr ~ ")" }
+  int        =  @{ (ASCII_NONZERO_DIGIT ~ ASCII_DIGIT+ | ASCII_DIGIT) }
+  ident      =  @{ ASCII_ALPHA+ }

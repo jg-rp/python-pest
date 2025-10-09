@@ -1,3 +1,3 @@
-from .calculator import example
+from .prec_climber import example
 
 example()
