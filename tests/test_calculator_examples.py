@@ -14,10 +14,12 @@ with open("examples/calculator/calculator.pest", encoding="utf-8") as fd:
 with open("examples/calculator/parser.py", "w", encoding="utf-8") as fd:
     fd.write(_parser.generate())
 
-with open("examples/calculator/implicit_prec.pest") as fd:
+with open("examples/calculator/grammar_encoded_prec.pest") as fd:
     _parser = Parser.from_grammar(fd.read())
 
-with open("examples/calculator/implicit_prec_parser.py", "w", encoding="utf-8") as fd:
+with open(
+    "examples/calculator/grammar_encoded_prec_parser.py", "w", encoding="utf-8"
+) as fd:
     fd.write(_parser.generate())
 
 sys.path.append(os.getcwd())
@@ -28,8 +30,8 @@ from examples.calculator._ast import IntExpr
 from examples.calculator._ast import PostfixExpr
 from examples.calculator._ast import PrefixExpr
 from examples.calculator._ast import VarExpr
-from examples.calculator.implicit_prec import parse_program as parse_program_implicit
-from examples.calculator.implicit_prec_parser import parse as parse_implicit
+from examples.calculator.grammar_encoded import parse_program as parse_program_implicit
+from examples.calculator.grammar_encoded_prec_parser import parse as parse_implicit
 from examples.calculator.parser import Rule
 from examples.calculator.parser import parse
 from examples.calculator.pratt import CalculatorParser
