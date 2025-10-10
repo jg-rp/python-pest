@@ -533,6 +533,7 @@ def _parse_negative() -> Callable[[State, list[Pair]], bool]:
         else:
             state.restore()
             matched = False
+            state.fail('d')
         state.neg_pred_depth -= 1
         # </NegativePredicate>
         state.rule_stack.pop()
@@ -569,6 +570,7 @@ def _parse_negative_match() -> Callable[[State, list[Pair]], bool]:
             else:
                 state.restore()
                 matched3 = False
+                state.fail('a')
             state.neg_pred_depth -= 1
             # </NegativePredicate>
             if not matched3:
@@ -619,6 +621,7 @@ def _parse_mixed() -> Callable[[State, list[Pair]], bool]:
             else:
                 state.restore()
                 matched = False
+                state.fail('d')
             state.neg_pred_depth -= 1
             # </NegativePredicate>
             if matched:
@@ -679,6 +682,7 @@ def _parse_mixed_progress() -> Callable[[State, list[Pair]], bool]:
                 else:
                     state.restore()
                     matched3 = False
+                    state.fail('d')
                 state.neg_pred_depth -= 1
                 # </NegativePredicate>
                 if matched3:
@@ -761,4 +765,4 @@ def parse(start_rule: str, input_: str, *, start_pos: int = 0) -> Pairs:
     matched = _RULE_MAP[start_rule](state, pairs)
     if matched:
         return Pairs(pairs)
-    raise PestParsingError(state.furthest_stack, list(state.furthest_expected), [], state.furthest_pos, *error_context(state.input, state.furthest_pos),)
+    raise PestParsingError(state.furthest_stack, list(state.furthest_expected), list(state.furthest_unexpected), state.furthest_pos, *error_context(state.input, state.furthest_pos),)

@@ -21,6 +21,7 @@ class PestParsingError(Exception):
         lineno: int,
         col: int,
     ):
+        # TODO: use negatives
         super().__init__(f"expected {join_with_limit(positives, ' or ')}")
         self.rule_stack = rule_stack
         self.positives = positives

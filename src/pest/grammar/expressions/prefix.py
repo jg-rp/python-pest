@@ -124,6 +124,7 @@ class NegativePredicate(Expression):
             # Inner matched, so the negative predicate fails.
             gen.writeln("state.restore()")
             gen.writeln(f"{matched_var} = False")
+            gen.writeln(f"state.fail({str(self.expression)!r})")
 
         gen.writeln("state.neg_pred_depth -= 1")
         gen.writeln("# </NegativePredicate>")

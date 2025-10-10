@@ -236,7 +236,8 @@ def generate_parse_entry_point() -> str:
         gen.writeln(
             "raise PestParsingError("
             "state.furthest_stack, "
-            "list(state.furthest_expected), [], "
+            "list(state.furthest_expected), "
+            "list(state.furthest_unexpected), "
             "state.furthest_pos, "
             "*error_context(state.input, state.furthest_pos),)"
         )

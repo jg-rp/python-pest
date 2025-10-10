@@ -34,5 +34,5 @@ for record in file:
             raise Exception(f"unexpected rule {record.name!r}")
 
 
-print(f"Sum of fields: {field_sum}")
-print(f"Number of records: {record_count}")
+print(f"Sum of fields: {field_sum}")  # noqa: T201
+print(f"Number of records: {record_count}")  # noqa: T201

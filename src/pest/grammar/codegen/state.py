@@ -44,6 +44,7 @@ class State:
         # Failure tracking
         self.furthest_pos = -1
         self.furthest_expected: dict[str, int] = {}
+        self.furthest_unexpected: dict[str, int] = {}
         self.furthest_stack: list[RuleFrame] = []
 
         self.user_stack = Stack[str]()  # PUSH/POP/PEEK/DROP
@@ -143,18 +144,25 @@ class State:
             if self.tag_stack:
                 self.tag_stack.pop()
 
-    def fail(self, expected: str) -> None:
-        """Record a parsing failure at the current position."""
-        if self.neg_pred_depth > 0:
-            return  # failures in negative predicates are successes
+    def fail(self, label: str) -> None:
+        """Record a failure, inferring expected vs. unexpected context."""
+        is_neg_context = self.neg_pred_depth % 2 == 1
 
         if self.pos > self.furthest_pos:
             self.furthest_pos = self.pos
-            self.furthest_expected = {expected: 1}
             self.furthest_stack = list(self.rule_stack)
+            if is_neg_context:
+                self.furthest_unexpected = {label: 1}
+                self.furthest_expected = {}
+            else:
+                self.furthest_expected = {label: 1}
+                self.furthest_unexpected = {}
         elif self.pos == self.furthest_pos:
-            # multiple expected tokens at same position
-            self.furthest_expected[expected] = 1
+            target = (
+                self.furthest_unexpected if is_neg_context else self.furthest_expected
+            )
+
+            target[label] = 1
 
 
 class RuleFrame:

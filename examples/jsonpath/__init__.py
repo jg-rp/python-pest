@@ -3,14 +3,21 @@ from .jsonpath import JSONPathParser
 from .node import JSONPathNodeList
 from .query import JSONPathQuery
 
-# TODO: Finish me
+__all__ = (
+    "JSONValue",
+    "JSONPathParser",
+    "JSONPathNodeList",
+    "JSONPathQuery",
+    "find",
+    "compile",
+)
 
-PARSER = JSONPathParser()
+DEFAULT_PARSER = JSONPathParser()
 
 
 def find(query: str, data: JSONValue) -> JSONPathNodeList:
-    return PARSER.parse(query).find(data)
+    return DEFAULT_PARSER.parse(query).find(data)
 
 
 def compile(query: str) -> JSONPathQuery:
-    return PARSER.parse(query)
+    return DEFAULT_PARSER.parse(query)

@@ -23,7 +23,7 @@ from pest import Parser
 if TYPE_CHECKING:
     from _pytest.fixtures import SubRequest
 
-    from examples.jsonpath.types import JSONValue
+    from examples.jsonpath import JSONValue
     from pest import Pairs
 
 

@@ -1169,4 +1169,4 @@ def parse(start_rule: str, input_: str, *, start_pos: int = 0) -> Pairs:
     matched = _RULE_MAP[start_rule](state, pairs)
     if matched:
         return Pairs(pairs)
-    raise PestParsingError(state.furthest_stack, list(state.furthest_expected), [], state.furthest_pos, *error_context(state.input, state.furthest_pos),)
+    raise PestParsingError(state.furthest_stack, list(state.furthest_expected), list(state.furthest_unexpected), state.furthest_pos, *error_context(state.input, state.furthest_pos),)
