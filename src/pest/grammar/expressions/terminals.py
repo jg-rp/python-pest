@@ -9,12 +9,12 @@ from typing import Self
 import regex as re
 
 from pest.grammar.expression import Expression
-from pest.grammar.expression import Match
 from pest.grammar.expression import Terminal
 
 if TYPE_CHECKING:
     from pest.grammar.codegen.builder import Builder
     from pest.grammar.rule import Rule
+    from pest.pairs import Pair
     from pest.state import ParserState
 
 
@@ -30,10 +30,9 @@ class PushLiteral(Terminal):
     def __str__(self) -> str:
         return f'{self.tag_str()}PUSH("{self.value}")'
 
-    def parse(self, state: ParserState, start: int) -> list[Match] | None:
-        """Attempt to match this expression against the input at `start`."""
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
         state.push(self.value)
-        return [Match(None, start)]
+        return True
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python code for a PUSH expression."""
@@ -62,14 +61,16 @@ class Push(Expression):
     def __str__(self) -> str:
         return f"{self.tag_str()}PUSH( {self.expression} )"
 
-    def parse(self, state: ParserState, start: int) -> list[Match] | None:
-        """Attempt to match this expression against the input at `start`."""
-        result = state.parse(self.expression, start, self.tag)
-        if not result:
-            return None
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
+        start = state.pos
+        children: list[Pair] = []
+        matched = self.expression.parse(state, children)
 
-        state.push(state.input[start : result[-1].pos])
-        return result
+        if not matched:
+            return False
+
+        state.push(state.input[start : state.pos])
+        return True
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python code for a PUSH expression."""
@@ -124,19 +125,16 @@ class PeekSlice(Terminal):
         stop = self.stop if self.stop else ""
         return f"{self.tag_str()}PEEK[{start}..{stop}]"
 
-    def parse(self, state: ParserState, start: int) -> list[Match] | None:
-        """Attempt to match this expression against the input at `start`."""
-        position = start
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
+        position = state.pos
 
         for literal in state.peek_slice(self.start, self.stop):
             if state.input.startswith(literal, position):
                 position += len(literal)
             else:
-                return None
+                return False
 
-        # TODO: If the end lies before or at the start, the expression matches
-        # (as does a PEEK_ALL on an empty stack).
-        return [Match(None, position)]
+        return True
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python code for a PEEK expression."""
@@ -175,13 +173,13 @@ class Peek(Terminal):
     def __str__(self) -> str:
         return f"{self.tag_str()}PEEK"
 
-    def parse(self, state: ParserState, start: int) -> list[Match] | None:
-        """Attempt to match this expression against the input at `start`."""
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
         with suppress(IndexError):
             value = state.user_stack.peek()
-            if state.input.startswith(value, start):
-                return [Match(None, start + len(value))]
-        return None
+            if state.input.startswith(value, state.pos):
+                state.pos += len(value)
+                return True
+        return False
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python code for a PEEK expression."""
@@ -216,24 +214,24 @@ class PeekAll(Terminal):
     def __str__(self) -> str:
         return f"{self.tag_str()}PEEK_ALL"
 
-    def parse(self, state: ParserState, start: int) -> list[Match] | None:
-        """Attempt to match this expression against the input at `start`."""
-        position = start
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
+        position = state.pos
         stack_size = len(state.user_stack)
+        children: list[Pair] = []
 
         for i, literal in enumerate(reversed(state.user_stack)):
             # XXX: can `literal` be empty?
             if not state.input.startswith(literal, position):
-                return None
+                return False
 
             position += len(literal)
 
             if i < stack_size:
-                implicit_result = list(state.parse_implicit_rules(position))
-                if implicit_result:
-                    position = implicit_result[-1].pos
+                state.parse_trivia(children)
 
-        return [Match(None, position)]
+        state.pos = position
+        pairs.extend(children)
+        return True
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python code for a PEEK_ALL expression."""
@@ -277,14 +275,14 @@ class Pop(Terminal):
     def __str__(self) -> str:
         return f"{self.tag_str()}POP"
 
-    def parse(self, state: ParserState, start: int) -> list[Match] | None:
-        """Attempt to match this expression against the input at `start`."""
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
         with suppress(IndexError):
             value = state.user_stack.peek()
-            if state.input.startswith(value, start):
+            if state.input.startswith(value, state.pos):
                 state.user_stack.pop()
-                return [Match(None, start + len(value))]
-        return None
+                state.pos += len(value)
+                return True
+        return False
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python code for a PEEK expression."""
@@ -320,24 +318,26 @@ class PopAll(Terminal):
     def __str__(self) -> str:
         return f"{self.tag_str()}POP_ALL"
 
-    def parse(self, state: ParserState, start: int) -> list[Match] | None:
-        """Attempt to match this expression against the input at `start`."""
-        position = start
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
+        position = state.pos
+        children: list[Pair] = []
         state.snapshot()
 
         while not state.user_stack.empty():
             literal = state.user_stack.pop()
             if not state.input.startswith(literal, position):
                 state.restore()
-                return None
+                return False
 
             position += len(literal)
 
             # TODO: don't skip trivia after the last pop
-            if implicit_result := list(state.parse_implicit_rules(position)):
-                position = implicit_result[-1].pos
+            state.parse_trivia(children)
 
-        return [Match(None, position)]
+        state.ok()
+        state.pos = position
+        pairs.extend(children)
+        return True
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python code for a POP_ALL expression."""
@@ -377,12 +377,11 @@ class Drop(Terminal):
     def __str__(self) -> str:
         return f"{self.tag_str()}DROP"
 
-    def parse(self, state: ParserState, start: int) -> list[Match] | None:
-        """Attempt to match this expression against the input at `start`."""
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
         if not state.user_stack.empty():
             state.user_stack.pop()
-            return [Match(None, start)]
-        return None
+            return True
+        return False
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python code for a Drop expression."""
@@ -423,10 +422,9 @@ class Identifier(Expression):
     def __eq__(self, other: object) -> bool:
         return isinstance(other, Identifier) and other.value == self.value
 
-    def parse(self, state: ParserState, start: int) -> list[Match] | None:
-        """Attempt to match this expression against the input at `start`."""
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
         # TODO: Assumes the rule exists.
-        return state.parse(state.parser.rules[self.value], start, self.tag)
+        return state.parser.rules[self.value].parse(state, pairs)
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python code for calling another rule."""
@@ -478,11 +476,11 @@ class String(Terminal):
     def __eq__(self, other: object) -> bool:
         return isinstance(other, String) and self.value == other.value
 
-    def parse(self, state: ParserState, start: int) -> list[Match] | None:
-        """Attempt to match this expression against the input at `start`."""
-        if state.input.startswith(self.value, start):
-            return [Match(None, start + len(self.value))]
-        return None
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
+        if state.input.startswith(self.value, state.pos):
+            state.pos += len(self.value)
+            return True
+        return False
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python source code that implements this grammar expression."""
@@ -522,11 +520,11 @@ class CIString(Terminal):
     def __eq__(self, other: object) -> bool:
         return isinstance(other, CIString) and self.value == other.value
 
-    def parse(self, state: ParserState, start: int) -> list[Match] | None:
-        """Attempt to match this expression against the input at `start`."""
-        if self._re.match(state.input, start):
-            return [Match(None, start + len(self.value))]
-        return None
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
+        if self._re.match(state.input, state.pos):
+            state.pos += len(self.value)
+            return True
+        return False
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python code for a case insensitive string literal."""
@@ -561,11 +559,11 @@ class Range(Terminal):
     def __str__(self) -> str:
         return f"{self.tag_str()}'{self.start!r}'..'{self.stop!r}'"
 
-    def parse(self, state: ParserState, start: int) -> list[Match] | None:
-        """Attempt to match this expression against the input at `start`."""
-        if match := self._re.match(state.input, start):
-            return [Match(None, match.end())]
-        return None
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
+        if match := self._re.match(state.input, state.pos):
+            state.pos = match.end()
+            return True
+        return False
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python code for a character range."""
@@ -607,7 +605,7 @@ class SkipUntil(Terminal):
     def __eq__(self, other: object) -> bool:
         return isinstance(other, SkipUntil) and other.subs == self.subs
 
-    def parse(self, state: ParserState, start: int) -> list[Match] | None:
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
         """Attempt to match this expression against the input at `start`.
 
         The match consumes characters until the earliest occurrence of any of
@@ -622,13 +620,16 @@ class SkipUntil(Terminal):
         s = state.input
 
         for sub in self.subs:
-            pos = s.find(sub, start)
+            pos = s.find(sub, state.pos)
             if pos != -1 and (best_index is None or pos < best_index):
                 best_index = pos
 
         if best_index is not None:
-            return [Match(None, best_index)]
-        return [Match(None, len(s))]
+            state.pos = best_index
+        else:
+            state.pos = len(s)
+
+        return True
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python code for an optimized rep/neg-pred/any expression."""

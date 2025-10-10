@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from contextlib import contextmanager
 from typing import TYPE_CHECKING
 from typing import Never
 
@@ -10,15 +9,13 @@ from .checkpoint_int import SnapshottingInt
 from .exceptions import PestParsingError
 from .exceptions import error_context
 from .grammar.expression import Match
-from .grammar.rule import Rule
 from .stack import Stack
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
     from collections.abc import Sequence
 
-    from pest.grammar.expression import Expression
-
+    from .grammar.rule import Rule
+    from .pairs import Pair
     from .parser import Parser
 
 
@@ -32,6 +29,7 @@ class ParserState:
     __slots__ = (
         "parser",
         "input",
+        "pos",
         "atomic_depth",
         "user_stack",
         "attempts",
@@ -45,6 +43,7 @@ class ParserState:
     ) -> None:
         self.parser = parser
         self.input = input_
+        self.pos = start_pos
 
         self.atomic_depth = SnapshottingInt()
         self.neg_pred_depth = SnapshottingInt()  # XXX: we're not currently using this
@@ -55,39 +54,37 @@ class ParserState:
         self.attempts: list[tuple[int, Rule]] = [(start_pos, start_rule)]
         self.furthest_failure: tuple[int, Rule] | None = None
 
-    def parse(
-        self, expr: Expression, pos: int, tag: str | None = None
-    ) -> list[Match] | None:
-        """Parse an expression in the current state."""
-        if tag:
-            self.tag_stack.append(tag)
+    # def parse(self, expr: Expression, tag: str | None = None) -> list[Match] | None:
+    #     """Parse an expression in the current state."""
+    #     if tag:
+    #         self.tag_stack.append(tag)
 
-        if not isinstance(expr, Rule):
-            matches = expr.parse(self, pos)
-            if tag and self.tag_stack:
-                self.tag_stack.pop()
-            return matches
+    #     if not isinstance(expr, Rule):
+    #         matches = expr.parse(self, pos)
+    #         if tag and self.tag_stack:
+    #             self.tag_stack.pop()
+    #         return matches
 
-        self.attempts.append((pos, expr))
-        matches = expr.parse(self, pos)
+    #     self.attempts.append((pos, expr))
+    #     matches = expr.parse(self, pos)
 
-        if not matches and (
-            self.furthest_failure is None or pos < self.furthest_failure[0]
-        ):
-            self.furthest_failure = (pos, expr)
+    #     if not matches and (
+    #         self.furthest_failure is None or pos < self.furthest_failure[0]
+    #     ):
+    #         self.furthest_failure = (pos, expr)
 
-        elif matches and self.tag_stack:
-            # Tag results with last tag on the tag stack.
-            rule_tag = self.tag_stack.pop()
-            for match in matches:
-                if match.pair:
-                    match.pair.tag = rule_tag
+    #     elif matches and self.tag_stack:
+    #         # Tag results with last tag on the tag stack.
+    #         rule_tag = self.tag_stack.pop()
+    #         for match in matches:
+    #             if match.pair:
+    #                 match.pair.tag = rule_tag
 
-        self.attempts.pop()
-        if tag and self.tag_stack:
-            self.tag_stack.pop()
+    #     self.attempts.pop()
+    #     if tag and self.tag_stack:
+    #         self.tag_stack.pop()
 
-        return matches
+    #     return matches
 
     def raise_failure(self) -> Never:
         """Return a PestParsingError populated with context info."""
@@ -95,7 +92,7 @@ class ParserState:
         # TODO: pass rule_stack and positives
         raise PestParsingError([], [], [], pos, *error_context(self.input, pos))
 
-    def parse_implicit_rules(self, pos: int) -> Iterator[Match]:
+    def parse_trivia(self, pairs: list[Pair]) -> None:
         """Parse any implicit rules (`WHITESPACE` and `COMMENT`) starting at `pos`.
 
         Returns a list of ParseResult instances. Each result represents one
@@ -191,18 +188,3 @@ class ParserState:
         self.user_stack.restore()
         self.atomic_depth.restore()
         self.neg_pred_depth.restore()
-
-    @contextmanager
-    def suppress(self, *, negative: bool = False) -> Iterator[ParserState]:
-        """A context manager that resets parser state on exit."""
-        self.user_stack.snapshot()
-        self.atomic_depth.snapshot()
-        if negative:
-            self.neg_pred_depth += 1
-
-        yield self
-
-        if negative:
-            self.neg_pred_depth -= 1
-        self.atomic_depth.restore()
-        self.user_stack.restore()

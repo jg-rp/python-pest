@@ -6,10 +6,10 @@ from typing import TYPE_CHECKING
 from typing import Self
 
 from pest.grammar import Expression
-from pest.grammar.expression import Match
 
 if TYPE_CHECKING:
     from pest.grammar.codegen.builder import Builder
+    from pest.pairs import Pair
     from pest.state import ParserState
 
 
@@ -31,18 +31,16 @@ class Optional(Expression):
     def __eq__(self, other: object) -> bool:
         return isinstance(other, Optional) and self.expression == other.expression
 
-    def parse(self, state: ParserState, start: int) -> list[Match] | None:
-        """Attempt to match this expression against the input at `start`.
-
-        Args:
-            state: The current parser state, including input text and
-                   any memoization or error-tracking structures.
-            start: The index in the input string where parsing begins.
-        """
-        matches = state.parse(self.expression, start, self.tag)
-        if matches:
-            return matches
-        return [Match(None, start)]
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
+        children: list[Pair] = []
+        state.snapshot()
+        matched = self.expression.parse(state, children)
+        if matched:
+            state.ok()
+            pairs.extend(children)
+            return True
+        state.restore()
+        return False
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python source code that implements this grammar expression."""
@@ -93,33 +91,24 @@ class Repeat(Expression):
     def __eq__(self, other: object) -> bool:
         return isinstance(other, Repeat) and self.expression == other.expression
 
-    def parse(self, state: ParserState, start: int) -> list[Match] | None:
-        """Attempt to match this expression against the input at `start`."""
-        position = start
-        matched = False
-        matches: list[Match] = []
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
+        children: list[Pair] = []
 
         while True:
             state.snapshot()
-            results = state.parse(self.expression, position, self.tag)
+            matched = self.expression.parse(state, children)
 
-            if not results:
+            if not matched:
                 state.restore()
                 break
 
-            matched = True
-            position = results[-1].pos
             state.ok()
-            matches.extend(results)
-
-            for match in state.parse_implicit_rules(position):
-                position = match.pos
-                matches.append(match)
+            pairs.extend(children)
+            children.clear()
+            state.parse_trivia(children)
 
         # Always succeed.
-        if not matched:
-            return [Match(None, position)]
-        return matches
+        return True
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python code for repeat zero or more times."""
@@ -182,37 +171,32 @@ class RepeatOnce(Expression):
     def __str__(self) -> str:
         return f"{self.tag_str()}{self.expression}+"
 
-    def parse(self, state: ParserState, start: int) -> list[Match] | None:
-        """Attempt to match this expression against the input at `start`."""
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
         state.snapshot()
-        matches = state.parse(self.expression, start, self.tag)
+        children: list[Pair] = []
+        matched = self.expression.parse(state, children)
 
-        if not matches:
+        if not matched:
             state.restore()
-            return None
+            return False
 
         state.ok()
-        position = matches[-1].pos
-
-        for success in state.parse_implicit_rules(position):
-            position = success.pos
-            matches.append(success)
+        pairs.extend(children)
+        children.clear()
 
         while True:
             state.snapshot()
-            results = state.parse(self.expression, position, self.tag)
-            if not results:
+            state.parse_trivia(children)
+            matched = self.expression.parse(state, children)
+            if not matched:
                 state.restore()
                 break
-            position = results[-1].pos
+
             state.ok()
-            matches.extend(results)
+            pairs.extend(children)
+            children.clear()
 
-            for success in state.parse_implicit_rules(position):
-                position = success.pos
-                matches.append(success)
-
-        return matches
+        return True
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python code for repeat one or more times."""
@@ -296,33 +280,47 @@ class RepeatExact(Expression):
     def __str__(self) -> str:
         return f"{self.expression}{{{self.number}}}"
 
-    def parse(self, state: ParserState, start: int) -> list[Match] | None:
-        """Attempt to match this expression against the input at `start`."""
-        matches: list[Match] = []
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
+        if self.number == 0:
+            return True
+
+        children: list[Pair] = []
+        accumulator: list[Pair] = []
         match_count = 0
-        position = start
         state.snapshot()
 
-        while True:
-            results = state.parse(self.expression, position, self.tag)
+        matched = self.expression.parse(state, accumulator)
 
-            if not results:
+        if not matched:
+            state.restore()
+            return False
+
+        match_count += 1
+
+        while True:
+            state.snapshot()
+            state.parse_trivia(children)
+            matched = self.expression.parse(state, children)
+
+            if not matched:
+                state.restore()
                 break
 
-            position = results[-1].pos
-            matches.extend(results)
             match_count += 1
+            state.ok()
+            accumulator.extend(children)
+            children.clear()
 
-            for success in state.parse_implicit_rules(position):
-                position = success.pos
-                matches.append(success)
+            if match_count == self.number:
+                break
 
         if match_count == self.number:
+            pairs.extend(accumulator)
             state.ok()
-            return matches
+            return True
 
         state.restore()
-        return None
+        return False
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python code for a bounded repetition expression (E{num})."""
@@ -395,31 +393,41 @@ class RepeatMin(Expression):
     def __str__(self) -> str:
         return f"{self.expression}{{{self.number},}}"
 
-    def parse(self, state: ParserState, start: int) -> list[Match] | None:
-        """Attempt to match this expression against the input at `start`."""
-        matches: list[Match] = []
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
+        children: list[Pair] = []
+        accumulator: list[Pair] = []
         match_count = 0
-        position = start
         state.snapshot()
 
-        while True:
-            results = state.parse(self.expression, position, self.tag)
-            if not results:
-                break
-            position = results[-1].pos
-            matches.extend(results)
-            match_count += 1
+        matched = self.expression.parse(state, accumulator)
 
-            for success in state.parse_implicit_rules(position):
-                position = success.pos
-                matches.append(success)
+        if not matched:
+            state.restore()
+            return False
+
+        match_count += 1
+
+        while True:
+            state.snapshot()
+            state.parse_trivia(children)
+            matched = self.expression.parse(state, children)
+
+            if not matched:
+                state.restore()
+                break
+
+            match_count += 1
+            state.ok()
+            accumulator.extend(children)
+            children.clear()
 
         if match_count >= self.number:
+            pairs.extend(accumulator)
             state.ok()
-            return matches
+            return True
 
         state.restore()
-        return None
+        return False
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python code for a bounded repetition expression (E{min,})."""
@@ -489,32 +497,47 @@ class RepeatMax(Expression):
     def __str__(self) -> str:
         return f"{self.expression}{{,{self.number}}}"
 
-    def parse(self, state: ParserState, start: int) -> list[Match] | None:
-        """Attempt to match this expression against the input at `start`."""
-        matches: list[Match] = []
-        position = start
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
+        if self.number == 0:
+            return True
+
+        children: list[Pair] = []
+        accumulator: list[Pair] = []
+        match_count = 0
         state.snapshot()
 
-        for i in range(self.number):
-            results = state.parse(self.expression, position, self.tag)
-            if not results:
+        matched = self.expression.parse(state, accumulator)
+
+        if not matched:
+            state.restore()
+            return False
+
+        match_count += 1
+
+        while True:
+            state.snapshot()
+            state.parse_trivia(children)
+            matched = self.expression.parse(state, children)
+
+            if not matched:
+                state.restore()
                 break
 
-            position = results[-1].pos
-            matches.extend(results)
-
-            if i < self.number - 1:
-                for success in state.parse_implicit_rules(position):
-                    position = success.pos
-                    matches.append(success)
-
-        if matches:
+            match_count += 1
             state.ok()
-            return matches
+            accumulator.extend(children)
+            children.clear()
 
-        # TODO: Always succeed?
+            if match_count == self.number:
+                break
+
+        if match_count <= self.number:
+            pairs.extend(accumulator)
+            state.ok()
+            return True
+
         state.restore()
-        return None
+        return False
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python code for a bounded repetition expression (E{,max})."""
@@ -579,31 +602,44 @@ class RepeatMinMax(Expression):
     def __str__(self) -> str:
         return f"{self.expression}{{{self.min}, {self.max}}}"
 
-    def parse(self, state: ParserState, start: int) -> list[Match] | None:
-        """Attempt to match this expression against the input at `start`."""
-        matches: list[Match] = []
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
+        children: list[Pair] = []
+        accumulator: list[Pair] = []
         match_count = 0
-        position = start
         state.snapshot()
 
-        while True:
-            results = state.parse(self.expression, position, self.tag)
-            if not results:
-                break
-            position = results[-1].pos
-            matches.extend(results)
-            match_count += 1
+        matched = self.expression.parse(state, accumulator)
 
-            for success in state.parse_implicit_rules(position):
-                position = success.pos
-                matches.append(success)
+        if not matched:
+            state.restore()
+            return False
+
+        match_count += 1
+
+        while True:
+            state.snapshot()
+            state.parse_trivia(children)
+            matched = self.expression.parse(state, children)
+
+            if not matched:
+                state.restore()
+                break
+
+            match_count += 1
+            state.ok()
+            accumulator.extend(children)
+            children.clear()
+
+            if match_count == self.max:
+                break
 
         if match_count >= self.min and match_count <= self.max:
+            pairs.extend(accumulator)
             state.ok()
-            return matches
+            return True
 
         state.restore()
-        return None
+        return False
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python code for a bounded repetition expression (E{min,max})."""

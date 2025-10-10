@@ -12,12 +12,12 @@ from typing import TypeAlias
 import regex as re
 
 from pest.grammar import Expression
-from pest.grammar.expression import Match
 from pest.grammar.expression import RegexExpression
 from pest.grammar.rules.unicode import UnicodePropertyRule
 
 if TYPE_CHECKING:
     from pest.grammar.codegen.builder import Builder
+    from pest.pairs import Pair
     from pest.state import ParserState
 
 
@@ -37,17 +37,20 @@ class Choice(Expression):
         choice = " | ".join(str(expr) for expr in self.expressions)
         return f"{self.tag_str()}{choice}"
 
-    def parse(self, state: ParserState, start: int) -> list[Match] | None:
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
         """Attempt to match this expression against the input at `start`."""
         for expr in self.expressions:
             state.snapshot()
-            result = state.parse(expr, start, self.tag)
-            if result:
+            children: list[Pair] = []
+            matched = expr.parse(state, children)
+
+            if matched:
                 state.ok()
-                return result
+                pairs.extend(children)
+                return True
 
             state.restore()
-        return None
+        return False
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python code for a choice expression (A | B | ...).
@@ -151,11 +154,12 @@ class LazyChoiceRegex(Expression):
             self._compiled = re.compile(self.build_optimized_pattern(), re.VERSION1)
         return self._compiled
 
-    def parse(self, state: ParserState, start: int) -> list[Match] | None:
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
         """Attempt to match this expression against the input at `start`."""
-        if match := self.pattern.match(state.input, start):
-            return [Match(None, match.end())]
-        return None
+        if match := self.pattern.match(state.input, state.pos):
+            state.pos = match.end()
+            return True
+        return False
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:  # noqa: ARG002
         """Emit Python code for an optimized regex choice expression."""

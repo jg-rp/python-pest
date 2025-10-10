@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 from typing import Self
 
 from pest.grammar import Expression
-from pest.grammar.expression import Match
 from pest.grammar.expressions.terminals import Identifier
 from pest.pairs import Pair
 
@@ -63,8 +62,9 @@ class Rule(Expression):
         modifier = modifier_to_str(self.modifier)
         return f"{doc}{self.name} = {modifier}{{ {self.expression} }}"
 
-    def parse(self, state: ParserState, start: int) -> list[Match] | None:
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
         """Attempt to match this expression against the input at `start`."""
+        start = state.pos
         state.atomic_depth.snapshot()
 
         if self.modifier & (ATOMIC | COMPOUND):
@@ -72,19 +72,19 @@ class Rule(Expression):
         elif self.modifier & NONATOMIC:
             state.atomic_depth.zero()
 
-        results = state.parse(self.expression, start, self.tag)
+        children: list[Pair] = []
+        matched = self.expression.parse(state, children)
 
         # Restore atomic depth to what it was before this rule
         state.atomic_depth.restore()
 
-        if not results:
-            return None
-
-        end = results[-1].pos
+        if not matched:
+            return False
 
         if self.modifier & SILENT:
             # Yield children without an enclosing Pair
-            return results
+            pairs.extend(children)
+            return True
 
         if self.modifier & ATOMIC:
             if isinstance(self.expression, Rule):
@@ -96,48 +96,31 @@ class Rule(Expression):
 
             if not rule or not rule.modifier & (NONATOMIC | COMPOUND):
                 # Atomic rule silences children
-                return [
-                    Match(
-                        Pair(
-                            input_=state.input,
-                            rule=self,
-                            start=start,
-                            end=end,
-                            children=[],
-                        ),
-                        pos=end,
-                    )
-                ]
-
-            # Non-atomic child rule.
-            # XXX: What about children's children?
-            return [
-                Match(
+                pairs.append(
                     Pair(
                         input_=state.input,
                         rule=self,
                         start=start,
-                        end=end,
-                        children=[success.pair for success in results if success.pair],
-                    ),
-                    pos=end,
+                        end=state.pos,
+                        children=[],
+                    )
                 )
-            ]
 
-        return [
-            Match(
-                Pair(
-                    input_=state.input,
-                    rule=self,
-                    start=start,
-                    end=end,
-                    children=[success.pair for success in results if success.pair],
-                ),
-                pos=end,
+                return True
+
+        pairs.append(
+            Pair(
+                input_=state.input,
+                rule=self,
+                start=start,
+                end=state.pos,
+                children=children,
             )
-        ]
+        )
 
-    def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
+        return True
+
+    def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:  # noqa: PLR0915
         """Emit Python source code that implements this grammar expression."""
         gen.writeln("def inner(state: State, pairs: list[Pair]) -> bool:")
         with gen.block():

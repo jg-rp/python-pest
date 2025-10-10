@@ -51,16 +51,16 @@ class Expression(ABC):
         self._pure: bool | None = None
 
     @abstractmethod
-    def parse(self, state: ParserState, start: int) -> list[Match] | None:
-        """Attempt to match this expression against the input at `start`.
-
-        Return instances of `Match` for each parsed node.
-        Return `None` or an empty list if parsing fails.
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
+        """Attempt to match this expression and push new pairs into `pairs`.
 
         Args:
             state: The current parser state, including input text and
-                   any memoization or error-tracking structures.
-            start: The index in the input string where parsing begins.
+                   the current position.
+            pairs: A list of token pairs. Append new pairs to this list.
+
+        Returns:
+            `True` if successful or `False` otherwise.
         """
 
     @abstractmethod
@@ -171,11 +171,12 @@ class RegexExpression(Terminal):
     def __str__(self) -> str:
         return f"`{self.pattern}`"
 
-    def parse(self, state: ParserState, start: int) -> list[Match] | None:
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
         """Attempt to match this expression against the input at `start`."""
-        if match := self.regex.match(state.input, start):
-            return [Match(None, match.end())]
-        return None
+        if match := self.regex.match(state.input, state.pos):
+            state.pos = match.end()
+            return True
+        return False
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:  # noqa: ARG002
         """Emit Python code for a regex expression."""

@@ -9,7 +9,7 @@ from pest.grammar import Expression
 
 if TYPE_CHECKING:
     from pest.grammar.codegen.builder import Builder
-    from pest.grammar.expression import Match
+    from pest.pairs import Pair
     from pest.state import ParserState
 
 
@@ -31,7 +31,7 @@ class Group(Expression):
     def __eq__(self, other: object) -> bool:
         return isinstance(other, Group) and self.expression == other.expression
 
-    def parse(self, state: ParserState, start: int) -> list[Match] | None:
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
         """Try to parse all parts in sequence starting at `pos`.
 
         Returns:
@@ -40,7 +40,7 @@ class Group(Expression):
         """
         # XXX: Do we need a `Group` expression?
         # A group might have a tag.
-        return state.parse(self.expression, start, self.tag)
+        return self.expression.parse(state, pairs)
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python source code that implements this grammar expression."""

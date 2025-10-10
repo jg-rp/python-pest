@@ -10,6 +10,7 @@ from pest.grammar.expressions.terminals import Range
 from pest.grammar.expressions.terminals import String
 from pest.grammar.rule import SILENT
 from pest.grammar.rule import BuiltInRule
+from pest.grammar.rule import Rule
 
 if TYPE_CHECKING:
     from pest.grammar.expression import Expression
@@ -46,7 +47,7 @@ class ASCIIRule(BuiltInRule):
         return self
 
 
-ASCII_RULES = {
+ASCII_RULES: dict[str, Rule] = {
     **{
         name: ASCIIRule(name, char_range) for name, char_range in ASCII_RULE_MAP.items()
     },

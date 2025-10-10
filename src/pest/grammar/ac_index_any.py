@@ -3,6 +3,8 @@
 from collections import deque
 from collections.abc import Sequence
 
+# TODO: delete me
+
 
 class _AhoCorasick:
     def __init__(self, patterns: Sequence[str]) -> None:

@@ -9,7 +9,7 @@ from pest.grammar import Expression
 
 if TYPE_CHECKING:
     from pest.grammar.codegen.builder import Builder
-    from pest.grammar.expression import Match
+    from pest.pairs import Pair
     from pest.state import ParserState
 
 
@@ -32,33 +32,26 @@ class Sequence(Expression):
     def __eq__(self, other: object) -> bool:
         return isinstance(other, Sequence) and other.expressions == self.expressions
 
-    def parse(self, state: ParserState, start: int) -> list[Match] | None:
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
         """Try to parse left followed by right starting at `start`."""
-        position = start
-        results: list[Match] = []
+        children: list[Pair] = []
         state.snapshot()
 
         for i, expr in enumerate(self.expressions):
-            result = state.parse(expr, position, self.tag)
-            if not result:
+            matched = expr.parse(state, children)
+            if not matched:
                 state.restore()
-                return None
-
-            position = result[-1].pos
-            results.extend(result)
+                return False
 
             # XXX: If the last expression can't fail, do we still parse implicit rules
             # before it if it does not match anything?
 
             # Only skip trivia between expressions, not after the last one.
             if i < len(self.expressions) - 1:
-                implicit_result = list(state.parse_implicit_rules(position))
-                if implicit_result:
-                    position = implicit_result[-1].pos
-                    results.extend(implicit_result)
+                state.parse_trivia(children)
 
         state.ok()
-        return results
+        return True
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python code for a sequence expression (A ~ B ~ ...).

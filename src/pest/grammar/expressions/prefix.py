@@ -6,10 +6,10 @@ from typing import TYPE_CHECKING
 from typing import Self
 
 from pest.grammar import Expression
-from pest.grammar.expression import Match
 
 if TYPE_CHECKING:
     from pest.grammar.codegen.builder import Builder
+    from pest.pairs import Pair
     from pest.state import ParserState
 
 
@@ -33,14 +33,12 @@ class PositivePredicate(Expression):
             isinstance(other, PositivePredicate) and self.expression == other.expression
         )
 
-    def parse(self, state: ParserState, start: int) -> list[Match] | None:
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
         """Try to parse all parts in sequence starting at `pos`."""
-        with state.suppress() as _state:
-            pairs = _state.parse(self.expression, start, self.tag)
-
-        if pairs:
-            return [Match(None, start)]
-        return None
+        state.snapshot()
+        matched = self.expression.parse(state, [])
+        state.restore()
+        return matched
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:  # noqa: ARG002
         """Emit Python code for a positive lookahead (&E)."""
@@ -92,15 +90,12 @@ class NegativePredicate(Expression):
             isinstance(other, NegativePredicate) and self.expression == other.expression
         )
 
-    def parse(self, state: ParserState, start: int) -> list[Match] | None:
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
         """Try to parse all parts in sequence starting at `pos`."""
-        with state.suppress(negative=True) as _state:
-            pairs = _state.parse(self.expression, start, self.tag)
-
-        if not pairs:
-            return [Match(None, start)]
-
-        return None
+        state.snapshot()
+        matched = self.expression.parse(state, [])
+        state.restore()
+        return not matched
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:  # noqa: ARG002
         """Emit Python code for a negative lookahead (!E)."""

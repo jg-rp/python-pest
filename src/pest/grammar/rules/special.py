@@ -6,12 +6,12 @@ from typing import TYPE_CHECKING
 from typing import Self
 
 from pest.grammar.expression import Expression
-from pest.grammar.expression import Match
 from pest.grammar.rule import SILENT
 from pest.grammar.rule import BuiltInRule
 
 if TYPE_CHECKING:
     from pest.grammar.codegen.builder import Builder
+    from pest.pairs import Pair
     from pest.state import ParserState
 
 
@@ -35,11 +35,12 @@ class _Any(Expression):
     def __str__(self) -> str:
         return "ANY"
 
-    def parse(self, state: ParserState, start: int) -> list[Match] | None:
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
         """Attempt to match this expression against the input at `start`."""
-        if start < len(state.input):
-            return [Match(None, start + 1)]
-        return None
+        if state.pos < len(state.input):
+            state.pos += 1
+            return True
+        return False
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python source code that implements this grammar expression."""
@@ -81,11 +82,9 @@ class _SOI(Expression):
     def __str__(self) -> str:
         return "SOI"
 
-    def parse(self, state: ParserState, start: int) -> list[Match] | None:
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
         """Attempt to match this expression against the input at `start`."""
-        if start == 0:
-            return [Match(None, 0)]
-        return None
+        return state.pos == 0
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python source code that implements this grammar expression."""
@@ -126,11 +125,9 @@ class _EOI(Expression):
     def __str__(self) -> str:
         return "EOI"
 
-    def parse(self, state: ParserState, start: int) -> list[Match] | None:
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
         """Attempt to match this expression against the input at `start`."""
-        if start == len(state.input):
-            return [Match(None, start)]
-        return None
+        return state.pos == len(state.input)
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python source code that implements this grammar expression."""
