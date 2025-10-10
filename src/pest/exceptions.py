@@ -5,7 +5,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from pest.grammar import Rule
+    from pest.grammar.codegen.state import RuleFrame
 
 
 class PestParsingError(Exception):
@@ -13,7 +16,7 @@ class PestParsingError(Exception):
 
     def __init__(
         self,
-        rule_stack: list[Rule],
+        rule_stack: Sequence[Rule | RuleFrame],
         positives: list[str],
         negatives: list[str],
         pos: int,
