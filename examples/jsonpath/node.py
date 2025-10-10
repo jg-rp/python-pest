@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from .serialize import canonical_string
 
 if TYPE_CHECKING:
-    from .types import JSONValue
+    from ._types import JSONValue
 
 
 class JSONPathNode:

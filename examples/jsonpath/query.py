@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Iterable
 
 from ._ast import IndexSelector
 from ._ast import NameSelector
@@ -12,8 +11,10 @@ from .node import JSONPathNode
 from .node import JSONPathNodeList
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from ._ast import Segment
-    from .types import JSONValue
+    from ._types import JSONValue
 
 
 class JSONPathQuery:

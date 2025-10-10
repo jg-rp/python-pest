@@ -7,14 +7,15 @@ from abc import ABC
 from abc import abstractmethod
 from contextlib import suppress
 from typing import TYPE_CHECKING
-from typing import Iterable
-from typing import Iterator
-from typing import Sequence
 
 from .exceptions import JSONPathTypeError
 from .filter_expression import FilterContext
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+    from collections.abc import Iterator
+    from collections.abc import Sequence
+
     from pest import Pair
 
     from .filter_expression import FilterExpression

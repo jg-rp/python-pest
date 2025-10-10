@@ -9,9 +9,9 @@ from typing import TYPE_CHECKING
 from typing import Any
 from typing import Sized
 
+from ._types import ExpressionType
 from .filter_expression import NOTHING
 from .filter_expression import Nothing
-from .types import ExpressionType
 
 if TYPE_CHECKING:
     from .node import JSONPathNodeList

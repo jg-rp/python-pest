@@ -8,19 +8,19 @@ from typing import TYPE_CHECKING
 from typing import Generic
 from typing import TypeVar
 
+from ._types import ExpressionType
 from .exceptions import JSONPathTypeError
 from .node import JSONPathNodeList
 from .serialize import canonical_string
-from .types import ExpressionType
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from pest import Pair
 
+    from ._types import JSONValue
     from .function_extensions import FilterFunction
     from .query import JSONPathQuery
-    from .types import JSONValue
 
 
 class Expression(ABC):

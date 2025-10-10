@@ -1,7 +1,7 @@
+from ._types import JSONValue
 from .jsonpath import JSONPathParser
 from .node import JSONPathNodeList
 from .query import JSONPathQuery
-from .types import JSONValue
 
 # TODO: Finish me
 
