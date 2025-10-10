@@ -33,7 +33,7 @@ from .parser import parse
 
 
 class CalculatorSyntaxError(Exception):
-    """Exception raised when there is a syntax error."""
+    """Exception raised when there is a syntax error in our calculator grammar."""
 
 
 class CalculatorParser(PrattParser[Expression]):
@@ -44,11 +44,11 @@ class CalculatorParser(PrattParser[Expression]):
     POSTFIX_OPS: ClassVar[dict[str, int]] = {Rule.FAC: 7}
 
     INFIX_OPS: ClassVar[dict[str, tuple[int, bool]]] = {
-        Rule.ADD: (3, False),
-        Rule.SUB: (3, False),
-        Rule.MUL: (4, False),
-        Rule.DIV: (4, False),
-        Rule.POW: (5, True),
+        Rule.ADD: (3, PrattParser.LEFT_ASSOC),
+        Rule.SUB: (3, PrattParser.LEFT_ASSOC),
+        Rule.MUL: (4, PrattParser.LEFT_ASSOC),
+        Rule.DIV: (4, PrattParser.LEFT_ASSOC),
+        Rule.POW: (5, PrattParser.RIGHT_ASSOC),
     }
 
     def parse(self, program: str) -> Expression:

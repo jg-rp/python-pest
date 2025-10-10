@@ -13,7 +13,6 @@ if TYPE_CHECKING:
     from pest import Pair
     from pest import Stream
 
-# Generic type variable for AST node type
 ExprT = TypeVar("ExprT")
 
 
@@ -33,25 +32,35 @@ class PrattParser(ABC, Generic[ExprT]):
     INFIX_OPS: ClassVar[dict[str, tuple[int, bool]]] = {}
     """Mapping of infix operator rule names to (precedence, right_associative)."""
 
+    LEFT_ASSOC = False
+    """An alias for `False`.
+    
+    Use it as the second item in `INFIX_OPS` values, right_associative, for
+    improved readability.
+    """
+
+    RIGHT_ASSOC = True
+    """An alias for `True`.
+    
+    Use it as the second item in `INFIX_OPS` values, right_associative, for
+    improved readability.
+    """
+
     @abstractmethod
     def parse_primary(self, pair: Pair) -> ExprT:
         """Parse a primary expression: literal, variable, or parenthesized."""
-        raise NotImplementedError
 
     @abstractmethod
     def parse_prefix(self, op: Pair, rhs: ExprT) -> ExprT:
         """Build a node for a prefix operator expression."""
-        raise NotImplementedError
 
     @abstractmethod
     def parse_postfix(self, lhs: ExprT, op: Pair) -> ExprT:
         """Build a node for a postfix operator expression."""
-        raise NotImplementedError
 
     @abstractmethod
     def parse_infix(self, lhs: ExprT, op: Pair, rhs: ExprT) -> ExprT:
         """Build a node for an infix operator expression."""
-        raise NotImplementedError
 
     def parse_expr(self, stream: Stream, min_prec: int = 0) -> ExprT:
         """Parse an expression from a pest `Stream` using Pratt precedence rules."""

@@ -84,7 +84,7 @@ POSTFIX_OPERATORS = frozenset(
 
 
 class CalculatorSyntaxError(Exception):
-    """Exception raised when there is a syntax error."""
+    """Exception raised when there is a syntax error in our calculator grammar."""
 
 
 def parse_program(program: Pairs) -> Expression:

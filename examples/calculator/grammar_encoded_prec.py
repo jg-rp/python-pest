@@ -28,6 +28,10 @@ from .grammar_encoded_prec_parser import Rule
 from .grammar_encoded_prec_parser import parse
 
 
+class CalculatorSyntaxError(Exception):
+    """Exception raised when there is a syntax error in our calculator grammar."""
+
+
 def parse_program(pairs: Pairs) -> Expression:
     return parse_expr(pairs.first().inner().first())
 
@@ -37,7 +41,7 @@ def parse_expr(pair: Pair) -> Expression:
         case Pair(Rule.EXPR, [expr]):
             return parse_add_sub(expr)
         case _:
-            raise SyntaxError(f"expected program, got {pair!r}")
+            raise CalculatorSyntaxError(f"expected program, got {pair!r}")
 
 
 def parse_add_sub(pair: Pair) -> Expression:
@@ -46,7 +50,7 @@ def parse_add_sub(pair: Pair) -> Expression:
             left = parse_mul_div(first)
             return parse_add_sub_inner(left, rest)
         case _:
-            raise SyntaxError(f"unexpected structure in add_sub: {pair!r}")
+            raise CalculatorSyntaxError(f"unexpected structure in add_sub: {pair!r}")
 
 
 def parse_add_sub_inner(left: Expression, pairs: list[Pair]) -> Expression:
@@ -59,7 +63,7 @@ def parse_add_sub_inner(left: Expression, pairs: list[Pair]) -> Expression:
             new_left = InfixExpr(func, left, right_expr)
             return parse_add_sub_inner(new_left, tail)
         case _:
-            raise SyntaxError(f"unexpected remainder in add_sub: {pairs}")
+            raise CalculatorSyntaxError(f"unexpected remainder in add_sub: {pairs}")
 
 
 def parse_mul_div(pair: Pair) -> Expression:
@@ -68,7 +72,7 @@ def parse_mul_div(pair: Pair) -> Expression:
             left = parse_pow_expr(first)
             return parse_mul_div_inner(left, rest)
         case _:
-            raise SyntaxError(f"unexpected structure in mul_div: {pair!r}")
+            raise CalculatorSyntaxError(f"unexpected structure in mul_div: {pair!r}")
 
 
 def parse_mul_div_inner(left: Expression, pairs: list[Pair]) -> Expression:
@@ -81,7 +85,7 @@ def parse_mul_div_inner(left: Expression, pairs: list[Pair]) -> Expression:
             new_left = InfixExpr(func, left, right_expr)
             return parse_mul_div_inner(new_left, tail)
         case _:
-            raise SyntaxError(f"unexpected remainder in mul_div: {pairs}")
+            raise CalculatorSyntaxError(f"unexpected remainder in mul_div: {pairs}")
 
 
 def parse_pow_expr(pair: Pair) -> Expression:
@@ -92,24 +96,22 @@ def parse_pow_expr(pair: Pair) -> Expression:
             left = parse_prefix(first)
             return parse_pow_expr_inner(left, rest)
         case _:
-            raise SyntaxError(f"unexpected structure in pow_expr: {pair!r}")
+            raise CalculatorSyntaxError(f"unexpected structure in pow_expr: {pair!r}")
 
 
 def parse_pow_expr_inner(left: Expression, pairs: list[Pair]) -> Expression:
     match pairs:
         case [Pair(Rule.POW), right]:
-            # Exactly one remaining '^' pair: recurse on the right-hand expression.
             right_expr = parse_pow_expr(right)
             return InfixExpr(pow, left, right_expr)
 
         case [Pair(Rule.POW), right, *tail]:
-            # Grammar shouldn't produce extra elements, but be defensive.
             right_expr = parse_pow_expr(right)
             expr = InfixExpr(pow, left, right_expr)
             return parse_pow_expr_inner(expr, tail)
 
         case _:
-            raise SyntaxError(f"unexpected remainder in pow_expr: {pairs}")
+            raise CalculatorSyntaxError(f"unexpected remainder in pow_expr: {pairs}")
 
 
 def parse_prefix(pair: Pair) -> Expression:
@@ -120,7 +122,7 @@ def parse_prefix(pair: Pair) -> Expression:
             expr = parse_prefix_inner(rest)
             return PrefixExpr(neg, expr)
         case _:
-            raise SyntaxError(f"unexpected structure in prefix: {pair!r}")
+            raise CalculatorSyntaxError(f"unexpected structure in prefix: {pair!r}")
 
 
 def parse_prefix_inner(pairs: list[Pair]) -> Expression:
@@ -131,7 +133,7 @@ def parse_prefix_inner(pairs: list[Pair]) -> Expression:
         case [postfix]:
             return parse_postfix(postfix)
         case _:
-            raise SyntaxError(f"unexpected remainder in prefix: {pairs}")
+            raise CalculatorSyntaxError(f"unexpected remainder in prefix: {pairs}")
 
 
 def parse_postfix(pair: Pair) -> Expression:
@@ -140,7 +142,7 @@ def parse_postfix(pair: Pair) -> Expression:
             expr = parse_primary(first)
             return parse_postfix_inner(expr, rest)
         case _:
-            raise SyntaxError(f"unexpected structure in postfix: {pair!r}")
+            raise CalculatorSyntaxError(f"unexpected structure in postfix: {pair!r}")
 
 
 def parse_postfix_inner(expr: Expression, pairs: list[Pair]) -> Expression:
@@ -151,7 +153,7 @@ def parse_postfix_inner(expr: Expression, pairs: list[Pair]) -> Expression:
             new_expr = PostfixExpr(factorial, expr)
             return parse_postfix_inner(new_expr, tail)
         case _:
-            raise SyntaxError(f"unexpected remainder in postfix: {pairs}")
+            raise CalculatorSyntaxError(f"unexpected remainder in postfix: {pairs}")
 
 
 def parse_primary(pair: Pair) -> Expression:
@@ -163,7 +165,7 @@ def parse_primary(pair: Pair) -> Expression:
         case Pair(Rule.EXPR, [inner]):
             return parse_add_sub(inner)
         case _:
-            raise SyntaxError(f"unexpected structure in primary: {pair!r}")
+            raise CalculatorSyntaxError(f"unexpected structure in primary: {pair!r}")
 
 
 def example() -> None:

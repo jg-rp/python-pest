@@ -72,9 +72,6 @@ class Parser:
 
         return cls(rules, doc, optimizer=optimizer, debug=debug)
 
-    # for name, rule in grammar.rules.items():
-    #     grammar.rules[name].expression = registry.optimize(rule.expression)
-
     def __str__(self) -> str:
         doc = "".join(f"//!{line}\n" for line in self.doc) + "\n" if self.doc else ""
         return doc + "\n\n".join(str(rule) for rule in self.rules.values())
