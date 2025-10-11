@@ -35,12 +35,10 @@ class Sequence(Expression):
     def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
         """Try to parse left followed by right starting at `start`."""
         children: list[Pair] = []
-        state.snapshot()
 
         for i, expr in enumerate(self.expressions):
             matched = expr.parse(state, children)
             if not matched:
-                state.restore()
                 return False
 
             # XXX: If the last expression can't fail, do we still parse implicit rules
@@ -50,7 +48,7 @@ class Sequence(Expression):
             if i < len(self.expressions) - 1:
                 state.parse_trivia(children)
 
-        state.ok()
+        pairs.extend(children)
         return True
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:

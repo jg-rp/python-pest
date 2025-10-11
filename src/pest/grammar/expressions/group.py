@@ -39,7 +39,12 @@ class Group(Expression):
             - None if any part fails.
         """
         # XXX: Do we need a `Group` expression?
-        # A group might have a tag.
+        # A group might have a tag. Can we attach it to its expression during grammar
+        # parsing?
+        if self.tag:
+            with state.tag(self.tag):
+                return self.expression.parse(state, pairs)
+
         return self.expression.parse(state, pairs)
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:

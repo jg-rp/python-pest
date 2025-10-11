@@ -65,26 +65,33 @@ class Rule(Expression):
     def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
         """Attempt to match this expression against the input at `start`."""
         start = state.pos
+        state.rule_stack.push(self)
         state.atomic_depth.snapshot()
 
-        if self.modifier & (ATOMIC | COMPOUND):
-            state.atomic_depth += 1
-        elif self.modifier & NONATOMIC:
-            state.atomic_depth.zero()
-
         children: list[Pair] = []
-        matched = self.expression.parse(state, children)
 
-        # Restore atomic depth to what it was before this rule
-        state.atomic_depth.restore()
+        if self.modifier & (ATOMIC | COMPOUND):
+            with state.atomic_checkpoint():
+                state.atomic_depth += 1
+                matched = self.expression.parse(state, children)
+        elif self.modifier & NONATOMIC:
+            with state.atomic_checkpoint():
+                state.atomic_depth.zero()
+                matched = self.expression.parse(state, children)
+        else:
+            matched = self.expression.parse(state, children)
+
+        state.rule_stack.pop()
 
         if not matched:
             return False
 
         if self.modifier & SILENT:
-            # Yield children without an enclosing Pair
+            # Children without an enclosing Pair.
             pairs.extend(children)
             return True
+
+        tag: str | None = state.tag_stack.pop() if state.tag_stack else None
 
         if self.modifier & ATOMIC:
             if isinstance(self.expression, Rule):
@@ -96,17 +103,7 @@ class Rule(Expression):
 
             if not rule or not rule.modifier & (NONATOMIC | COMPOUND):
                 # Atomic rule silences children
-                pairs.append(
-                    Pair(
-                        input_=state.input,
-                        rule=self,
-                        start=start,
-                        end=state.pos,
-                        children=[],
-                    )
-                )
-
-                return True
+                children = []
 
         pairs.append(
             Pair(
@@ -115,6 +112,7 @@ class Rule(Expression):
                 start=start,
                 end=state.pos,
                 children=children,
+                tag=tag,
             )
         )
 

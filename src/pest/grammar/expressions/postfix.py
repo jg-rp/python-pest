@@ -33,14 +33,14 @@ class Optional(Expression):
 
     def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
         children: list[Pair] = []
-        state.snapshot()
+        state.checkpoint()
         matched = self.expression.parse(state, children)
         if matched:
             state.ok()
             pairs.extend(children)
             return True
         state.restore()
-        return False
+        return True
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
         """Emit Python source code that implements this grammar expression."""
@@ -95,7 +95,7 @@ class Repeat(Expression):
         children: list[Pair] = []
 
         while True:
-            state.snapshot()
+            state.checkpoint()
             matched = self.expression.parse(state, children)
 
             if not matched:
@@ -172,7 +172,7 @@ class RepeatOnce(Expression):
         return f"{self.tag_str()}{self.expression}+"
 
     def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
-        state.snapshot()
+        state.checkpoint()
         children: list[Pair] = []
         matched = self.expression.parse(state, children)
 
@@ -185,7 +185,7 @@ class RepeatOnce(Expression):
         children.clear()
 
         while True:
-            state.snapshot()
+            state.checkpoint()
             state.parse_trivia(children)
             matched = self.expression.parse(state, children)
             if not matched:
@@ -287,7 +287,7 @@ class RepeatExact(Expression):
         children: list[Pair] = []
         accumulator: list[Pair] = []
         match_count = 0
-        state.snapshot()
+        state.checkpoint()
 
         matched = self.expression.parse(state, accumulator)
 
@@ -298,7 +298,7 @@ class RepeatExact(Expression):
         match_count += 1
 
         while True:
-            state.snapshot()
+            state.checkpoint()
             state.parse_trivia(children)
             matched = self.expression.parse(state, children)
 
@@ -397,7 +397,7 @@ class RepeatMin(Expression):
         children: list[Pair] = []
         accumulator: list[Pair] = []
         match_count = 0
-        state.snapshot()
+        state.checkpoint()
 
         matched = self.expression.parse(state, accumulator)
 
@@ -408,7 +408,7 @@ class RepeatMin(Expression):
         match_count += 1
 
         while True:
-            state.snapshot()
+            state.checkpoint()
             state.parse_trivia(children)
             matched = self.expression.parse(state, children)
 
@@ -504,7 +504,7 @@ class RepeatMax(Expression):
         children: list[Pair] = []
         accumulator: list[Pair] = []
         match_count = 0
-        state.snapshot()
+        state.checkpoint()
 
         matched = self.expression.parse(state, accumulator)
 
@@ -515,7 +515,7 @@ class RepeatMax(Expression):
         match_count += 1
 
         while True:
-            state.snapshot()
+            state.checkpoint()
             state.parse_trivia(children)
             matched = self.expression.parse(state, children)
 
@@ -606,7 +606,7 @@ class RepeatMinMax(Expression):
         children: list[Pair] = []
         accumulator: list[Pair] = []
         match_count = 0
-        state.snapshot()
+        state.checkpoint()
 
         matched = self.expression.parse(state, accumulator)
 
@@ -617,7 +617,7 @@ class RepeatMinMax(Expression):
         match_count += 1
 
         while True:
-            state.snapshot()
+            state.checkpoint()
             state.parse_trivia(children)
             matched = self.expression.parse(state, children)
 

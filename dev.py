@@ -1,13 +1,12 @@
 from pest import Parser
 
-with open("examples/calculator/calculator.pest") as fd:
+with open("tests/grammars/json.pest") as fd:
     GRAMMAR = fd.read()
 
-parser = Parser.from_grammar(GRAMMAR)
+parser = Parser.from_grammar(GRAMMAR, optimizer=None)
+pairs = parser.parse("array", "[ ]")
 
-with open("tmp.py", "w") as fd:
-    fd.write(parser.generate())
-
+print(pairs.dumps(compact=False))
 
 # from tmp import parse
 # from tmp import Rule

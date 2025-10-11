@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from .exceptions import PestParsingError
+from .exceptions import error_context
 from .grammar import parse
 from .grammar.codegen.generate import generate_module
 from .grammar.optimizer import DEFAULT_OPTIMIZER
@@ -21,6 +23,7 @@ if TYPE_CHECKING:
 
     from .grammar.optimizer import Optimizer
     from .grammar.rule import Rule
+    from .pairs import Pair
 
 
 class Parser:
@@ -79,13 +82,20 @@ class Parser:
     def parse(self, start_rule: str, input_: str, *, start_pos: int = 0) -> Pairs:
         """Parse `input_` starting from `rule`."""
         rule = self.rules[start_rule]
-        state = ParserState(self, input_, rule, start_pos)
-        results = rule.parse(state, start_pos)
+        state = ParserState(self, input_, start_pos)
+        pairs: list[Pair] = []
+        matched = rule.parse(state, pairs)
 
-        if not results:
-            state.raise_failure()
+        if matched:
+            return Pairs(pairs)
 
-        return Pairs([result.pair for result in results if result.pair])
+        raise PestParsingError(
+            state.furthest_stack,
+            list(state.furthest_expected),
+            list(state.furthest_unexpected),
+            state.furthest_pos,
+            *error_context(state.input, state.furthest_pos),
+        )
 
     def generate(self) -> str:
         """Return a generated parser as Python module source code."""

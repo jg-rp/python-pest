@@ -28,6 +28,22 @@ class State:
     the execution of generated parsers.
     """
 
+    __slots__ = (
+        "_pos_history",
+        "atomic_depth",
+        "furthest_expected",
+        "furthest_pos",
+        "furthest_stack",
+        "furthest_unexpected",
+        "input",
+        "neg_pred_depth",
+        "parser",
+        "pos",
+        "rule_stack",
+        "tag_stack",
+        "user_stack",
+    )
+
     def __init__(self, text: str, start_pos: int = 0):
         """Initialize a new parser state for the given input text.
 

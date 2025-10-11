@@ -40,7 +40,7 @@ class Choice(Expression):
     def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
         """Attempt to match this expression against the input at `start`."""
         for expr in self.expressions:
-            state.snapshot()
+            state.checkpoint()
             children: list[Pair] = []
             matched = expr.parse(state, children)
 

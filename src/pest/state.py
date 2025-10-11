@@ -2,21 +2,24 @@
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 from typing import TYPE_CHECKING
-from typing import Never
 
 from .checkpoint_int import SnapshottingInt
-from .exceptions import PestParsingError
-from .exceptions import error_context
-from .grammar.expression import Match
+from .grammar.rule import Rule
 from .stack import Stack
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from collections.abc import Sequence
 
-    from .grammar.rule import Rule
     from .pairs import Pair
     from .parser import Parser
+
+
+# TODO: can we use the same state implementation for both interpreted and
+# generates parsers? The only difference is `parse_trivia()` and `Rule`
+# instead of `RuleFrame`.
 
 
 class ParserState:
@@ -27,72 +30,42 @@ class ParserState:
     """
 
     __slots__ = (
-        "parser",
-        "input",
-        "pos",
+        "_pos_history",
         "atomic_depth",
-        "user_stack",
-        "attempts",
-        "furthest_failure",
+        "furthest_expected",
+        "furthest_pos",
+        "furthest_stack",
+        "furthest_unexpected",
+        "input",
         "neg_pred_depth",
+        "parser",
+        "pos",
+        "rule_stack",
         "tag_stack",
+        "user_stack",
     )
 
-    def __init__(
-        self, parser: Parser, input_: str, start_rule: Rule, start_pos: int = 0
-    ) -> None:
+    def __init__(self, parser: Parser, input_: str, start_pos: int = 0) -> None:
         self.parser = parser
         self.input = input_
         self.pos = start_pos
 
+        # Negative predicate depth
+        self.neg_pred_depth = 0
+
+        # Failure tracking
+        self.furthest_pos = -1
+        self.furthest_expected: dict[str, int] = {}
+        self.furthest_unexpected: dict[str, int] = {}
+        self.furthest_stack: list[Rule] = []
+
+        self.user_stack = Stack[str]()  # PUSH/POP/PEEK/DROP
+        self.rule_stack = Stack[Rule]()
+        self._pos_history: list[int] = []  # TODO: better
         self.atomic_depth = SnapshottingInt()
-        self.neg_pred_depth = SnapshottingInt()  # XXX: we're not currently using this
-        self.tag_stack: list[str | None] = []
+        self.tag_stack: list[str] = []
 
-        self.user_stack: Stack[str] = Stack()
-
-        self.attempts: list[tuple[int, Rule]] = [(start_pos, start_rule)]
-        self.furthest_failure: tuple[int, Rule] | None = None
-
-    # def parse(self, expr: Expression, tag: str | None = None) -> list[Match] | None:
-    #     """Parse an expression in the current state."""
-    #     if tag:
-    #         self.tag_stack.append(tag)
-
-    #     if not isinstance(expr, Rule):
-    #         matches = expr.parse(self, pos)
-    #         if tag and self.tag_stack:
-    #             self.tag_stack.pop()
-    #         return matches
-
-    #     self.attempts.append((pos, expr))
-    #     matches = expr.parse(self, pos)
-
-    #     if not matches and (
-    #         self.furthest_failure is None or pos < self.furthest_failure[0]
-    #     ):
-    #         self.furthest_failure = (pos, expr)
-
-    #     elif matches and self.tag_stack:
-    #         # Tag results with last tag on the tag stack.
-    #         rule_tag = self.tag_stack.pop()
-    #         for match in matches:
-    #             if match.pair:
-    #                 match.pair.tag = rule_tag
-
-    #     self.attempts.pop()
-    #     if tag and self.tag_stack:
-    #         self.tag_stack.pop()
-
-    #     return matches
-
-    def raise_failure(self) -> Never:
-        """Return a PestParsingError populated with context info."""
-        pos, expr = self.furthest_failure
-        # TODO: pass rule_stack and positives
-        raise PestParsingError([], [], [], pos, *error_context(self.input, pos))
-
-    def parse_trivia(self, pairs: list[Pair]) -> None:
+    def parse_trivia(self, pairs: list[Pair]) -> bool:
         """Parse any implicit rules (`WHITESPACE` and `COMMENT`) starting at `pos`.
 
         Returns a list of ParseResult instances. Each result represents one
@@ -100,57 +73,87 @@ class ParserState:
         the rule was silent.
         """
         if self.atomic_depth > 0:
-            return
+            return False
+
+        # TODO: look for optimized SKIP rule
 
         # Unoptimized whitespace and comment rules.
         whitespace_rule = self.parser.rules.get("WHITESPACE")
         comment_rule = self.parser.rules.get("COMMENT")
 
         if not whitespace_rule and not comment_rule:
-            return
+            return False
 
         while True:
-            new_pos = pos
             matched = False
 
+            # TODO: do we need a checkpoint here?
+
             if whitespace_rule:
-                for result in self.parse(whitespace_rule, new_pos) or []:
-                    matched = True
-                    new_pos = result.pos
-                    if result.pair and self.atomic_depth == 0:
-                        yield result
+                matched = whitespace_rule.parse(self, pairs)
 
             if comment_rule and (
-                not self.attempts or self.attempts[-1][1].name != "COMMENT"
+                not self.rule_stack or self.rule_stack[-1].name != "COMMENT"
             ):
-                for result in self.parse(comment_rule, new_pos) or []:
-                    matched = True
-                    new_pos = result.pos
-                    if result.pair and self.atomic_depth == 0:
-                        yield result
+                matched = comment_rule.parse(self, pairs) or matched
 
             if not matched:
-                yield Match(None, new_pos)
                 break
 
-            pos = new_pos
+        return matched
+
+    def checkpoint(self) -> None:
+        """Take a snapshot of the current state for potential backtracking.
+
+        Saves the current state of all stacks, allowing restoration if parsing fails.
+        """
+        self.user_stack.snapshot()
+        self.rule_stack.snapshot()
+        self.atomic_depth.snapshot()
+        self._pos_history.append(self.pos)
+
+    def ok(self) -> None:
+        """Commit to the current state after a successful parse.
+
+        Discards the last checkpoint, making the changes since the last checkpoint
+        permanent.
+        """
+        self.user_stack.drop_snapshot()
+        self.rule_stack.drop_snapshot()
+        self.atomic_depth.drop()
+        self._pos_history.pop()
+
+    def restore(self) -> None:
+        """Restore the state to the most recent checkpoint.
+
+        Reverts all stacks to their state at the last checkpoint, undoing any changes
+        since then.
+        """
+        self.user_stack.restore()
+        self.rule_stack.restore()
+        self.atomic_depth.restore()
+        self.pos = self._pos_history.pop()
 
     def push(self, value: str) -> None:
-        """Push a value onto the stack."""
+        """Push a value onto the user stack.
+
+        Args:
+            value: The value to push onto the stack.
+        """
         self.user_stack.push(value)
 
     def drop(self) -> None:
-        """Pops one item from the top of the stack."""
+        """Pop one item from the top of the user stack."""
         self.user_stack.pop()
 
     def peek(self) -> str | None:
-        """Peek at the top element of the stack."""
+        """Return the value at the top of the user stack, or None if empty."""
         return self.user_stack.peek()
 
     def peek_slice(
         self, start: int | None = None, end: int | None = None
     ) -> Sequence[str]:
-        """Peek at a slice of the stack, similar to pest's `PEEK(start..end)`.
+        """Peek at a slice of the user stack, similar to pest's `PEEK(start..end)`.
 
         Args:
             start: Start index of the slice (0 = bottom of stack).
@@ -158,7 +161,7 @@ class ParserState:
 
         Returns:
             A list of values from the stack slice. If no arguments are given,
-            return the entire stack.
+            returns the entire stack.
 
         Example:
             stack = [1, 2, 3, 4]
@@ -171,20 +174,41 @@ class ParserState:
             return self.user_stack[:]
         return self.user_stack[slice(start, end)]
 
-    def snapshot(self) -> None:
-        """Mark the current state as a checkpoint."""
-        self.user_stack.snapshot()
+    @contextmanager
+    def atomic_checkpoint(self) -> Iterator[ParserState]:
+        """A context manager that restores atomic depth on exit."""
         self.atomic_depth.snapshot()
-        self.neg_pred_depth.snapshot()
+        try:
+            yield self
+        finally:
+            self.atomic_depth.restore()
 
-    def ok(self) -> None:
-        """Discard the last checkpoint after a successful match."""
-        self.user_stack.drop_snapshot()
-        self.atomic_depth.drop()
-        self.neg_pred_depth.drop()
+    @contextmanager
+    def tag(self, tag_: str) -> Iterator[ParserState]:
+        """A context manager that removes `tag_` on exit."""
+        self.tag_stack.append(tag_)
+        try:
+            yield self
+        finally:
+            if self.tag_stack:
+                self.tag_stack.pop()
 
-    def restore(self) -> None:
-        """Restore the state to the most recent checkpoint."""
-        self.user_stack.restore()
-        self.atomic_depth.restore()
-        self.neg_pred_depth.restore()
+    def fail(self, label: str) -> None:
+        """Record a failure, inferring expected vs. unexpected context."""
+        is_neg_context = self.neg_pred_depth % 2 == 1
+
+        if self.pos > self.furthest_pos:
+            self.furthest_pos = self.pos
+            self.furthest_stack = list(self.rule_stack)
+            if is_neg_context:
+                self.furthest_unexpected = {label: 1}
+                self.furthest_expected = {}
+            else:
+                self.furthest_expected = {label: 1}
+                self.furthest_unexpected = {}
+        elif self.pos == self.furthest_pos:
+            target = (
+                self.furthest_unexpected if is_neg_context else self.furthest_expected
+            )
+
+            target[label] = 1

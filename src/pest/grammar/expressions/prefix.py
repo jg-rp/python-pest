@@ -35,7 +35,7 @@ class PositivePredicate(Expression):
 
     def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
         """Try to parse all parts in sequence starting at `pos`."""
-        state.snapshot()
+        state.checkpoint()
         matched = self.expression.parse(state, [])
         state.restore()
         return matched
@@ -92,9 +92,15 @@ class NegativePredicate(Expression):
 
     def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
         """Try to parse all parts in sequence starting at `pos`."""
-        state.snapshot()
+        state.checkpoint()
+        state.neg_pred_depth += 1
         matched = self.expression.parse(state, [])
         state.restore()
+
+        if matched:
+            state.fail(str(self.expression))
+
+        state.neg_pred_depth -= 1
         return not matched
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:  # noqa: ARG002

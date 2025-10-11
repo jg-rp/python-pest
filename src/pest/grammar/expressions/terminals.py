@@ -30,7 +30,7 @@ class PushLiteral(Terminal):
     def __str__(self) -> str:
         return f'{self.tag_str()}PUSH("{self.value}")'
 
-    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:  # noqa: D102
         state.push(self.value)
         return True
 
@@ -61,7 +61,7 @@ class Push(Expression):
     def __str__(self) -> str:
         return f"{self.tag_str()}PUSH( {self.expression} )"
 
-    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:  # noqa: D102
         start = state.pos
         children: list[Pair] = []
         matched = self.expression.parse(state, children)
@@ -70,6 +70,7 @@ class Push(Expression):
             return False
 
         state.push(state.input[start : state.pos])
+        pairs.extend(children)
         return True
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
@@ -125,15 +126,17 @@ class PeekSlice(Terminal):
         stop = self.stop if self.stop else ""
         return f"{self.tag_str()}PEEK[{start}..{stop}]"
 
-    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:  # noqa: D102
         position = state.pos
 
         for literal in state.peek_slice(self.start, self.stop):
             if state.input.startswith(literal, position):
                 position += len(literal)
             else:
+                state.fail(literal)
                 return False
 
+        state.pos = position
         return True
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
@@ -173,12 +176,15 @@ class Peek(Terminal):
     def __str__(self) -> str:
         return f"{self.tag_str()}PEEK"
 
-    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:  # noqa: D102
         with suppress(IndexError):
             value = state.user_stack.peek()
+
             if state.input.startswith(value, state.pos):
                 state.pos += len(value)
                 return True
+
+            state.fail(value)
         return False
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
@@ -214,7 +220,7 @@ class PeekAll(Terminal):
     def __str__(self) -> str:
         return f"{self.tag_str()}PEEK_ALL"
 
-    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:  # noqa: D102
         position = state.pos
         stack_size = len(state.user_stack)
         children: list[Pair] = []
@@ -222,6 +228,7 @@ class PeekAll(Terminal):
         for i, literal in enumerate(reversed(state.user_stack)):
             # XXX: can `literal` be empty?
             if not state.input.startswith(literal, position):
+                state.fail(literal)
                 return False
 
             position += len(literal)
@@ -275,13 +282,14 @@ class Pop(Terminal):
     def __str__(self) -> str:
         return f"{self.tag_str()}POP"
 
-    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:  # noqa: D102
         with suppress(IndexError):
             value = state.user_stack.peek()
             if state.input.startswith(value, state.pos):
                 state.user_stack.pop()
                 state.pos += len(value)
                 return True
+            state.fail(value)
         return False
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
@@ -318,15 +326,16 @@ class PopAll(Terminal):
     def __str__(self) -> str:
         return f"{self.tag_str()}POP_ALL"
 
-    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:  # noqa: D102
         position = state.pos
         children: list[Pair] = []
-        state.snapshot()
+        state.checkpoint()
 
         while not state.user_stack.empty():
             literal = state.user_stack.pop()
             if not state.input.startswith(literal, position):
                 state.restore()
+                state.fail(literal)
                 return False
 
             position += len(literal)
@@ -377,10 +386,11 @@ class Drop(Terminal):
     def __str__(self) -> str:
         return f"{self.tag_str()}DROP"
 
-    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:  # noqa: D102
         if not state.user_stack.empty():
             state.user_stack.pop()
             return True
+        state.fail("drop from empty stack")
         return False
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
@@ -422,8 +432,11 @@ class Identifier(Expression):
     def __eq__(self, other: object) -> bool:
         return isinstance(other, Identifier) and other.value == self.value
 
-    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:  # noqa: D102
         # TODO: Assumes the rule exists.
+        if self.tag:
+            with state.tag(self.tag):
+                return state.parser.rules[self.value].parse(state, pairs)
         return state.parser.rules[self.value].parse(state, pairs)
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
@@ -476,10 +489,11 @@ class String(Terminal):
     def __eq__(self, other: object) -> bool:
         return isinstance(other, String) and self.value == other.value
 
-    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:  # noqa: D102
         if state.input.startswith(self.value, state.pos):
             state.pos += len(self.value)
             return True
+        state.fail(str(self))
         return False
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
@@ -520,10 +534,11 @@ class CIString(Terminal):
     def __eq__(self, other: object) -> bool:
         return isinstance(other, CIString) and self.value == other.value
 
-    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:  # noqa: D102
         if self._re.match(state.input, state.pos):
             state.pos += len(self.value)
             return True
+        state.fail(str(self))
         return False
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
@@ -559,10 +574,11 @@ class Range(Terminal):
     def __str__(self) -> str:
         return f"{self.tag_str()}'{self.start!r}'..'{self.stop!r}'"
 
-    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:  # noqa: D102
         if match := self._re.match(state.input, state.pos):
             state.pos = match.end()
             return True
+        state.fail(str(self))
         return False
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
@@ -605,7 +621,7 @@ class SkipUntil(Terminal):
     def __eq__(self, other: object) -> bool:
         return isinstance(other, SkipUntil) and other.subs == self.subs
 
-    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:  # noqa: D102
         """Attempt to match this expression against the input at `start`.
 
         The match consumes characters until the earliest occurrence of any of
