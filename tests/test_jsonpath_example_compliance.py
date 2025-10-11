@@ -14,11 +14,18 @@ from typing import Any
 
 import pytest
 
+from pest import Parser
+
+with open("examples/jsonpath/jsonpath.pest", encoding="utf-8") as fd:
+    grammar = fd.read()
+
+with open("examples/jsonpath/parser.py", "w", encoding="utf-8") as fd:
+    fd.write(Parser.from_grammar(grammar).generate())
+
 sys.path.append(os.getcwd())
 
 from examples.jsonpath.exceptions import JSONPathError
 from examples.jsonpath.jsonpath import JSONPathParser
-from pest import Parser
 
 if TYPE_CHECKING:
     from _pytest.fixtures import SubRequest
@@ -79,10 +86,6 @@ class GeneratedParser:
 
     def parse(self, start_rule: str, input_: str, *, start_pos: int = 0) -> Pairs:
         return self._parse(start_rule, input_, start_pos=start_pos)
-
-
-with open("examples/jsonpath/jsonpath.pest", encoding="utf-8") as fd:
-    grammar = fd.read()
 
 
 class UnoptimizedJSONPathParser(JSONPathParser):

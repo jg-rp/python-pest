@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from pest.grammar import Rule
-    from pest.grammar.codegen.state import RuleFrame
+    from pest.state import RuleFrame
 
 
 class PestParsingError(Exception):

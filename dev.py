@@ -14,6 +14,5 @@ print(pairs.dumps(compact=False))
 # pairs = parse(Rule.NEGATIVE, "x")
 # print(pairs.dumps())
 
-# TODO: refactor `Expression.parse`
 # TODO: revisit parse error context and messages
 # TODO: CLI for generating parsers from grammar

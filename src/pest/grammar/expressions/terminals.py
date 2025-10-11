@@ -433,7 +433,8 @@ class Identifier(Expression):
         return isinstance(other, Identifier) and other.value == self.value
 
     def parse(self, state: ParserState, pairs: list[Pair]) -> bool:  # noqa: D102
-        # TODO: Assumes the rule exists.
+        # TODO: Handle unknown rule.
+        assert state.parser
         if self.tag:
             with state.tag(self.tag):
                 return state.parser.rules[self.value].parse(state, pairs)

@@ -17,6 +17,10 @@ class Group(Expression):
     """A pest grammar expression group.
 
     This corresponds to `(EXPRESSION)` in pest.
+
+    NOTE: Strictly we don't need to model a group explicitly, but it does make
+    it easy to produce accurate string representations of a grammar's parse
+    tree before optimization, especially for tagged groups.
     """
 
     __slots__ = ("expression",)
@@ -38,9 +42,6 @@ class Group(Expression):
             - (Node, new_pos) if all parts match in order.
             - None if any part fails.
         """
-        # XXX: Do we need a `Group` expression?
-        # A group might have a tag. Can we attach it to its expression during grammar
-        # parsing?
         if self.tag:
             with state.tag(self.tag):
                 return self.expression.parse(state, pairs)

@@ -95,6 +95,7 @@ class Rule(Expression):
             if isinstance(self.expression, Rule):
                 rule: Rule | None = self.expression
             elif isinstance(self.expression, Identifier):
+                assert state.parser
                 rule = state.parser.rules.get(self.expression.value)
             else:
                 rule = None
@@ -118,7 +119,7 @@ class Rule(Expression):
 
     def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:  # noqa: PLR0915
         """Emit Python source code that implements this grammar expression."""
-        gen.writeln("def inner(state: State, pairs: list[Pair]) -> bool:")
+        gen.writeln("def inner(state: ParserState, pairs: list[Pair]) -> bool:")
         with gen.block():
             gen.writeln(f'"""Parse {self.name}."""')
 

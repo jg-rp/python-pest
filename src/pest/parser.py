@@ -82,7 +82,7 @@ class Parser:
     def parse(self, start_rule: str, input_: str, *, start_pos: int = 0) -> Pairs:
         """Parse `input_` starting from `rule`."""
         rule = self.rules[start_rule]
-        state = ParserState(self, input_, start_pos)
+        state = ParserState(input_, start_pos, self)
         pairs: list[Pair] = []
         matched = rule.parse(state, pairs)
 

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Mapping
 
 from .exceptions import PestGrammarSyntaxError
 from .expressions import Choice
@@ -38,6 +37,8 @@ from .tokens import TokenKind
 from .unescape import unescape_string
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from .expression import Expression
 
 

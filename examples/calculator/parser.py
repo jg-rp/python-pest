@@ -12,10 +12,10 @@ import regex as re
 
 from pest.exceptions import PestParsingError
 from pest.exceptions import error_context
-from pest.grammar.codegen.state import RuleFrame
-from pest.grammar.codegen.state import State
 from pest.pairs import Pair
 from pest.pairs import Pairs
+from pest.state import ParserState
+from pest.state import RuleFrame
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -43,10 +43,10 @@ class Rule(StrEnum):
     INT = 'int'
     IDENT = 'ident'
 
-def _parse_EOI() -> Callable[[State, list[Pair]], bool]:
+def _parse_EOI() -> Callable[[ParserState, list[Pair]], bool]:
     rule_frame = RuleFrame('EOI', 0)
     
-    def inner(state: State, pairs: list[Pair]) -> bool:
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse EOI."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -68,12 +68,12 @@ def _parse_EOI() -> Callable[[State, list[Pair]], bool]:
     
 parse_EOI = _parse_EOI()
 
-def _parse_WHITESPACE() -> Callable[[State, list[Pair]], bool]:
+def _parse_WHITESPACE() -> Callable[[ParserState, list[Pair]], bool]:
     RE3 = re.compile('(?:\\\r\\\n|[\\\t\\\n\\\r\\ ])', re.VERSION1)
     
     rule_frame = RuleFrame('WHITESPACE', 2)
     
-    def inner(state: State, pairs: list[Pair]) -> bool:
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse WHITESPACE."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
@@ -93,10 +93,10 @@ def _parse_WHITESPACE() -> Callable[[State, list[Pair]], bool]:
     
 parse_WHITESPACE = _parse_WHITESPACE()
 
-def _parse_program() -> Callable[[State, list[Pair]], bool]:
+def _parse_program() -> Callable[[ParserState, list[Pair]], bool]:
     rule_frame = RuleFrame('program', 0)
     
-    def inner(state: State, pairs: list[Pair]) -> bool:
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse program."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -144,10 +144,10 @@ def _parse_program() -> Callable[[State, list[Pair]], bool]:
     
 parse_program = _parse_program()
 
-def _parse_expr() -> Callable[[State, list[Pair]], bool]:
+def _parse_expr() -> Callable[[ParserState, list[Pair]], bool]:
     rule_frame = RuleFrame('expr', 0)
     
-    def inner(state: State, pairs: list[Pair]) -> bool:
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse expr."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -521,10 +521,10 @@ def _parse_expr() -> Callable[[State, list[Pair]], bool]:
     
 parse_expr = _parse_expr()
 
-def _parse_infix() -> Callable[[State, list[Pair]], bool]:
+def _parse_infix() -> Callable[[ParserState, list[Pair]], bool]:
     rule_frame = RuleFrame('infix', 2)
     
-    def inner(state: State, pairs: list[Pair]) -> bool:
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse infix."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
@@ -596,10 +596,10 @@ def _parse_infix() -> Callable[[State, list[Pair]], bool]:
     
 parse_infix = _parse_infix()
 
-def _parse_add() -> Callable[[State, list[Pair]], bool]:
+def _parse_add() -> Callable[[ParserState, list[Pair]], bool]:
     rule_frame = RuleFrame('add', 0)
     
-    def inner(state: State, pairs: list[Pair]) -> bool:
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse add."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -625,10 +625,10 @@ def _parse_add() -> Callable[[State, list[Pair]], bool]:
     
 parse_add = _parse_add()
 
-def _parse_sub() -> Callable[[State, list[Pair]], bool]:
+def _parse_sub() -> Callable[[ParserState, list[Pair]], bool]:
     rule_frame = RuleFrame('sub', 0)
     
-    def inner(state: State, pairs: list[Pair]) -> bool:
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse sub."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -654,10 +654,10 @@ def _parse_sub() -> Callable[[State, list[Pair]], bool]:
     
 parse_sub = _parse_sub()
 
-def _parse_mul() -> Callable[[State, list[Pair]], bool]:
+def _parse_mul() -> Callable[[ParserState, list[Pair]], bool]:
     rule_frame = RuleFrame('mul', 0)
     
-    def inner(state: State, pairs: list[Pair]) -> bool:
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse mul."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -683,10 +683,10 @@ def _parse_mul() -> Callable[[State, list[Pair]], bool]:
     
 parse_mul = _parse_mul()
 
-def _parse_div() -> Callable[[State, list[Pair]], bool]:
+def _parse_div() -> Callable[[ParserState, list[Pair]], bool]:
     rule_frame = RuleFrame('div', 0)
     
-    def inner(state: State, pairs: list[Pair]) -> bool:
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse div."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -712,10 +712,10 @@ def _parse_div() -> Callable[[State, list[Pair]], bool]:
     
 parse_div = _parse_div()
 
-def _parse_pow() -> Callable[[State, list[Pair]], bool]:
+def _parse_pow() -> Callable[[ParserState, list[Pair]], bool]:
     rule_frame = RuleFrame('pow', 0)
     
-    def inner(state: State, pairs: list[Pair]) -> bool:
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse pow."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -741,10 +741,10 @@ def _parse_pow() -> Callable[[State, list[Pair]], bool]:
     
 parse_pow = _parse_pow()
 
-def _parse_prefix() -> Callable[[State, list[Pair]], bool]:
+def _parse_prefix() -> Callable[[ParserState, list[Pair]], bool]:
     rule_frame = RuleFrame('prefix', 2)
     
-    def inner(state: State, pairs: list[Pair]) -> bool:
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse prefix."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
@@ -760,10 +760,10 @@ def _parse_prefix() -> Callable[[State, list[Pair]], bool]:
     
 parse_prefix = _parse_prefix()
 
-def _parse_neg() -> Callable[[State, list[Pair]], bool]:
+def _parse_neg() -> Callable[[ParserState, list[Pair]], bool]:
     rule_frame = RuleFrame('neg', 0)
     
-    def inner(state: State, pairs: list[Pair]) -> bool:
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse neg."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -789,10 +789,10 @@ def _parse_neg() -> Callable[[State, list[Pair]], bool]:
     
 parse_neg = _parse_neg()
 
-def _parse_postfix() -> Callable[[State, list[Pair]], bool]:
+def _parse_postfix() -> Callable[[ParserState, list[Pair]], bool]:
     rule_frame = RuleFrame('postfix', 2)
     
-    def inner(state: State, pairs: list[Pair]) -> bool:
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse postfix."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
@@ -808,10 +808,10 @@ def _parse_postfix() -> Callable[[State, list[Pair]], bool]:
     
 parse_postfix = _parse_postfix()
 
-def _parse_fac() -> Callable[[State, list[Pair]], bool]:
+def _parse_fac() -> Callable[[ParserState, list[Pair]], bool]:
     rule_frame = RuleFrame('fac', 0)
     
-    def inner(state: State, pairs: list[Pair]) -> bool:
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse fac."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -837,10 +837,10 @@ def _parse_fac() -> Callable[[State, list[Pair]], bool]:
     
 parse_fac = _parse_fac()
 
-def _parse_primary() -> Callable[[State, list[Pair]], bool]:
+def _parse_primary() -> Callable[[ParserState, list[Pair]], bool]:
     rule_frame = RuleFrame('primary', 2)
     
-    def inner(state: State, pairs: list[Pair]) -> bool:
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse primary."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
@@ -926,7 +926,7 @@ def _parse_primary() -> Callable[[State, list[Pair]], bool]:
     
 parse_primary = _parse_primary()
 
-def _parse_int() -> Callable[[State, list[Pair]], bool]:
+def _parse_int() -> Callable[[ParserState, list[Pair]], bool]:
     RE6 = re.compile('[1-9]', re.I)
     RE9 = re.compile('[0-9]', re.I)
     RE12 = re.compile('[0-9]', re.I)
@@ -934,7 +934,7 @@ def _parse_int() -> Callable[[State, list[Pair]], bool]:
     
     rule_frame = RuleFrame('int', 4)
     
-    def inner(state: State, pairs: list[Pair]) -> bool:
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse int."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -1054,13 +1054,13 @@ def _parse_int() -> Callable[[State, list[Pair]], bool]:
     
 parse_int = _parse_int()
 
-def _parse_ident() -> Callable[[State, list[Pair]], bool]:
+def _parse_ident() -> Callable[[ParserState, list[Pair]], bool]:
     RE5 = re.compile('[A-Za-z]', re.VERSION1)
     RE8 = re.compile('[A-Za-z]', re.VERSION1)
     
     rule_frame = RuleFrame('ident', 4)
     
-    def inner(state: State, pairs: list[Pair]) -> bool:
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse ident."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -1126,7 +1126,7 @@ def _parse_ident() -> Callable[[State, list[Pair]], bool]:
     
 parse_ident = _parse_ident()
 
-def parse_trivia(state: State, pairs: list[Pair]) -> bool:
+def parse_trivia(state: ParserState, pairs: list[Pair]) -> bool:
     if state.atomic_depth > 0:
         return True
     while True:
@@ -1142,7 +1142,7 @@ def parse_trivia(state: State, pairs: list[Pair]) -> bool:
             break
     return True
 
-_RULE_MAP: dict[str, Callable[[State, list[Pair]], bool]] = {
+_RULE_MAP: dict[str, Callable[[ParserState, list[Pair]], bool]] = {
     'EOI': parse_EOI,
     'WHITESPACE': parse_WHITESPACE,
     'program': parse_program,
@@ -1164,12 +1164,16 @@ _RULE_MAP: dict[str, Callable[[State, list[Pair]], bool]] = {
 
 def parse(start_rule: str, input_: str, *, start_pos: int = 0) -> Pairs:
     """Parse `input_` starting from `rule`."""
-    state = State(input_, start_pos)
+    state = ParserState(input_, start_pos)
     pairs: list[Pair] = []
     matched = _RULE_MAP[start_rule](state, pairs)
     if matched:
         return Pairs(pairs)
     raise PestParsingError(state.furthest_stack, list(state.furthest_expected), list(state.furthest_unexpected), state.furthest_pos, *error_context(state.input, state.furthest_pos),)
+
+class Parser:
+    def parse(self, start_rule: str, input_: str, *, start_pos: int = 0) -> Pairs:
+        return parse(start_rule, input_, start_pos=start_pos)
 
 def main() -> None:
     parser = argparse.ArgumentParser(

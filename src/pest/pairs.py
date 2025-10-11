@@ -15,8 +15,8 @@ from typing import overload
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from .grammar.codegen.state import RuleFrame
     from .grammar.rule import Rule
+    from .state import RuleFrame
 
 
 class Token:

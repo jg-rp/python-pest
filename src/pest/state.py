@@ -17,16 +17,17 @@ if TYPE_CHECKING:
     from .parser import Parser
 
 
-# TODO: can we use the same state implementation for both interpreted and
-# generates parsers? The only difference is `parse_trivia()` and `Rule`
-# instead of `RuleFrame`.
-
-
 class ParserState:
-    """Holds parsing state.
+    """Encapsulates the mutable state of a parser.
 
-    Includes input string, current parsing context, and a stack for stateful
-    grammar operations.
+    The `ParserState` tracks the input text, current position, and multiple stacks
+    for user values and modifiers. It supports checkpointing, restoration, and
+    stack operations to facilitate backtracking and complex parsing logic during
+    the execution of generated parsers.
+
+    Args:
+        text: The input string to be parsed.
+        start_pos: The index in `text` to start parsing from.
     """
 
     __slots__ = (
@@ -45,10 +46,12 @@ class ParserState:
         "user_stack",
     )
 
-    def __init__(self, parser: Parser, input_: str, start_pos: int = 0) -> None:
-        self.parser = parser
-        self.input = input_
+    def __init__(
+        self, text: str, start_pos: int = 0, parser: Parser | None = None
+    ) -> None:
+        self.input = text
         self.pos = start_pos
+        self.parser = parser  # parser will always be None in generated code.
 
         # Negative predicate depth
         self.neg_pred_depth = 0
@@ -57,27 +60,23 @@ class ParserState:
         self.furthest_pos = -1
         self.furthest_expected: dict[str, int] = {}
         self.furthest_unexpected: dict[str, int] = {}
-        self.furthest_stack: list[Rule] = []
+        self.furthest_stack: list[Rule | RuleFrame] = []
 
-        self.user_stack = Stack[str]()  # PUSH/POP/PEEK/DROP
-        self.rule_stack = Stack[Rule]()
-        self._pos_history: list[int] = []  # TODO: better
+        self._pos_history: list[int] = []
         self.atomic_depth = SnapshottingInt()
-        self.tag_stack: list[str] = []
+        self.rule_stack = Stack[Rule | RuleFrame]()  # RuleFrame is for generated code.
+        self.tag_stack: list[str] = []  # User tags are always enabled
+        self.user_stack = Stack[str]()  # PUSH/POP/PEEK/DROP
 
     def parse_trivia(self, pairs: list[Pair]) -> bool:
-        """Parse any implicit rules (`WHITESPACE` and `COMMENT`) starting at `pos`.
-
-        Returns a list of ParseResult instances. Each result represents one
-        successful application of an implicit rule. `node` will be None if
-        the rule was silent.
-        """
+        """Parse any implicit rules (`WHITESPACE` and `COMMENT`)."""
         if self.atomic_depth > 0:
             return False
 
         # TODO: look for optimized SKIP rule
 
         # Unoptimized whitespace and comment rules.
+        assert self.parser
         whitespace_rule = self.parser.rules.get("WHITESPACE")
         comment_rule = self.parser.rules.get("COMMENT")
 
@@ -223,3 +222,16 @@ class ParserState:
             )
 
             target[label] = 1
+
+
+class RuleFrame:
+    """Rule meta data for the generated rule stack."""
+
+    __slots__ = ("name", "modifier")
+
+    def __init__(self, name: str, modifier: int):
+        self.name = name
+        self.modifier = modifier
+
+    def __repr__(self) -> str:
+        return f"RuleFrame({self.name!r}, {self.modifier})"

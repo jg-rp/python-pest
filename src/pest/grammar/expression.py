@@ -27,10 +27,6 @@ class Match(NamedTuple):
     pos: int
 
 
-# TODO: refactor expression.parse
-# TODO: maybe follow generated code example?
-
-
 class Expression(ABC):
     """Abstract base class for all grammar expressions.
 

@@ -25,10 +25,10 @@ import regex as re
 
 from pest.exceptions import PestParsingError
 from pest.exceptions import error_context
-from pest.grammar.codegen.state import RuleFrame
-from pest.grammar.codegen.state import State
 from pest.pairs import Pair
 from pest.pairs import Pairs
+from pest.state import ParserState
+from pest.state import RuleFrame
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -91,7 +91,7 @@ def generate_rule(name: str, rules: dict[str, Rule]) -> str:
     gen = Builder()
     func_name = f"parse_{rule.name}"
 
-    gen.writeln(f"def _{func_name}() -> Callable[[State, list[Pair]], bool]:")
+    gen.writeln(f"def _{func_name}() -> Callable[[ParserState, list[Pair]], bool]:")
     with gen.block():
         # Emit rule-scoped constants (regexes, tables, etc.)
         if inner_gen.rule_constants:
@@ -136,7 +136,7 @@ def generate_parse_trivia(rules: dict[str, Rule]) -> str:
     has_comment = "COMMENT" in rules
 
     gen = Builder()
-    gen.writeln("def parse_trivia(state: State, pairs: list[Pair]) -> bool:")
+    gen.writeln("def parse_trivia(state: ParserState, pairs: list[Pair]) -> bool:")
     with gen.block():
         if not (has_skip or has_ws or has_comment):
             # Nothing to do
@@ -207,7 +207,7 @@ def generate_rule_enum(rules: dict[str, Rule]) -> str:
 def generate_rule_map(rules: dict[str, Rule]) -> str:
     """Generate a dictionary mapping rule names to `parse_*` callables."""
     gen = Builder()
-    gen.writeln("_RULE_MAP: dict[str, Callable[[State, list[Pair]], bool]] = {")
+    gen.writeln("_RULE_MAP: dict[str, Callable[[ParserState, list[Pair]], bool]] = {")
     with gen.block():
         for name, rule in rules.items():
             if not isinstance(rule, BuiltInRule) or rule.name == "EOI":
@@ -225,7 +225,7 @@ def generate_parse_entry_point() -> str:
     with gen.block():
         # TODO: improve doc comment
         gen.writeln('"""Parse `input_` starting from `rule`."""')
-        gen.writeln("state = State(input_, start_pos)")
+        gen.writeln("state = ParserState(input_, start_pos)")
 
         gen.writeln("pairs: list[Pair] = []")
         gen.writeln("matched = _RULE_MAP[start_rule](state, pairs)")

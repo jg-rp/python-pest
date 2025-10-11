@@ -12,10 +12,10 @@ import regex as re
 
 from pest.exceptions import PestParsingError
 from pest.exceptions import error_context
-from pest.grammar.codegen.state import RuleFrame
-from pest.grammar.codegen.state import State
 from pest.pairs import Pair
 from pest.pairs import Pairs
+from pest.state import ParserState
+from pest.state import RuleFrame
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -25,81 +25,79 @@ if TYPE_CHECKING:
 
 class Rule(StrEnum):
     """Grammar rules."""
+    EOI = 'EOI'
+    JSONPATH = 'jsonpath'
+    JSONPATH_QUERY = 'jsonpath_query'
+    SEGMENTS = 'segments'
+    B = 'B'
+    S = 'S'
+    ROOT_IDENTIFIER = 'root_identifier'
+    SELECTOR = 'selector'
+    NAME_SELECTOR = 'name_selector'
+    STRING_LITERAL = 'string_literal'
+    DOUBLE_QUOTED = 'double_quoted'
+    SINGLE_QUOTED = 'single_quoted'
+    DOUBLE_QUOTED_CHAR = 'double_quoted_char'
+    SINGLE_QUOTED_CHAR = 'single_quoted_char'
+    ESC = 'ESC'
+    UNESCAPED = 'unescaped'
+    ESCAPABLE = 'escapable'
+    HEXCHAR = 'hexchar'
+    NON_SURROGATE = 'non_surrogate'
+    HIGH_SURROGATE = 'high_surrogate'
+    LOW_SURROGATE = 'low_surrogate'
+    WILDCARD_SELECTOR = 'wildcard_selector'
+    INDEX_SELECTOR = 'index_selector'
+    INT = 'int'
+    SLICE_SELECTOR = 'slice_selector'
+    START = 'start'
+    STOP = 'stop'
+    STEP = 'step'
+    FILTER_SELECTOR = 'filter_selector'
+    LOGICAL_EXPR = 'logical_expr'
+    LOGICAL_OR_EXPR = 'logical_or_expr'
+    LOGICAL_AND_EXPR = 'logical_and_expr'
+    BASIC_EXPR = 'basic_expr'
+    PAREN_EXPR = 'paren_expr'
+    LOGICAL_NOT_OP = 'logical_not_op'
+    TEST_EXPR = 'test_expr'
+    FILTER_QUERY = 'filter_query'
+    ROOT_QUERY = 'root_query'
+    REL_QUERY = 'rel_query'
+    CURRENT_NODE_IDENTIFIER = 'current_node_identifier'
+    COMPARISON_EXPR = 'comparison_expr'
+    LITERAL = 'literal'
+    COMPARABLE = 'comparable'
+    COMPARISON_OP = 'comparison_op'
+    SINGULAR_QUERY = 'singular_query'
+    REL_SINGULAR_QUERY = 'rel_singular_query'
+    ABS_SINGULAR_QUERY = 'abs_singular_query'
+    SINGULAR_QUERY_SEGMENTS = 'singular_query_segments'
+    NAME_SEGMENT = 'name_segment'
+    INDEX_SEGMENT = 'index_segment'
+    NUMBER = 'number'
+    FRAC = 'frac'
+    EXP = 'exp'
+    TRUE_LITERAL = 'true_literal'
+    FALSE_LITERAL = 'false_literal'
+    NULL = 'null'
+    FUNCTION_NAME = 'function_name'
+    FUNCTION_NAME_FIRST = 'function_name_first'
+    FUNCTION_NAME_CHAR = 'function_name_char'
+    FUNCTION_EXPR = 'function_expr'
+    FUNCTION_ARGUMENT = 'function_argument'
+    SEGMENT = 'segment'
+    CHILD_SEGMENT = 'child_segment'
+    BRACKETED_SELECTION = 'bracketed_selection'
+    MEMBER_NAME_SHORTHAND = 'member_name_shorthand'
+    NAME_FIRST = 'name_first'
+    NAME_CHAR = 'name_char'
+    DESCENDANT_SEGMENT = 'descendant_segment'
 
-    EOI = "EOI"
-    JSONPATH = "jsonpath"
-    JSONPATH_QUERY = "jsonpath_query"
-    SEGMENTS = "segments"
-    B = "B"
-    S = "S"
-    ROOT_IDENTIFIER = "root_identifier"
-    SELECTOR = "selector"
-    NAME_SELECTOR = "name_selector"
-    STRING_LITERAL = "string_literal"
-    DOUBLE_QUOTED = "double_quoted"
-    SINGLE_QUOTED = "single_quoted"
-    DOUBLE_QUOTED_CHAR = "double_quoted_char"
-    SINGLE_QUOTED_CHAR = "single_quoted_char"
-    ESC = "ESC"
-    UNESCAPED = "unescaped"
-    ESCAPABLE = "escapable"
-    HEXCHAR = "hexchar"
-    NON_SURROGATE = "non_surrogate"
-    HIGH_SURROGATE = "high_surrogate"
-    LOW_SURROGATE = "low_surrogate"
-    WILDCARD_SELECTOR = "wildcard_selector"
-    INDEX_SELECTOR = "index_selector"
-    INT = "int"
-    SLICE_SELECTOR = "slice_selector"
-    START = "start"
-    STOP = "stop"
-    STEP = "step"
-    FILTER_SELECTOR = "filter_selector"
-    LOGICAL_EXPR = "logical_expr"
-    LOGICAL_OR_EXPR = "logical_or_expr"
-    LOGICAL_AND_EXPR = "logical_and_expr"
-    BASIC_EXPR = "basic_expr"
-    PAREN_EXPR = "paren_expr"
-    LOGICAL_NOT_OP = "logical_not_op"
-    TEST_EXPR = "test_expr"
-    FILTER_QUERY = "filter_query"
-    ROOT_QUERY = "root_query"
-    REL_QUERY = "rel_query"
-    CURRENT_NODE_IDENTIFIER = "current_node_identifier"
-    COMPARISON_EXPR = "comparison_expr"
-    LITERAL = "literal"
-    COMPARABLE = "comparable"
-    COMPARISON_OP = "comparison_op"
-    SINGULAR_QUERY = "singular_query"
-    REL_SINGULAR_QUERY = "rel_singular_query"
-    ABS_SINGULAR_QUERY = "abs_singular_query"
-    SINGULAR_QUERY_SEGMENTS = "singular_query_segments"
-    NAME_SEGMENT = "name_segment"
-    INDEX_SEGMENT = "index_segment"
-    NUMBER = "number"
-    FRAC = "frac"
-    EXP = "exp"
-    TRUE_LITERAL = "true_literal"
-    FALSE_LITERAL = "false_literal"
-    NULL = "null"
-    FUNCTION_NAME = "function_name"
-    FUNCTION_NAME_FIRST = "function_name_first"
-    FUNCTION_NAME_CHAR = "function_name_char"
-    FUNCTION_EXPR = "function_expr"
-    FUNCTION_ARGUMENT = "function_argument"
-    SEGMENT = "segment"
-    CHILD_SEGMENT = "child_segment"
-    BRACKETED_SELECTION = "bracketed_selection"
-    MEMBER_NAME_SHORTHAND = "member_name_shorthand"
-    NAME_FIRST = "name_first"
-    NAME_CHAR = "name_char"
-    DESCENDANT_SEGMENT = "descendant_segment"
-
-
-def _parse_EOI() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("EOI", 0)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_EOI() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('EOI', 0)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse EOI."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -114,28 +112,17 @@ def _parse_EOI() -> Callable[[State, list[Pair]], bool]:
         else:
             tag3 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag3,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag3,))
         return matched
-
+    
     return inner
-
-
+    
 parse_EOI = _parse_EOI()
 
-
-def _parse_jsonpath() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("jsonpath", 2)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_jsonpath() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('jsonpath', 2)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse jsonpath."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
@@ -190,17 +177,15 @@ def _parse_jsonpath() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'jsonpath'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_jsonpath = _parse_jsonpath()
 
-
-def _parse_jsonpath_query() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("jsonpath_query", 2)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_jsonpath_query() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('jsonpath_query', 2)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse jsonpath_query."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
@@ -209,7 +194,7 @@ def _parse_jsonpath_query() -> Callable[[State, list[Pair]], bool]:
         if all_ok4:
             matched3 = False
             # <String>
-            if state.input.startswith("$", state.pos):
+            if state.input.startswith('$', state.pos):
                 state.pos += 1
                 matched3 = True
             else:
@@ -269,17 +254,15 @@ def _parse_jsonpath_query() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'jsonpath_query'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_jsonpath_query = _parse_jsonpath_query()
 
-
-def _parse_segments() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("segments", 2)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_segments() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('segments', 2)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse segments."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
@@ -366,19 +349,17 @@ def _parse_segments() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'segments'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_segments = _parse_segments()
 
-
-def _parse_B() -> Callable[[State, list[Pair]], bool]:
-    RE3 = re.compile("[\\\t\\\n\\\r\\ ]", re.VERSION1)
-
-    rule_frame = RuleFrame("B", 2)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_B() -> Callable[[ParserState, list[Pair]], bool]:
+    RE3 = re.compile('[\\\t\\\n\\\r\\ ]', re.VERSION1)
+    
+    rule_frame = RuleFrame('B', 2)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse B."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
@@ -393,19 +374,17 @@ def _parse_B() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'B'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_B = _parse_B()
 
-
-def _parse_S() -> Callable[[State, list[Pair]], bool]:
-    RE5 = re.compile("[\\\t\\\n\\\r\\ ]", re.VERSION1)
-
-    rule_frame = RuleFrame("S", 2)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_S() -> Callable[[ParserState, list[Pair]], bool]:
+    RE5 = re.compile('[\\\t\\\n\\\r\\ ]', re.VERSION1)
+    
+    rule_frame = RuleFrame('S', 2)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse S."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
@@ -437,22 +416,20 @@ def _parse_S() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'S'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_S = _parse_S()
 
-
-def _parse_root_identifier() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("root_identifier", 2)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_root_identifier() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('root_identifier', 2)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse root_identifier."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
         # <String>
-        if state.input.startswith("$", state.pos):
+        if state.input.startswith('$', state.pos):
             state.pos += 1
             matched = True
         else:
@@ -463,17 +440,15 @@ def _parse_root_identifier() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'root_identifier'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_root_identifier = _parse_root_identifier()
 
-
-def _parse_selector() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("selector", 2)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_selector() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('selector', 2)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse selector."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
@@ -540,17 +515,15 @@ def _parse_selector() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'selector'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_selector = _parse_selector()
 
-
-def _parse_name_selector() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("name_selector", 2)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_name_selector() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('name_selector', 2)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse name_selector."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
@@ -660,17 +633,15 @@ def _parse_name_selector() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'name_selector'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_name_selector = _parse_name_selector()
 
-
-def _parse_string_literal() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("string_literal", 2)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_string_literal() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('string_literal', 2)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse string_literal."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
@@ -780,17 +751,15 @@ def _parse_string_literal() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'string_literal'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_string_literal = _parse_string_literal()
 
-
-def _parse_double_quoted() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("double_quoted", 0)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_double_quoted() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('double_quoted', 0)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse double_quoted."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -914,28 +883,17 @@ def _parse_double_quoted() -> Callable[[State, list[Pair]], bool]:
         else:
             tag10 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag10,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag10,))
         return matched
-
+    
     return inner
-
-
+    
 parse_double_quoted = _parse_double_quoted()
 
-
-def _parse_single_quoted() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("single_quoted", 0)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_single_quoted() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('single_quoted', 0)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse single_quoted."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -1059,30 +1017,19 @@ def _parse_single_quoted() -> Callable[[State, list[Pair]], bool]:
         else:
             tag10 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag10,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag10,))
         return matched
-
+    
     return inner
-
-
+    
 parse_single_quoted = _parse_single_quoted()
 
-
-def _parse_double_quoted_char() -> Callable[[State, list[Pair]], bool]:
-    RE4 = re.compile("[\\ -!\\#-\\&\\(-\\[\\]-\ud7ff\ue000-\U0010ffff]", re.VERSION1)
-
-    rule_frame = RuleFrame("double_quoted_char", 2)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_double_quoted_char() -> Callable[[ParserState, list[Pair]], bool]:
+    RE4 = re.compile('[\\ -!\\#-\\&\\(-\\[\\]-\ud7ff\ue000-\U0010ffff]', re.VERSION1)
+    
+    rule_frame = RuleFrame('double_quoted_char', 2)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse double_quoted_char."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
@@ -1128,7 +1075,7 @@ def _parse_double_quoted_char() -> Callable[[State, list[Pair]], bool]:
             if all_ok6:
                 matched5 = False
                 # <String>
-                if state.input.startswith("\\", state.pos):
+                if state.input.startswith('\\', state.pos):
                     state.pos += 1
                     matched5 = True
                 else:
@@ -1168,7 +1115,7 @@ def _parse_double_quoted_char() -> Callable[[State, list[Pair]], bool]:
             if all_ok8:
                 matched7 = False
                 # <String>
-                if state.input.startswith("\\", state.pos):
+                if state.input.startswith('\\', state.pos):
                     state.pos += 1
                     matched7 = True
                 else:
@@ -1187,7 +1134,7 @@ def _parse_double_quoted_char() -> Callable[[State, list[Pair]], bool]:
                 if not matched7:
                     state.checkpoint()
                     # <String>
-                    if state.input.startswith("b", state.pos):
+                    if state.input.startswith('b', state.pos):
                         state.pos += 1
                         matched7 = True
                     else:
@@ -1203,7 +1150,7 @@ def _parse_double_quoted_char() -> Callable[[State, list[Pair]], bool]:
                 if not matched7:
                     state.checkpoint()
                     # <String>
-                    if state.input.startswith("f", state.pos):
+                    if state.input.startswith('f', state.pos):
                         state.pos += 1
                         matched7 = True
                     else:
@@ -1219,7 +1166,7 @@ def _parse_double_quoted_char() -> Callable[[State, list[Pair]], bool]:
                 if not matched7:
                     state.checkpoint()
                     # <String>
-                    if state.input.startswith("n", state.pos):
+                    if state.input.startswith('n', state.pos):
                         state.pos += 1
                         matched7 = True
                     else:
@@ -1235,7 +1182,7 @@ def _parse_double_quoted_char() -> Callable[[State, list[Pair]], bool]:
                 if not matched7:
                     state.checkpoint()
                     # <String>
-                    if state.input.startswith("r", state.pos):
+                    if state.input.startswith('r', state.pos):
                         state.pos += 1
                         matched7 = True
                     else:
@@ -1251,7 +1198,7 @@ def _parse_double_quoted_char() -> Callable[[State, list[Pair]], bool]:
                 if not matched7:
                     state.checkpoint()
                     # <String>
-                    if state.input.startswith("t", state.pos):
+                    if state.input.startswith('t', state.pos):
                         state.pos += 1
                         matched7 = True
                     else:
@@ -1267,7 +1214,7 @@ def _parse_double_quoted_char() -> Callable[[State, list[Pair]], bool]:
                 if not matched7:
                     state.checkpoint()
                     # <String>
-                    if state.input.startswith("/", state.pos):
+                    if state.input.startswith('/', state.pos):
                         state.pos += 1
                         matched7 = True
                     else:
@@ -1283,7 +1230,7 @@ def _parse_double_quoted_char() -> Callable[[State, list[Pair]], bool]:
                 if not matched7:
                     state.checkpoint()
                     # <String>
-                    if state.input.startswith("\\", state.pos):
+                    if state.input.startswith('\\', state.pos):
                         state.pos += 1
                         matched7 = True
                     else:
@@ -1304,7 +1251,7 @@ def _parse_double_quoted_char() -> Callable[[State, list[Pair]], bool]:
                     if all_ok11:
                         matched10 = False
                         # <String>
-                        if state.input.startswith("u", state.pos):
+                        if state.input.startswith('u', state.pos):
                             state.pos += 1
                             matched10 = True
                         else:
@@ -1348,19 +1295,17 @@ def _parse_double_quoted_char() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'double_quoted_char'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_double_quoted_char = _parse_double_quoted_char()
 
-
-def _parse_single_quoted_char() -> Callable[[State, list[Pair]], bool]:
-    RE4 = re.compile("[\\ -!\\#-\\&\\(-\\[\\]-\ud7ff\ue000-\U0010ffff]", re.VERSION1)
-
-    rule_frame = RuleFrame("single_quoted_char", 2)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_single_quoted_char() -> Callable[[ParserState, list[Pair]], bool]:
+    RE4 = re.compile('[\\ -!\\#-\\&\\(-\\[\\]-\ud7ff\ue000-\U0010ffff]', re.VERSION1)
+    
+    rule_frame = RuleFrame('single_quoted_char', 2)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse single_quoted_char."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
@@ -1406,7 +1351,7 @@ def _parse_single_quoted_char() -> Callable[[State, list[Pair]], bool]:
             if all_ok6:
                 matched5 = False
                 # <String>
-                if state.input.startswith("\\", state.pos):
+                if state.input.startswith('\\', state.pos):
                     state.pos += 1
                     matched5 = True
                 else:
@@ -1446,7 +1391,7 @@ def _parse_single_quoted_char() -> Callable[[State, list[Pair]], bool]:
             if all_ok8:
                 matched7 = False
                 # <String>
-                if state.input.startswith("\\", state.pos):
+                if state.input.startswith('\\', state.pos):
                     state.pos += 1
                     matched7 = True
                 else:
@@ -1465,7 +1410,7 @@ def _parse_single_quoted_char() -> Callable[[State, list[Pair]], bool]:
                 if not matched7:
                     state.checkpoint()
                     # <String>
-                    if state.input.startswith("b", state.pos):
+                    if state.input.startswith('b', state.pos):
                         state.pos += 1
                         matched7 = True
                     else:
@@ -1481,7 +1426,7 @@ def _parse_single_quoted_char() -> Callable[[State, list[Pair]], bool]:
                 if not matched7:
                     state.checkpoint()
                     # <String>
-                    if state.input.startswith("f", state.pos):
+                    if state.input.startswith('f', state.pos):
                         state.pos += 1
                         matched7 = True
                     else:
@@ -1497,7 +1442,7 @@ def _parse_single_quoted_char() -> Callable[[State, list[Pair]], bool]:
                 if not matched7:
                     state.checkpoint()
                     # <String>
-                    if state.input.startswith("n", state.pos):
+                    if state.input.startswith('n', state.pos):
                         state.pos += 1
                         matched7 = True
                     else:
@@ -1513,7 +1458,7 @@ def _parse_single_quoted_char() -> Callable[[State, list[Pair]], bool]:
                 if not matched7:
                     state.checkpoint()
                     # <String>
-                    if state.input.startswith("r", state.pos):
+                    if state.input.startswith('r', state.pos):
                         state.pos += 1
                         matched7 = True
                     else:
@@ -1529,7 +1474,7 @@ def _parse_single_quoted_char() -> Callable[[State, list[Pair]], bool]:
                 if not matched7:
                     state.checkpoint()
                     # <String>
-                    if state.input.startswith("t", state.pos):
+                    if state.input.startswith('t', state.pos):
                         state.pos += 1
                         matched7 = True
                     else:
@@ -1545,7 +1490,7 @@ def _parse_single_quoted_char() -> Callable[[State, list[Pair]], bool]:
                 if not matched7:
                     state.checkpoint()
                     # <String>
-                    if state.input.startswith("/", state.pos):
+                    if state.input.startswith('/', state.pos):
                         state.pos += 1
                         matched7 = True
                     else:
@@ -1561,7 +1506,7 @@ def _parse_single_quoted_char() -> Callable[[State, list[Pair]], bool]:
                 if not matched7:
                     state.checkpoint()
                     # <String>
-                    if state.input.startswith("\\", state.pos):
+                    if state.input.startswith('\\', state.pos):
                         state.pos += 1
                         matched7 = True
                     else:
@@ -1582,7 +1527,7 @@ def _parse_single_quoted_char() -> Callable[[State, list[Pair]], bool]:
                     if all_ok11:
                         matched10 = False
                         # <String>
-                        if state.input.startswith("u", state.pos):
+                        if state.input.startswith('u', state.pos):
                             state.pos += 1
                             matched10 = True
                         else:
@@ -1626,22 +1571,20 @@ def _parse_single_quoted_char() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'single_quoted_char'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_single_quoted_char = _parse_single_quoted_char()
 
-
-def _parse_ESC() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("ESC", 2)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_ESC() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('ESC', 2)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse ESC."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
         # <String>
-        if state.input.startswith("\\", state.pos):
+        if state.input.startswith('\\', state.pos):
             state.pos += 1
             matched = True
         else:
@@ -1652,19 +1595,17 @@ def _parse_ESC() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'ESC'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_ESC = _parse_ESC()
 
-
-def _parse_unescaped() -> Callable[[State, list[Pair]], bool]:
-    RE3 = re.compile("[\\ -!\\#-\\&\\(-\\[\\]-\ud7ff\ue000-\U0010ffff]", re.VERSION1)
-
-    rule_frame = RuleFrame("unescaped", 2)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_unescaped() -> Callable[[ParserState, list[Pair]], bool]:
+    RE3 = re.compile('[\\ -!\\#-\\&\\(-\\[\\]-\ud7ff\ue000-\U0010ffff]', re.VERSION1)
+    
+    rule_frame = RuleFrame('unescaped', 2)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse unescaped."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
@@ -1679,17 +1620,15 @@ def _parse_unescaped() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'unescaped'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_unescaped = _parse_unescaped()
 
-
-def _parse_escapable() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("escapable", 2)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_escapable() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('escapable', 2)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse escapable."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
@@ -1699,7 +1638,7 @@ def _parse_escapable() -> Callable[[State, list[Pair]], bool]:
         if not matched:
             state.checkpoint()
             # <String>
-            if state.input.startswith("b", state.pos):
+            if state.input.startswith('b', state.pos):
                 state.pos += 1
                 matched = True
             else:
@@ -1715,7 +1654,7 @@ def _parse_escapable() -> Callable[[State, list[Pair]], bool]:
         if not matched:
             state.checkpoint()
             # <String>
-            if state.input.startswith("f", state.pos):
+            if state.input.startswith('f', state.pos):
                 state.pos += 1
                 matched = True
             else:
@@ -1731,7 +1670,7 @@ def _parse_escapable() -> Callable[[State, list[Pair]], bool]:
         if not matched:
             state.checkpoint()
             # <String>
-            if state.input.startswith("n", state.pos):
+            if state.input.startswith('n', state.pos):
                 state.pos += 1
                 matched = True
             else:
@@ -1747,7 +1686,7 @@ def _parse_escapable() -> Callable[[State, list[Pair]], bool]:
         if not matched:
             state.checkpoint()
             # <String>
-            if state.input.startswith("r", state.pos):
+            if state.input.startswith('r', state.pos):
                 state.pos += 1
                 matched = True
             else:
@@ -1763,7 +1702,7 @@ def _parse_escapable() -> Callable[[State, list[Pair]], bool]:
         if not matched:
             state.checkpoint()
             # <String>
-            if state.input.startswith("t", state.pos):
+            if state.input.startswith('t', state.pos):
                 state.pos += 1
                 matched = True
             else:
@@ -1779,7 +1718,7 @@ def _parse_escapable() -> Callable[[State, list[Pair]], bool]:
         if not matched:
             state.checkpoint()
             # <String>
-            if state.input.startswith("/", state.pos):
+            if state.input.startswith('/', state.pos):
                 state.pos += 1
                 matched = True
             else:
@@ -1795,7 +1734,7 @@ def _parse_escapable() -> Callable[[State, list[Pair]], bool]:
         if not matched:
             state.checkpoint()
             # <String>
-            if state.input.startswith("\\", state.pos):
+            if state.input.startswith('\\', state.pos):
                 state.pos += 1
                 matched = True
             else:
@@ -1816,7 +1755,7 @@ def _parse_escapable() -> Callable[[State, list[Pair]], bool]:
             if all_ok5:
                 matched4 = False
                 # <String>
-                if state.input.startswith("u", state.pos):
+                if state.input.startswith('u', state.pos):
                     state.pos += 1
                     matched4 = True
                 else:
@@ -1860,7 +1799,7 @@ def _parse_escapable() -> Callable[[State, list[Pair]], bool]:
                     if all_ok8:
                         matched7 = False
                         # <String>
-                        if state.input.startswith("\\u", state.pos):
+                        if state.input.startswith('\\u', state.pos):
                             state.pos += 2
                             matched7 = True
                         else:
@@ -1904,34 +1843,32 @@ def _parse_escapable() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'escapable'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_escapable = _parse_escapable()
 
-
-def _parse_hexchar() -> Callable[[State, list[Pair]], bool]:
-    RE7 = re.compile("[ABCEFabcef0-9]", re.VERSION1)
-    RE10 = re.compile("[0-9A-Fa-f]", re.VERSION1)
-    RE11 = re.compile("[0-9A-Fa-f]", re.VERSION1)
-    RE12 = re.compile("[0-9A-Fa-f]", re.VERSION1)
-    RE15 = re.compile("D", re.I)
-    RE16 = re.compile("[0-7]", re.I)
-    RE19 = re.compile("[0-9A-Fa-f]", re.VERSION1)
-    RE20 = re.compile("[0-9A-Fa-f]", re.VERSION1)
-    RE25 = re.compile("D", re.I)
-    RE26 = re.compile("[89ABab]", re.VERSION1)
-    RE29 = re.compile("[0-9A-Fa-f]", re.VERSION1)
-    RE30 = re.compile("[0-9A-Fa-f]", re.VERSION1)
-    RE33 = re.compile("D", re.I)
-    RE34 = re.compile("[CDEFcdef]", re.VERSION1)
-    RE37 = re.compile("[0-9A-Fa-f]", re.VERSION1)
-    RE38 = re.compile("[0-9A-Fa-f]", re.VERSION1)
-
-    rule_frame = RuleFrame("hexchar", 2)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_hexchar() -> Callable[[ParserState, list[Pair]], bool]:
+    RE7 = re.compile('[ABCEFabcef0-9]', re.VERSION1)
+    RE10 = re.compile('[0-9A-Fa-f]', re.VERSION1)
+    RE11 = re.compile('[0-9A-Fa-f]', re.VERSION1)
+    RE12 = re.compile('[0-9A-Fa-f]', re.VERSION1)
+    RE15 = re.compile('D', re.I)
+    RE16 = re.compile('[0-7]', re.I)
+    RE19 = re.compile('[0-9A-Fa-f]', re.VERSION1)
+    RE20 = re.compile('[0-9A-Fa-f]', re.VERSION1)
+    RE25 = re.compile('D', re.I)
+    RE26 = re.compile('[89ABab]', re.VERSION1)
+    RE29 = re.compile('[0-9A-Fa-f]', re.VERSION1)
+    RE30 = re.compile('[0-9A-Fa-f]', re.VERSION1)
+    RE33 = re.compile('D', re.I)
+    RE34 = re.compile('[CDEFcdef]', re.VERSION1)
+    RE37 = re.compile('[0-9A-Fa-f]', re.VERSION1)
+    RE38 = re.compile('[0-9A-Fa-f]', re.VERSION1)
+    
+    rule_frame = RuleFrame('hexchar', 2)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse hexchar."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
@@ -2177,7 +2114,7 @@ def _parse_hexchar() -> Callable[[State, list[Pair]], bool]:
             if all_ok22:
                 matched21 = False
                 # <String>
-                if state.input.startswith("\\u", state.pos):
+                if state.input.startswith('\\u', state.pos):
                     state.pos += 2
                     matched21 = True
                 else:
@@ -2271,26 +2208,24 @@ def _parse_hexchar() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'hexchar'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_hexchar = _parse_hexchar()
 
-
-def _parse_non_surrogate() -> Callable[[State, list[Pair]], bool]:
-    RE6 = re.compile("[ABCEFabcef0-9]", re.VERSION1)
-    RE9 = re.compile("[0-9A-Fa-f]", re.VERSION1)
-    RE10 = re.compile("[0-9A-Fa-f]", re.VERSION1)
-    RE11 = re.compile("[0-9A-Fa-f]", re.VERSION1)
-    RE14 = re.compile("D", re.I)
-    RE15 = re.compile("[0-7]", re.I)
-    RE18 = re.compile("[0-9A-Fa-f]", re.VERSION1)
-    RE19 = re.compile("[0-9A-Fa-f]", re.VERSION1)
-
-    rule_frame = RuleFrame("non_surrogate", 2)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_non_surrogate() -> Callable[[ParserState, list[Pair]], bool]:
+    RE6 = re.compile('[ABCEFabcef0-9]', re.VERSION1)
+    RE9 = re.compile('[0-9A-Fa-f]', re.VERSION1)
+    RE10 = re.compile('[0-9A-Fa-f]', re.VERSION1)
+    RE11 = re.compile('[0-9A-Fa-f]', re.VERSION1)
+    RE14 = re.compile('D', re.I)
+    RE15 = re.compile('[0-7]', re.I)
+    RE18 = re.compile('[0-9A-Fa-f]', re.VERSION1)
+    RE19 = re.compile('[0-9A-Fa-f]', re.VERSION1)
+    
+    rule_frame = RuleFrame('non_surrogate', 2)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse non_surrogate."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
@@ -2450,22 +2385,20 @@ def _parse_non_surrogate() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'non_surrogate'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_non_surrogate = _parse_non_surrogate()
 
-
-def _parse_high_surrogate() -> Callable[[State, list[Pair]], bool]:
-    RE5 = re.compile("D", re.I)
-    RE6 = re.compile("[89ABab]", re.VERSION1)
-    RE9 = re.compile("[0-9A-Fa-f]", re.VERSION1)
-    RE10 = re.compile("[0-9A-Fa-f]", re.VERSION1)
-
-    rule_frame = RuleFrame("high_surrogate", 2)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_high_surrogate() -> Callable[[ParserState, list[Pair]], bool]:
+    RE5 = re.compile('D', re.I)
+    RE6 = re.compile('[89ABab]', re.VERSION1)
+    RE9 = re.compile('[0-9A-Fa-f]', re.VERSION1)
+    RE10 = re.compile('[0-9A-Fa-f]', re.VERSION1)
+    
+    rule_frame = RuleFrame('high_surrogate', 2)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse high_surrogate."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
@@ -2538,22 +2471,20 @@ def _parse_high_surrogate() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'high_surrogate'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_high_surrogate = _parse_high_surrogate()
 
-
-def _parse_low_surrogate() -> Callable[[State, list[Pair]], bool]:
-    RE5 = re.compile("D", re.I)
-    RE6 = re.compile("[CDEFcdef]", re.VERSION1)
-    RE9 = re.compile("[0-9A-Fa-f]", re.VERSION1)
-    RE10 = re.compile("[0-9A-Fa-f]", re.VERSION1)
-
-    rule_frame = RuleFrame("low_surrogate", 2)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_low_surrogate() -> Callable[[ParserState, list[Pair]], bool]:
+    RE5 = re.compile('D', re.I)
+    RE6 = re.compile('[CDEFcdef]', re.VERSION1)
+    RE9 = re.compile('[0-9A-Fa-f]', re.VERSION1)
+    RE10 = re.compile('[0-9A-Fa-f]', re.VERSION1)
+    
+    rule_frame = RuleFrame('low_surrogate', 2)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse low_surrogate."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
@@ -2626,23 +2557,21 @@ def _parse_low_surrogate() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'low_surrogate'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_low_surrogate = _parse_low_surrogate()
 
-
-def _parse_wildcard_selector() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("wildcard_selector", 0)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_wildcard_selector() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('wildcard_selector', 0)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse wildcard_selector."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
         # <String>
-        if state.input.startswith("*", state.pos):
+        if state.input.startswith('*', state.pos):
             state.pos += 1
             matched = True
         else:
@@ -2655,28 +2584,17 @@ def _parse_wildcard_selector() -> Callable[[State, list[Pair]], bool]:
         else:
             tag3 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag3,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag3,))
         return matched
-
+    
     return inner
-
-
+    
 parse_wildcard_selector = _parse_wildcard_selector()
 
-
-def _parse_index_selector() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("index_selector", 4)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_index_selector() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('index_selector', 4)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse index_selector."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -2693,31 +2611,20 @@ def _parse_index_selector() -> Callable[[State, list[Pair]], bool]:
             tag3 = None
         # Atomic rule: 'index_selector'
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    [],
-                    tag3,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, [], tag3,))
         return matched
-
+    
     return inner
-
-
+    
 parse_index_selector = _parse_index_selector()
 
-
-def _parse_int() -> Callable[[State, list[Pair]], bool]:
-    RE7 = re.compile("[1-9]", re.I)
-    RE10 = re.compile("[0-9]", re.I)
-
-    rule_frame = RuleFrame("int", 0)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_int() -> Callable[[ParserState, list[Pair]], bool]:
+    RE7 = re.compile('[1-9]', re.I)
+    RE10 = re.compile('[0-9]', re.I)
+    
+    rule_frame = RuleFrame('int', 0)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse int."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -2728,7 +2635,7 @@ def _parse_int() -> Callable[[State, list[Pair]], bool]:
         if not matched:
             state.checkpoint()
             # <String>
-            if state.input.startswith("0", state.pos):
+            if state.input.startswith('0', state.pos):
                 state.pos += 1
                 matched = True
             else:
@@ -2752,7 +2659,7 @@ def _parse_int() -> Callable[[State, list[Pair]], bool]:
                 children6: list[Pair] = []
                 state.checkpoint()
                 # <String>
-                if state.input.startswith("-", state.pos):
+                if state.input.startswith('-', state.pos):
                     state.pos += 1
                     matched4 = True
                 else:
@@ -2830,33 +2737,22 @@ def _parse_int() -> Callable[[State, list[Pair]], bool]:
         else:
             tag11 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag11,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag11,))
         return matched
-
+    
     return inner
-
-
+    
 parse_int = _parse_int()
 
-
-def _parse_slice_selector() -> Callable[[State, list[Pair]], bool]:
-    RE10 = re.compile("[\\\t\\\n\\\r\\ ]", re.VERSION1)
-    RE13 = re.compile("[\\\t\\\n\\\r\\ ]", re.VERSION1)
-    RE19 = re.compile("[\\\t\\\n\\\r\\ ]", re.VERSION1)
-    RE28 = re.compile("[\\\t\\\n\\\r\\ ]", re.VERSION1)
-
-    rule_frame = RuleFrame("slice_selector", 0)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_slice_selector() -> Callable[[ParserState, list[Pair]], bool]:
+    RE10 = re.compile('[\\\t\\\n\\\r\\ ]', re.VERSION1)
+    RE13 = re.compile('[\\\t\\\n\\\r\\ ]', re.VERSION1)
+    RE19 = re.compile('[\\\t\\\n\\\r\\ ]', re.VERSION1)
+    RE28 = re.compile('[\\\t\\\n\\\r\\ ]', re.VERSION1)
+    
+    rule_frame = RuleFrame('slice_selector', 0)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse slice_selector."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -2926,7 +2822,7 @@ def _parse_slice_selector() -> Callable[[State, list[Pair]], bool]:
         if all_ok4:
             matched3 = False
             # <String>
-            if state.input.startswith(":", state.pos):
+            if state.input.startswith(':', state.pos):
                 state.pos += 1
                 matched3 = True
             else:
@@ -3038,7 +2934,7 @@ def _parse_slice_selector() -> Callable[[State, list[Pair]], bool]:
             if all_ok22:
                 matched21 = False
                 # <String>
-                if state.input.startswith(":", state.pos):
+                if state.input.startswith(':', state.pos):
                     state.pos += 1
                     matched21 = True
                 else:
@@ -3128,28 +3024,17 @@ def _parse_slice_selector() -> Callable[[State, list[Pair]], bool]:
         else:
             tag29 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag29,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag29,))
         return matched
-
+    
     return inner
-
-
+    
 parse_slice_selector = _parse_slice_selector()
 
-
-def _parse_start() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("start", 4)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_start() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('start', 4)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse start."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -3166,28 +3051,17 @@ def _parse_start() -> Callable[[State, list[Pair]], bool]:
             tag3 = None
         # Atomic rule: 'start'
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    [],
-                    tag3,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, [], tag3,))
         return matched
-
+    
     return inner
-
-
+    
 parse_start = _parse_start()
 
-
-def _parse_stop() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("stop", 4)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_stop() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('stop', 4)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse stop."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -3204,28 +3078,17 @@ def _parse_stop() -> Callable[[State, list[Pair]], bool]:
             tag3 = None
         # Atomic rule: 'stop'
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    [],
-                    tag3,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, [], tag3,))
         return matched
-
+    
     return inner
-
-
+    
 parse_stop = _parse_stop()
 
-
-def _parse_step() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("step", 4)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_step() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('step', 4)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse step."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -3242,30 +3105,19 @@ def _parse_step() -> Callable[[State, list[Pair]], bool]:
             tag3 = None
         # Atomic rule: 'step'
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    [],
-                    tag3,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, [], tag3,))
         return matched
-
+    
     return inner
-
-
+    
 parse_step = _parse_step()
 
-
-def _parse_filter_selector() -> Callable[[State, list[Pair]], bool]:
-    RE7 = re.compile("[\\\t\\\n\\\r\\ ]", re.VERSION1)
-
-    rule_frame = RuleFrame("filter_selector", 0)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_filter_selector() -> Callable[[ParserState, list[Pair]], bool]:
+    RE7 = re.compile('[\\\t\\\n\\\r\\ ]', re.VERSION1)
+    
+    rule_frame = RuleFrame('filter_selector', 0)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse filter_selector."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -3275,7 +3127,7 @@ def _parse_filter_selector() -> Callable[[State, list[Pair]], bool]:
         if all_ok4:
             matched3 = False
             # <String>
-            if state.input.startswith("?", state.pos):
+            if state.input.startswith('?', state.pos):
                 state.pos += 1
                 matched3 = True
             else:
@@ -3331,28 +3183,17 @@ def _parse_filter_selector() -> Callable[[State, list[Pair]], bool]:
         else:
             tag8 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag8,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag8,))
         return matched
-
+    
     return inner
-
-
+    
 parse_filter_selector = _parse_filter_selector()
 
-
-def _parse_logical_expr() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("logical_expr", 2)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_logical_expr() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('logical_expr', 2)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse logical_expr."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
@@ -3363,20 +3204,18 @@ def _parse_logical_expr() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'logical_expr'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_logical_expr = _parse_logical_expr()
 
-
-def _parse_logical_or_expr() -> Callable[[State, list[Pair]], bool]:
-    RE11 = re.compile("[\\\t\\\n\\\r\\ ]", re.VERSION1)
-    RE14 = re.compile("[\\\t\\\n\\\r\\ ]", re.VERSION1)
-
-    rule_frame = RuleFrame("logical_or_expr", 0)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_logical_or_expr() -> Callable[[ParserState, list[Pair]], bool]:
+    RE11 = re.compile('[\\\t\\\n\\\r\\ ]', re.VERSION1)
+    RE14 = re.compile('[\\\t\\\n\\\r\\ ]', re.VERSION1)
+    
+    rule_frame = RuleFrame('logical_or_expr', 0)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse logical_or_expr."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -3435,7 +3274,7 @@ def _parse_logical_or_expr() -> Callable[[State, list[Pair]], bool]:
                 if all_ok8:
                     matched7 = False
                     # <String>
-                    if state.input.startswith("||", state.pos):
+                    if state.input.startswith('||', state.pos):
                         state.pos += 2
                         matched7 = True
                     else:
@@ -3508,31 +3347,20 @@ def _parse_logical_or_expr() -> Callable[[State, list[Pair]], bool]:
         else:
             tag15 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag15,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag15,))
         return matched
-
+    
     return inner
-
-
+    
 parse_logical_or_expr = _parse_logical_or_expr()
 
-
-def _parse_logical_and_expr() -> Callable[[State, list[Pair]], bool]:
-    RE12 = re.compile("[\\\t\\\n\\\r\\ ]", re.VERSION1)
-    RE15 = re.compile("[\\\t\\\n\\\r\\ ]", re.VERSION1)
-
-    rule_frame = RuleFrame("logical_and_expr", 0)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_logical_and_expr() -> Callable[[ParserState, list[Pair]], bool]:
+    RE12 = re.compile('[\\\t\\\n\\\r\\ ]', re.VERSION1)
+    RE15 = re.compile('[\\\t\\\n\\\r\\ ]', re.VERSION1)
+    
+    rule_frame = RuleFrame('logical_and_expr', 0)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse logical_and_expr."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -3625,7 +3453,7 @@ def _parse_logical_and_expr() -> Callable[[State, list[Pair]], bool]:
                 if all_ok9:
                     matched8 = False
                     # <String>
-                    if state.input.startswith("&&", state.pos):
+                    if state.input.startswith('&&', state.pos):
                         state.pos += 2
                         matched8 = True
                     else:
@@ -3732,28 +3560,17 @@ def _parse_logical_and_expr() -> Callable[[State, list[Pair]], bool]:
         else:
             tag17 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag17,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag17,))
         return matched
-
+    
     return inner
-
-
+    
 parse_logical_and_expr = _parse_logical_and_expr()
 
-
-def _parse_basic_expr() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("basic_expr", 2)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_basic_expr() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('basic_expr', 2)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse basic_expr."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
@@ -3798,21 +3615,19 @@ def _parse_basic_expr() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'basic_expr'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_basic_expr = _parse_basic_expr()
 
-
-def _parse_paren_expr() -> Callable[[State, list[Pair]], bool]:
-    RE10 = re.compile("[\\\t\\\n\\\r\\ ]", re.VERSION1)
-    RE13 = re.compile("[\\\t\\\n\\\r\\ ]", re.VERSION1)
-    RE16 = re.compile("[\\\t\\\n\\\r\\ ]", re.VERSION1)
-
-    rule_frame = RuleFrame("paren_expr", 0)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_paren_expr() -> Callable[[ParserState, list[Pair]], bool]:
+    RE10 = re.compile('[\\\t\\\n\\\r\\ ]', re.VERSION1)
+    RE13 = re.compile('[\\\t\\\n\\\r\\ ]', re.VERSION1)
+    RE16 = re.compile('[\\\t\\\n\\\r\\ ]', re.VERSION1)
+    
+    rule_frame = RuleFrame('paren_expr', 0)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse paren_expr."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -3882,7 +3697,7 @@ def _parse_paren_expr() -> Callable[[State, list[Pair]], bool]:
         if all_ok4:
             matched3 = False
             # <String>
-            if state.input.startswith("(", state.pos):
+            if state.input.startswith('(', state.pos):
                 state.pos += 1
                 matched3 = True
             else:
@@ -3965,7 +3780,7 @@ def _parse_paren_expr() -> Callable[[State, list[Pair]], bool]:
         if all_ok4:
             matched3 = False
             # <String>
-            if state.input.startswith(")", state.pos):
+            if state.input.startswith(')', state.pos):
                 state.pos += 1
                 matched3 = True
             else:
@@ -3982,34 +3797,23 @@ def _parse_paren_expr() -> Callable[[State, list[Pair]], bool]:
         else:
             tag17 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag17,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag17,))
         return matched
-
+    
     return inner
-
-
+    
 parse_paren_expr = _parse_paren_expr()
 
-
-def _parse_logical_not_op() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("logical_not_op", 0)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_logical_not_op() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('logical_not_op', 0)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse logical_not_op."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
         # <String>
-        if state.input.startswith("!", state.pos):
+        if state.input.startswith('!', state.pos):
             state.pos += 1
             matched = True
         else:
@@ -4022,30 +3826,19 @@ def _parse_logical_not_op() -> Callable[[State, list[Pair]], bool]:
         else:
             tag3 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag3,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag3,))
         return matched
-
+    
     return inner
-
-
+    
 parse_logical_not_op = _parse_logical_not_op()
 
-
-def _parse_test_expr() -> Callable[[State, list[Pair]], bool]:
-    RE10 = re.compile("[\\\t\\\n\\\r\\ ]", re.VERSION1)
-
-    rule_frame = RuleFrame("test_expr", 0)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_test_expr() -> Callable[[ParserState, list[Pair]], bool]:
+    RE10 = re.compile('[\\\t\\\n\\\r\\ ]', re.VERSION1)
+    
+    rule_frame = RuleFrame('test_expr', 0)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse test_expr."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -4175,28 +3968,17 @@ def _parse_test_expr() -> Callable[[State, list[Pair]], bool]:
         else:
             tag13 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag13,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag13,))
         return matched
-
+    
     return inner
-
-
+    
 parse_test_expr = _parse_test_expr()
 
-
-def _parse_filter_query() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("filter_query", 2)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_filter_query() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('filter_query', 2)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse filter_query."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
@@ -4230,17 +4012,15 @@ def _parse_filter_query() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'filter_query'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_filter_query = _parse_filter_query()
 
-
-def _parse_root_query() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("root_query", 0)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_root_query() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('root_query', 0)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse root_query."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -4250,7 +4030,7 @@ def _parse_root_query() -> Callable[[State, list[Pair]], bool]:
         if all_ok4:
             matched3 = False
             # <String>
-            if state.input.startswith("$", state.pos):
+            if state.input.startswith('$', state.pos):
                 state.pos += 1
                 matched3 = True
             else:
@@ -4312,28 +4092,17 @@ def _parse_root_query() -> Callable[[State, list[Pair]], bool]:
         else:
             tag9 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag9,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag9,))
         return matched
-
+    
     return inner
-
-
+    
 parse_root_query = _parse_root_query()
 
-
-def _parse_rel_query() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("rel_query", 0)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_rel_query() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('rel_query', 0)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse rel_query."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -4343,7 +4112,7 @@ def _parse_rel_query() -> Callable[[State, list[Pair]], bool]:
         if all_ok4:
             matched3 = False
             # <String>
-            if state.input.startswith("@", state.pos):
+            if state.input.startswith('@', state.pos):
                 state.pos += 1
                 matched3 = True
             else:
@@ -4445,33 +4214,22 @@ def _parse_rel_query() -> Callable[[State, list[Pair]], bool]:
         else:
             tag12 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag12,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag12,))
         return matched
-
+    
     return inner
-
-
+    
 parse_rel_query = _parse_rel_query()
 
-
-def _parse_current_node_identifier() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("current_node_identifier", 2)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_current_node_identifier() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('current_node_identifier', 2)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse current_node_identifier."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
         # <String>
-        if state.input.startswith("@", state.pos):
+        if state.input.startswith('@', state.pos):
             state.pos += 1
             matched = True
         else:
@@ -4482,20 +4240,18 @@ def _parse_current_node_identifier() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'current_node_identifier'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_current_node_identifier = _parse_current_node_identifier()
 
-
-def _parse_comparison_expr() -> Callable[[State, list[Pair]], bool]:
-    RE8 = re.compile("[\\\t\\\n\\\r\\ ]", re.VERSION1)
-    RE11 = re.compile("[\\\t\\\n\\\r\\ ]", re.VERSION1)
-
-    rule_frame = RuleFrame("comparison_expr", 0)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_comparison_expr() -> Callable[[ParserState, list[Pair]], bool]:
+    RE8 = re.compile('[\\\t\\\n\\\r\\ ]', re.VERSION1)
+    RE11 = re.compile('[\\\t\\\n\\\r\\ ]', re.VERSION1)
+    
+    rule_frame = RuleFrame('comparison_expr', 0)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse comparison_expr."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -4663,28 +4419,17 @@ def _parse_comparison_expr() -> Callable[[State, list[Pair]], bool]:
         else:
             tag13 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag13,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag13,))
         return matched
-
+    
     return inner
-
-
+    
 parse_comparison_expr = _parse_comparison_expr()
 
-
-def _parse_literal() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("literal", 2)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_literal() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('literal', 2)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse literal."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
@@ -4850,17 +4595,15 @@ def _parse_literal() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'literal'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_literal = _parse_literal()
 
-
-def _parse_comparable() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("comparable", 2)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_comparable() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('comparable', 2)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse comparable."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
@@ -5083,19 +4826,17 @@ def _parse_comparable() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'comparable'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_comparable = _parse_comparable()
 
-
-def _parse_comparison_op() -> Callable[[State, list[Pair]], bool]:
-    RE3 = re.compile("(?:==|!=|<=|>=|[<>])", re.VERSION1)
-
-    rule_frame = RuleFrame("comparison_op", 0)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_comparison_op() -> Callable[[ParserState, list[Pair]], bool]:
+    RE3 = re.compile('(?:==|!=|<=|>=|[<>])', re.VERSION1)
+    
+    rule_frame = RuleFrame('comparison_op', 0)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse comparison_op."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -5113,28 +4854,17 @@ def _parse_comparison_op() -> Callable[[State, list[Pair]], bool]:
         else:
             tag4 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag4,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag4,))
         return matched
-
+    
     return inner
-
-
+    
 parse_comparison_op = _parse_comparison_op()
 
-
-def _parse_singular_query() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("singular_query", 2)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_singular_query() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('singular_query', 2)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse singular_query."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
@@ -5168,17 +4898,15 @@ def _parse_singular_query() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'singular_query'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_singular_query = _parse_singular_query()
 
-
-def _parse_rel_singular_query() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("rel_singular_query", 0)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_rel_singular_query() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('rel_singular_query', 0)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse rel_singular_query."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -5188,7 +4916,7 @@ def _parse_rel_singular_query() -> Callable[[State, list[Pair]], bool]:
         if all_ok4:
             matched3 = False
             # <String>
-            if state.input.startswith("@", state.pos):
+            if state.input.startswith('@', state.pos):
                 state.pos += 1
                 matched3 = True
             else:
@@ -5275,28 +5003,17 @@ def _parse_rel_singular_query() -> Callable[[State, list[Pair]], bool]:
         else:
             tag10 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag10,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag10,))
         return matched
-
+    
     return inner
-
-
+    
 parse_rel_singular_query = _parse_rel_singular_query()
 
-
-def _parse_abs_singular_query() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("abs_singular_query", 0)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_abs_singular_query() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('abs_singular_query', 0)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse abs_singular_query."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -5306,7 +5023,7 @@ def _parse_abs_singular_query() -> Callable[[State, list[Pair]], bool]:
         if all_ok4:
             matched3 = False
             # <String>
-            if state.input.startswith("$", state.pos):
+            if state.input.startswith('$', state.pos):
                 state.pos += 1
                 matched3 = True
             else:
@@ -5393,30 +5110,19 @@ def _parse_abs_singular_query() -> Callable[[State, list[Pair]], bool]:
         else:
             tag10 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag10,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag10,))
         return matched
-
+    
     return inner
-
-
+    
 parse_abs_singular_query = _parse_abs_singular_query()
 
-
-def _parse_singular_query_segments() -> Callable[[State, list[Pair]], bool]:
-    RE9 = re.compile("[\\\t\\\n\\\r\\ ]", re.VERSION1)
-
-    rule_frame = RuleFrame("singular_query_segments", 2)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_singular_query_segments() -> Callable[[ParserState, list[Pair]], bool]:
+    RE9 = re.compile('[\\\t\\\n\\\r\\ ]', re.VERSION1)
+    
+    rule_frame = RuleFrame('singular_query_segments', 2)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse singular_query_segments."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
@@ -5509,17 +5215,15 @@ def _parse_singular_query_segments() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'singular_query_segments'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_singular_query_segments = _parse_singular_query_segments()
 
-
-def _parse_name_segment() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("name_segment", 0)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_name_segment() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('name_segment', 0)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse name_segment."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -5535,7 +5239,7 @@ def _parse_name_segment() -> Callable[[State, list[Pair]], bool]:
             if all_ok5:
                 matched4 = False
                 # <String>
-                if state.input.startswith("[", state.pos):
+                if state.input.startswith('[', state.pos):
                     state.pos += 1
                     matched4 = True
                 else:
@@ -5657,7 +5361,7 @@ def _parse_name_segment() -> Callable[[State, list[Pair]], bool]:
             if all_ok5:
                 matched4 = False
                 # <String>
-                if state.input.startswith("]", state.pos):
+                if state.input.startswith(']', state.pos):
                     state.pos += 1
                     matched4 = True
                 else:
@@ -5683,7 +5387,7 @@ def _parse_name_segment() -> Callable[[State, list[Pair]], bool]:
             if all_ok12:
                 matched11 = False
                 # <String>
-                if state.input.startswith(".", state.pos):
+                if state.input.startswith('.', state.pos):
                     state.pos += 1
                     matched11 = True
                 else:
@@ -5717,28 +5421,17 @@ def _parse_name_segment() -> Callable[[State, list[Pair]], bool]:
         else:
             tag13 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag13,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag13,))
         return matched
-
+    
     return inner
-
-
+    
 parse_name_segment = _parse_name_segment()
 
-
-def _parse_index_segment() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("index_segment", 0)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_index_segment() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('index_segment', 0)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse index_segment."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -5748,7 +5441,7 @@ def _parse_index_segment() -> Callable[[State, list[Pair]], bool]:
         if all_ok4:
             matched3 = False
             # <String>
-            if state.input.startswith("[", state.pos):
+            if state.input.startswith('[', state.pos):
                 state.pos += 1
                 matched3 = True
             else:
@@ -5771,7 +5464,7 @@ def _parse_index_segment() -> Callable[[State, list[Pair]], bool]:
         if all_ok4:
             matched3 = False
             # <String>
-            if state.input.startswith("]", state.pos):
+            if state.input.startswith(']', state.pos):
                 state.pos += 1
                 matched3 = True
             else:
@@ -5788,28 +5481,17 @@ def _parse_index_segment() -> Callable[[State, list[Pair]], bool]:
         else:
             tag5 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag5,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag5,))
         return matched
-
+    
     return inner
-
-
+    
 parse_index_segment = _parse_index_segment()
 
-
-def _parse_number() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("number", 0)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_number() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('number', 0)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse number."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -5836,7 +5518,7 @@ def _parse_number() -> Callable[[State, list[Pair]], bool]:
             if not matched3:
                 state.checkpoint()
                 # <String>
-                if state.input.startswith("-0", state.pos):
+                if state.input.startswith('-0', state.pos):
                     state.pos += 2
                     matched3 = True
                 else:
@@ -5901,31 +5583,20 @@ def _parse_number() -> Callable[[State, list[Pair]], bool]:
         else:
             tag8 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag8,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag8,))
         return matched
-
+    
     return inner
-
-
+    
 parse_number = _parse_number()
 
-
-def _parse_frac() -> Callable[[State, list[Pair]], bool]:
-    RE7 = re.compile("[0-9]", re.I)
-    RE10 = re.compile("[0-9]", re.I)
-
-    rule_frame = RuleFrame("frac", 0)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_frac() -> Callable[[ParserState, list[Pair]], bool]:
+    RE7 = re.compile('[0-9]', re.I)
+    RE10 = re.compile('[0-9]', re.I)
+    
+    rule_frame = RuleFrame('frac', 0)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse frac."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -5935,7 +5606,7 @@ def _parse_frac() -> Callable[[State, list[Pair]], bool]:
         if all_ok4:
             matched3 = False
             # <String>
-            if state.input.startswith(".", state.pos):
+            if state.input.startswith('.', state.pos):
                 state.pos += 1
                 matched3 = True
             else:
@@ -6005,33 +5676,22 @@ def _parse_frac() -> Callable[[State, list[Pair]], bool]:
         else:
             tag11 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag11,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag11,))
         return matched
-
+    
     return inner
-
-
+    
 parse_frac = _parse_frac()
 
-
-def _parse_exp() -> Callable[[State, list[Pair]], bool]:
-    RE5 = re.compile("e", re.I)
-    RE7 = re.compile("[\\+\\-]", re.VERSION1)
-    RE10 = re.compile("[0-9]", re.I)
-    RE13 = re.compile("[0-9]", re.I)
-
-    rule_frame = RuleFrame("exp", 0)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_exp() -> Callable[[ParserState, list[Pair]], bool]:
+    RE5 = re.compile('e', re.I)
+    RE7 = re.compile('[\\+\\-]', re.VERSION1)
+    RE10 = re.compile('[0-9]', re.I)
+    RE13 = re.compile('[0-9]', re.I)
+    
+    rule_frame = RuleFrame('exp', 0)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse exp."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -6137,34 +5797,23 @@ def _parse_exp() -> Callable[[State, list[Pair]], bool]:
         else:
             tag14 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag14,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag14,))
         return matched
-
+    
     return inner
-
-
+    
 parse_exp = _parse_exp()
 
-
-def _parse_true_literal() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("true_literal", 0)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_true_literal() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('true_literal', 0)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse true_literal."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
         # <String>
-        if state.input.startswith("true", state.pos):
+        if state.input.startswith('true', state.pos):
             state.pos += 4
             matched = True
         else:
@@ -6177,34 +5826,23 @@ def _parse_true_literal() -> Callable[[State, list[Pair]], bool]:
         else:
             tag3 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag3,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag3,))
         return matched
-
+    
     return inner
-
-
+    
 parse_true_literal = _parse_true_literal()
 
-
-def _parse_false_literal() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("false_literal", 0)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_false_literal() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('false_literal', 0)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse false_literal."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
         # <String>
-        if state.input.startswith("false", state.pos):
+        if state.input.startswith('false', state.pos):
             state.pos += 5
             matched = True
         else:
@@ -6217,34 +5855,23 @@ def _parse_false_literal() -> Callable[[State, list[Pair]], bool]:
         else:
             tag3 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag3,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag3,))
         return matched
-
+    
     return inner
-
-
+    
 parse_false_literal = _parse_false_literal()
 
-
-def _parse_null() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("null", 0)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_null() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('null', 0)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse null."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
         # <String>
-        if state.input.startswith("null", state.pos):
+        if state.input.startswith('null', state.pos):
             state.pos += 4
             matched = True
         else:
@@ -6257,31 +5884,20 @@ def _parse_null() -> Callable[[State, list[Pair]], bool]:
         else:
             tag3 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag3,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag3,))
         return matched
-
+    
     return inner
-
-
+    
 parse_null = _parse_null()
 
-
-def _parse_function_name() -> Callable[[State, list[Pair]], bool]:
-    RE5 = re.compile("[a-z]", re.I)
-    RE9 = re.compile("[0-9]", re.I)
-
-    rule_frame = RuleFrame("function_name", 0)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_function_name() -> Callable[[ParserState, list[Pair]], bool]:
+    RE5 = re.compile('[a-z]', re.I)
+    RE9 = re.compile('[0-9]', re.I)
+    
+    rule_frame = RuleFrame('function_name', 0)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse function_name."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -6326,7 +5942,7 @@ def _parse_function_name() -> Callable[[State, list[Pair]], bool]:
                 if not matched3:
                     state.checkpoint()
                     # <String>
-                    if state.input.startswith("_", state.pos):
+                    if state.input.startswith('_', state.pos):
                         state.pos += 1
                         matched3 = True
                     else:
@@ -6378,30 +5994,19 @@ def _parse_function_name() -> Callable[[State, list[Pair]], bool]:
         else:
             tag10 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag10,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag10,))
         return matched
-
+    
     return inner
-
-
+    
 parse_function_name = _parse_function_name()
 
-
-def _parse_function_name_first() -> Callable[[State, list[Pair]], bool]:
-    RE3 = re.compile("[a-z]", re.I)
-
-    rule_frame = RuleFrame("function_name_first", 2)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_function_name_first() -> Callable[[ParserState, list[Pair]], bool]:
+    RE3 = re.compile('[a-z]', re.I)
+    
+    rule_frame = RuleFrame('function_name_first', 2)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse function_name_first."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
@@ -6417,20 +6022,18 @@ def _parse_function_name_first() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'function_name_first'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_function_name_first = _parse_function_name_first()
 
-
-def _parse_function_name_char() -> Callable[[State, list[Pair]], bool]:
-    RE4 = re.compile("[a-z]", re.I)
-    RE5 = re.compile("[0-9]", re.I)
-
-    rule_frame = RuleFrame("function_name_char", 2)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_function_name_char() -> Callable[[ParserState, list[Pair]], bool]:
+    RE4 = re.compile('[a-z]', re.I)
+    RE5 = re.compile('[0-9]', re.I)
+    
+    rule_frame = RuleFrame('function_name_char', 2)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse function_name_char."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
@@ -6456,7 +6059,7 @@ def _parse_function_name_char() -> Callable[[State, list[Pair]], bool]:
         if not matched:
             state.checkpoint()
             # <String>
-            if state.input.startswith("_", state.pos):
+            if state.input.startswith('_', state.pos):
                 state.pos += 1
                 matched = True
             else:
@@ -6490,22 +6093,20 @@ def _parse_function_name_char() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'function_name_char'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_function_name_char = _parse_function_name_char()
 
-
-def _parse_function_expr() -> Callable[[State, list[Pair]], bool]:
-    RE7 = re.compile("[\\\t\\\n\\\r\\ ]", re.VERSION1)
-    RE18 = re.compile("[\\\t\\\n\\\r\\ ]", re.VERSION1)
-    RE21 = re.compile("[\\\t\\\n\\\r\\ ]", re.VERSION1)
-    RE25 = re.compile("[\\\t\\\n\\\r\\ ]", re.VERSION1)
-
-    rule_frame = RuleFrame("function_expr", 0)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_function_expr() -> Callable[[ParserState, list[Pair]], bool]:
+    RE7 = re.compile('[\\\t\\\n\\\r\\ ]', re.VERSION1)
+    RE18 = re.compile('[\\\t\\\n\\\r\\ ]', re.VERSION1)
+    RE21 = re.compile('[\\\t\\\n\\\r\\ ]', re.VERSION1)
+    RE25 = re.compile('[\\\t\\\n\\\r\\ ]', re.VERSION1)
+    
+    rule_frame = RuleFrame('function_expr', 0)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse function_expr."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -6524,7 +6125,7 @@ def _parse_function_expr() -> Callable[[State, list[Pair]], bool]:
         if all_ok4:
             matched3 = False
             # <String>
-            if state.input.startswith("(", state.pos):
+            if state.input.startswith('(', state.pos):
                 state.pos += 1
                 matched3 = True
             else:
@@ -6670,7 +6271,7 @@ def _parse_function_expr() -> Callable[[State, list[Pair]], bool]:
                     if all_ok15:
                         matched14 = False
                         # <String>
-                        if state.input.startswith(",", state.pos):
+                        if state.input.startswith(',', state.pos):
                             state.pos += 1
                             matched14 = True
                         else:
@@ -6828,7 +6429,7 @@ def _parse_function_expr() -> Callable[[State, list[Pair]], bool]:
         if all_ok4:
             matched3 = False
             # <String>
-            if state.input.startswith(")", state.pos):
+            if state.input.startswith(')', state.pos):
                 state.pos += 1
                 matched3 = True
             else:
@@ -6845,28 +6446,17 @@ def _parse_function_expr() -> Callable[[State, list[Pair]], bool]:
         else:
             tag26 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag26,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag26,))
         return matched
-
+    
     return inner
-
-
+    
 parse_function_expr = _parse_function_expr()
 
-
-def _parse_function_argument() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("function_argument", 2)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_function_argument() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('function_argument', 2)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse function_argument."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
@@ -7100,17 +6690,15 @@ def _parse_function_argument() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'function_argument'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_function_argument = _parse_function_argument()
 
-
-def _parse_segment() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("segment", 2)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_segment() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('segment', 2)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse segment."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
@@ -7144,17 +6732,15 @@ def _parse_segment() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'segment'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_segment = _parse_segment()
 
-
-def _parse_child_segment() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("child_segment", 0)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_child_segment() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('child_segment', 0)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse child_segment."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -7181,7 +6767,7 @@ def _parse_child_segment() -> Callable[[State, list[Pair]], bool]:
             if all_ok5:
                 matched4 = False
                 # <String>
-                if state.input.startswith(".", state.pos):
+                if state.input.startswith('.', state.pos):
                     state.pos += 1
                     matched4 = True
                 else:
@@ -7240,33 +6826,22 @@ def _parse_child_segment() -> Callable[[State, list[Pair]], bool]:
         else:
             tag7 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag7,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag7,))
         return matched
-
+    
     return inner
-
-
+    
 parse_child_segment = _parse_child_segment()
 
-
-def _parse_bracketed_selection() -> Callable[[State, list[Pair]], bool]:
-    RE7 = re.compile("[\\\t\\\n\\\r\\ ]", re.VERSION1)
-    RE15 = re.compile("[\\\t\\\n\\\r\\ ]", re.VERSION1)
-    RE18 = re.compile("[\\\t\\\n\\\r\\ ]", re.VERSION1)
-    RE22 = re.compile("[\\\t\\\n\\\r\\ ]", re.VERSION1)
-
-    rule_frame = RuleFrame("bracketed_selection", 0)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_bracketed_selection() -> Callable[[ParserState, list[Pair]], bool]:
+    RE7 = re.compile('[\\\t\\\n\\\r\\ ]', re.VERSION1)
+    RE15 = re.compile('[\\\t\\\n\\\r\\ ]', re.VERSION1)
+    RE18 = re.compile('[\\\t\\\n\\\r\\ ]', re.VERSION1)
+    RE22 = re.compile('[\\\t\\\n\\\r\\ ]', re.VERSION1)
+    
+    rule_frame = RuleFrame('bracketed_selection', 0)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse bracketed_selection."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -7276,7 +6851,7 @@ def _parse_bracketed_selection() -> Callable[[State, list[Pair]], bool]:
         if all_ok4:
             matched3 = False
             # <String>
-            if state.input.startswith("[", state.pos):
+            if state.input.startswith('[', state.pos):
                 state.pos += 1
                 matched3 = True
             else:
@@ -7425,7 +7000,7 @@ def _parse_bracketed_selection() -> Callable[[State, list[Pair]], bool]:
                 if all_ok12:
                     matched11 = False
                     # <String>
-                    if state.input.startswith(",", state.pos):
+                    if state.input.startswith(',', state.pos):
                         state.pos += 1
                         matched11 = True
                     else:
@@ -7581,7 +7156,7 @@ def _parse_bracketed_selection() -> Callable[[State, list[Pair]], bool]:
         if all_ok4:
             matched3 = False
             # <String>
-            if state.input.startswith("]", state.pos):
+            if state.input.startswith(']', state.pos):
                 state.pos += 1
                 matched3 = True
             else:
@@ -7598,31 +7173,20 @@ def _parse_bracketed_selection() -> Callable[[State, list[Pair]], bool]:
         else:
             tag23 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag23,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag23,))
         return matched
-
+    
     return inner
-
-
+    
 parse_bracketed_selection = _parse_bracketed_selection()
 
-
-def _parse_member_name_shorthand() -> Callable[[State, list[Pair]], bool]:
-    RE5 = re.compile("[_A-Za-z\x80-\ud7ff\ue000-\U0010ffff]", re.VERSION1)
-    RE9 = re.compile("[0-9]", re.I)
-
-    rule_frame = RuleFrame("member_name_shorthand", 0)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_member_name_shorthand() -> Callable[[ParserState, list[Pair]], bool]:
+    RE5 = re.compile('[_A-Za-z\x80-\ud7ff\ue000-\U0010ffff]', re.VERSION1)
+    RE9 = re.compile('[0-9]', re.I)
+    
+    rule_frame = RuleFrame('member_name_shorthand', 0)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse member_name_shorthand."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -7702,30 +7266,19 @@ def _parse_member_name_shorthand() -> Callable[[State, list[Pair]], bool]:
         else:
             tag10 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag10,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag10,))
         return matched
-
+    
     return inner
-
-
+    
 parse_member_name_shorthand = _parse_member_name_shorthand()
 
-
-def _parse_name_first() -> Callable[[State, list[Pair]], bool]:
-    RE3 = re.compile("[_A-Za-z\x80-\ud7ff\ue000-\U0010ffff]", re.VERSION1)
-
-    rule_frame = RuleFrame("name_first", 2)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_name_first() -> Callable[[ParserState, list[Pair]], bool]:
+    RE3 = re.compile('[_A-Za-z\x80-\ud7ff\ue000-\U0010ffff]', re.VERSION1)
+    
+    rule_frame = RuleFrame('name_first', 2)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse name_first."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
@@ -7740,20 +7293,18 @@ def _parse_name_first() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'name_first'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_name_first = _parse_name_first()
 
-
-def _parse_name_char() -> Callable[[State, list[Pair]], bool]:
-    RE4 = re.compile("[_A-Za-z\x80-\ud7ff\ue000-\U0010ffff]", re.VERSION1)
-    RE5 = re.compile("[0-9]", re.I)
-
-    rule_frame = RuleFrame("name_char", 2)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_name_char() -> Callable[[ParserState, list[Pair]], bool]:
+    RE4 = re.compile('[_A-Za-z\x80-\ud7ff\ue000-\U0010ffff]', re.VERSION1)
+    RE5 = re.compile('[0-9]', re.I)
+    
+    rule_frame = RuleFrame('name_char', 2)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse name_char."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
@@ -7796,17 +7347,15 @@ def _parse_name_char() -> Callable[[State, list[Pair]], bool]:
         # Silent rule 'name_char'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_name_char = _parse_name_char()
 
-
-def _parse_descendant_segment() -> Callable[[State, list[Pair]], bool]:
-    rule_frame = RuleFrame("descendant_segment", 0)
-
-    def inner(state: State, pairs: list[Pair]) -> bool:
+def _parse_descendant_segment() -> Callable[[ParserState, list[Pair]], bool]:
+    rule_frame = RuleFrame('descendant_segment', 0)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse descendant_segment."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
@@ -7816,7 +7365,7 @@ def _parse_descendant_segment() -> Callable[[State, list[Pair]], bool]:
         if all_ok4:
             matched3 = False
             # <String>
-            if state.input.startswith("..", state.pos):
+            if state.input.startswith('..', state.pos):
                 state.pos += 2
                 matched3 = True
             else:
@@ -7878,120 +7427,99 @@ def _parse_descendant_segment() -> Callable[[State, list[Pair]], bool]:
         else:
             tag6 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag6,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag6,))
         return matched
-
+    
     return inner
-
-
+    
 parse_descendant_segment = _parse_descendant_segment()
 
-
-def parse_trivia(state: State, pairs: list[Pair]) -> bool:
+def parse_trivia(state: ParserState, pairs: list[Pair]) -> bool:
     return True
 
-
-_RULE_MAP: dict[str, Callable[[State, list[Pair]], bool]] = {
-    "EOI": parse_EOI,
-    "jsonpath": parse_jsonpath,
-    "jsonpath_query": parse_jsonpath_query,
-    "segments": parse_segments,
-    "B": parse_B,
-    "S": parse_S,
-    "root_identifier": parse_root_identifier,
-    "selector": parse_selector,
-    "name_selector": parse_name_selector,
-    "string_literal": parse_string_literal,
-    "double_quoted": parse_double_quoted,
-    "single_quoted": parse_single_quoted,
-    "double_quoted_char": parse_double_quoted_char,
-    "single_quoted_char": parse_single_quoted_char,
-    "ESC": parse_ESC,
-    "unescaped": parse_unescaped,
-    "escapable": parse_escapable,
-    "hexchar": parse_hexchar,
-    "non_surrogate": parse_non_surrogate,
-    "high_surrogate": parse_high_surrogate,
-    "low_surrogate": parse_low_surrogate,
-    "wildcard_selector": parse_wildcard_selector,
-    "index_selector": parse_index_selector,
-    "int": parse_int,
-    "slice_selector": parse_slice_selector,
-    "start": parse_start,
-    "stop": parse_stop,
-    "step": parse_step,
-    "filter_selector": parse_filter_selector,
-    "logical_expr": parse_logical_expr,
-    "logical_or_expr": parse_logical_or_expr,
-    "logical_and_expr": parse_logical_and_expr,
-    "basic_expr": parse_basic_expr,
-    "paren_expr": parse_paren_expr,
-    "logical_not_op": parse_logical_not_op,
-    "test_expr": parse_test_expr,
-    "filter_query": parse_filter_query,
-    "root_query": parse_root_query,
-    "rel_query": parse_rel_query,
-    "current_node_identifier": parse_current_node_identifier,
-    "comparison_expr": parse_comparison_expr,
-    "literal": parse_literal,
-    "comparable": parse_comparable,
-    "comparison_op": parse_comparison_op,
-    "singular_query": parse_singular_query,
-    "rel_singular_query": parse_rel_singular_query,
-    "abs_singular_query": parse_abs_singular_query,
-    "singular_query_segments": parse_singular_query_segments,
-    "name_segment": parse_name_segment,
-    "index_segment": parse_index_segment,
-    "number": parse_number,
-    "frac": parse_frac,
-    "exp": parse_exp,
-    "true_literal": parse_true_literal,
-    "false_literal": parse_false_literal,
-    "null": parse_null,
-    "function_name": parse_function_name,
-    "function_name_first": parse_function_name_first,
-    "function_name_char": parse_function_name_char,
-    "function_expr": parse_function_expr,
-    "function_argument": parse_function_argument,
-    "segment": parse_segment,
-    "child_segment": parse_child_segment,
-    "bracketed_selection": parse_bracketed_selection,
-    "member_name_shorthand": parse_member_name_shorthand,
-    "name_first": parse_name_first,
-    "name_char": parse_name_char,
-    "descendant_segment": parse_descendant_segment,
+_RULE_MAP: dict[str, Callable[[ParserState, list[Pair]], bool]] = {
+    'EOI': parse_EOI,
+    'jsonpath': parse_jsonpath,
+    'jsonpath_query': parse_jsonpath_query,
+    'segments': parse_segments,
+    'B': parse_B,
+    'S': parse_S,
+    'root_identifier': parse_root_identifier,
+    'selector': parse_selector,
+    'name_selector': parse_name_selector,
+    'string_literal': parse_string_literal,
+    'double_quoted': parse_double_quoted,
+    'single_quoted': parse_single_quoted,
+    'double_quoted_char': parse_double_quoted_char,
+    'single_quoted_char': parse_single_quoted_char,
+    'ESC': parse_ESC,
+    'unescaped': parse_unescaped,
+    'escapable': parse_escapable,
+    'hexchar': parse_hexchar,
+    'non_surrogate': parse_non_surrogate,
+    'high_surrogate': parse_high_surrogate,
+    'low_surrogate': parse_low_surrogate,
+    'wildcard_selector': parse_wildcard_selector,
+    'index_selector': parse_index_selector,
+    'int': parse_int,
+    'slice_selector': parse_slice_selector,
+    'start': parse_start,
+    'stop': parse_stop,
+    'step': parse_step,
+    'filter_selector': parse_filter_selector,
+    'logical_expr': parse_logical_expr,
+    'logical_or_expr': parse_logical_or_expr,
+    'logical_and_expr': parse_logical_and_expr,
+    'basic_expr': parse_basic_expr,
+    'paren_expr': parse_paren_expr,
+    'logical_not_op': parse_logical_not_op,
+    'test_expr': parse_test_expr,
+    'filter_query': parse_filter_query,
+    'root_query': parse_root_query,
+    'rel_query': parse_rel_query,
+    'current_node_identifier': parse_current_node_identifier,
+    'comparison_expr': parse_comparison_expr,
+    'literal': parse_literal,
+    'comparable': parse_comparable,
+    'comparison_op': parse_comparison_op,
+    'singular_query': parse_singular_query,
+    'rel_singular_query': parse_rel_singular_query,
+    'abs_singular_query': parse_abs_singular_query,
+    'singular_query_segments': parse_singular_query_segments,
+    'name_segment': parse_name_segment,
+    'index_segment': parse_index_segment,
+    'number': parse_number,
+    'frac': parse_frac,
+    'exp': parse_exp,
+    'true_literal': parse_true_literal,
+    'false_literal': parse_false_literal,
+    'null': parse_null,
+    'function_name': parse_function_name,
+    'function_name_first': parse_function_name_first,
+    'function_name_char': parse_function_name_char,
+    'function_expr': parse_function_expr,
+    'function_argument': parse_function_argument,
+    'segment': parse_segment,
+    'child_segment': parse_child_segment,
+    'bracketed_selection': parse_bracketed_selection,
+    'member_name_shorthand': parse_member_name_shorthand,
+    'name_first': parse_name_first,
+    'name_char': parse_name_char,
+    'descendant_segment': parse_descendant_segment,
 }
-
 
 def parse(start_rule: str, input_: str, *, start_pos: int = 0) -> Pairs:
     """Parse `input_` starting from `rule`."""
-    state = State(input_, start_pos)
+    state = ParserState(input_, start_pos)
     pairs: list[Pair] = []
     matched = _RULE_MAP[start_rule](state, pairs)
     if matched:
         return Pairs(pairs)
-    raise PestParsingError(
-        state.furthest_stack,
-        list(state.furthest_expected),
-        list(state.furthest_unexpected),
-        state.furthest_pos,
-        *error_context(state.input, state.furthest_pos),
-    )
-
+    raise PestParsingError(state.furthest_stack, list(state.furthest_expected), list(state.furthest_unexpected), state.furthest_pos, *error_context(state.input, state.furthest_pos),)
 
 class Parser:
     def parse(self, start_rule: str, input_: str, *, start_pos: int = 0) -> Pairs:
         return parse(start_rule, input_, start_pos=start_pos)
-
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -8035,8 +7563,6 @@ def main() -> None:
         parse(args.rule, text).dumps(compact=not args.verbose)
     )
 
-
 if __name__ == "__main__":
     import argparse
-
     main()
