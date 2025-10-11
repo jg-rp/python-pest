@@ -29,7 +29,7 @@ def test_first_item_too_long_suffix_does_not_fit():
 
 
 def test_empty_list():
-    items = []
+    items: list[str] = []
     result = join_with_limit(items, separator=", ", limit=10)
     assert result == ""
 
@@ -63,3 +63,56 @@ def test_no_truncation_needed_with_custom_separator():
     items = ["a", "b", "c"]
     result = join_with_limit(items, separator="|", limit=10)
     assert result == "a|b|c"
+
+
+def test_last_separator_basic() -> None:
+    result = join_with_limit(
+        ["a", "b", "c", "d"], separator=", ", last_separator=" or "
+    )
+    assert result == "a, b, c or d"
+
+
+def test_last_separator_two_items() -> None:
+    result = join_with_limit(["yes", "no"], separator=", ", last_separator=" or ")
+    assert result == "yes or no"
+
+
+def test_last_separator_truncation() -> None:
+    result = join_with_limit(
+        ["apple", "banana", "cherry", "date"],
+        separator=", ",
+        last_separator=" or ",
+        limit=25,
+    )
+    # Should truncate normally, using comma separators (not last_separator)
+    # before ellipsis
+    assert result == "apple, banana…(+2 more)"
+
+
+def test_last_separator_used_in_full_fit() -> None:
+    result = join_with_limit(
+        ["red", "blue", "green"], separator=", ", last_separator=" and ", limit=50
+    )
+    assert result == "red, blue and green"
+
+
+def test_last_separator_edge_truncation() -> None:
+    result = join_with_limit(
+        ["a", "b", "c", "d", "e"], separator=", ", last_separator=" or ", limit=14
+    )
+    # Expected: "a, b…(+3 more)" (truncation before last separator)
+    assert result == "a, b…(+3 more)"
+
+
+def test_last_separator_with_fallback_summary() -> None:
+    result = join_with_limit(
+        ["superlongword"] * 3, separator=", ", last_separator=" or ", limit=9
+    )
+    assert result == "(3 items)"
+
+
+def test_last_separator_with_small_limit() -> None:
+    result = join_with_limit(
+        ["x", "y", "z"], separator=", ", last_separator=" or ", limit=5
+    )
+    assert result == ""

@@ -25,7 +25,9 @@ class PestParsingError(Exception):
         col: int,
     ):
         # TODO: use negatives
-        super().__init__(f"expected {join_with_limit(positives, ' or ')}")
+        super().__init__(
+            f"expected {join_with_limit(positives, ', ', last_separator=' or ')}"
+        )
         self.rule_stack = rule_stack
         self.positives = positives
         self.negatives = negatives
@@ -52,111 +54,95 @@ class PestParsingError(Exception):
         )
 
 
-def join_with_limit(items: list[str], separator: str = ", ", limit: int = 80) -> str:  # noqa: PLR0911
-    """Join a list of strings into a single string with a character-length limit.
+def join_with_limit(
+    items: list[str],
+    separator: str = ", ",
+    last_separator: str | None = None,
+    limit: int = 80,
+) -> str:
+    """Join a list of strings with a character-length limit.
 
-    The function joins items from the list using the provided separator, ensuring
-    that the total length of the resulting string (including any truncation suffix)
-    does not exceed the given character `limit`. Items are always included in full:
-    truncation occurs only at item boundaries, never in the middle of a word or
-    separator.
+    The function joins items using `separator` between most items, and optionally
+    uses `last_separator` before the final item (e.g., ", " and " or " to produce
+    "a, b or c"). The total output length, including separators and any suffix,
+    will never exceed `limit`.
 
     Truncation behavior:
-        • If all items fit within the limit, the function returns the full joined
-          string.
-        • If not all items fit, it joins as many items as possible and appends an
-          ellipsis-based suffix of the form:
-              "…(+N more)"
-          where `N` is the number of items omitted.
-        • If the first item cannot fit (even with truncation), the function falls back
-          to returning a summary of the form:
-              "(N items)"
-          where `N` is the total number of items in the list.
-        • If neither the summary nor any item fits within the limit, the function
-          returns an empty string.
-
-    This ensures the returned string is concise, readable, and always respects the
-    limit.
+        • If all items fit, returns the full joined string.
+        • If truncation is needed, includes as many items as possible and appends
+          "…(+N more)".
+        • When truncating, only the normal separator is used before the ellipsis;
+          the `last_separator` is reserved for full output.
+        • If even the first item doesn’t fit, returns "(N items)" if possible.
+        • Returns "" if nothing fits.
 
     Args:
         items (list[str]): The list of strings to join.
-        separator (str, optional): The string used to separate items. Defaults to ", ".
-        limit (int, optional): The maximum allowed length of the result string,
-            including separators and suffixes. Defaults to 80.
+        separator (str): The separator used between most items (default: ", ").
+        last_separator (str | None): The separator used before the last item
+            (e.g., " or "). If None, uses `separator` for all.
+        limit (int): Maximum total output length (default: 80).
 
     Returns:
-        str: A string representation of the list that:
-            - Includes as many full items as possible.
-            - Appends an ellipsis and item count when truncated ("…(+N more)").
-            - Returns "(N items)" when no items can fit.
-            - Never exceeds the specified `limit`.
-            - Returns an empty string if nothing fits.
-
-    Examples:
-        >>> join_with_limit(["apple", "banana", "cherry"], limit=50)
-        'apple, banana, cherry'
-
-        >>> join_with_limit(["apple", "banana", "cherry", "date"], ", ", limit=25)
-        'apple, banana…(+2 more)'
-
-        >>> join_with_limit(["superlongword"] * 5, limit=10)
-        '(5 items)'
-
-        >>> join_with_limit(["superlongword"] * 5, limit=3)
-        ''
-
-        >>> join_with_limit([], limit=10)
-        ''
+        str: Joined string representation, truncated or summarized if necessary.
     """
     if not items or limit <= 0:
         return ""
 
-    # Handle single-item case explicitly
+    # Handle single item
     if len(items) == 1:
         if len(items[0]) <= limit:
             return items[0]
         summary = "(1 items)"
-        if len(summary) <= limit:
-            return summary
-        return ""
+        return summary if len(summary) <= limit else ""
 
-    # Try to fit all items first
-    joined = separator.join(items)
+    # Helper for full join
+    def join_all(lst: list[str]) -> str:
+        if last_separator and len(lst) > 1:
+            return separator.join(lst[:-1]) + last_separator + lst[-1]
+        return separator.join(lst)
+
+    # Try full join first
+    joined = join_all(items)
     if len(joined) <= limit:
         return joined
 
-    # Try to fit as many items as possible, then add suffix
+    # Incremental truncation loop
     result_parts: list[str] = []
     current_length = 0
+
     for idx, item in enumerate(items):
         sep_len = len(separator) if result_parts else 0
         added_length = sep_len + len(item)
         remaining_count = len(items) - (idx + 1)
         suffix = f"…(+{remaining_count} more)" if remaining_count > 0 else ""
         total_length = current_length + added_length + len(suffix)
+
         if total_length > limit:
             break
+
         if result_parts:
             current_length += len(separator)
         result_parts.append(item)
         current_length += len(item)
 
     if result_parts:
-        # If not all items fit, add suffix
+        # Truncation occurred
         if len(result_parts) < len(items):
             remaining_count = len(items) - len(result_parts)
             suffix = f"…(+{remaining_count} more)"
             candidate = separator.join(result_parts) + suffix
             if len(candidate) <= limit:
                 return candidate
-        # If all items fit, just return joined items
+
+        # All items fit within limit (no truncation needed)
+        if last_separator and len(result_parts) > 1:
+            return separator.join(result_parts[:-1]) + last_separator + result_parts[-1]
         return separator.join(result_parts)
 
-    # If no items fit, always try summary
+    # Fallback summary if nothing fits
     summary = f"({len(items)} items)"
-    if len(summary) <= limit:
-        return summary
-    return ""
+    return summary if len(summary) <= limit else ""
 
 
 def error_context(text: str, index: int) -> tuple[str, int, int]:

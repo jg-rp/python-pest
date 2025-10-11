@@ -1,10 +1,10 @@
 from pest import Parser
 
-with open("tests/grammars/json.pest") as fd:
+with open("tests/grammars/reporting.pest") as fd:
     GRAMMAR = fd.read()
 
 parser = Parser.from_grammar(GRAMMAR, optimizer=None)
-pairs = parser.parse("array", "[ ]")
+pairs = parser.parse("choices", "x")
 
 print(pairs.dumps(compact=False))
 
