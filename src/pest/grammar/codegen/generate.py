@@ -243,6 +243,16 @@ def generate_parse_entry_point() -> str:
             "*error_context(state.input, state.furthest_pos),)"
         )
 
+    gen.writeln("\nclass Parser:")
+    with gen.block():
+        gen.writeln(
+            "def parse("
+            "self, start_rule: str, input_: str, *, start_pos: int = 0"
+            ") -> Pairs:"
+        )
+        with gen.block():
+            gen.writeln("return parse(start_rule, input_, start_pos=start_pos)")
+
     return gen.render()
 
 

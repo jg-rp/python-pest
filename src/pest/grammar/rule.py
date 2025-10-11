@@ -66,8 +66,6 @@ class Rule(Expression):
         """Attempt to match this expression against the input at `start`."""
         start = state.pos
         state.rule_stack.push(self)
-        state.atomic_depth.snapshot()
-
         children: list[Pair] = []
 
         if self.modifier & (ATOMIC | COMPOUND):

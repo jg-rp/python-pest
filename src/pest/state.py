@@ -84,23 +84,34 @@ class ParserState:
         if not whitespace_rule and not comment_rule:
             return False
 
+        children: list[Pair] = []
+        some = False
+
         while True:
             matched = False
 
-            # TODO: do we need a checkpoint here?
-
             if whitespace_rule:
-                matched = whitespace_rule.parse(self, pairs)
+                matched = whitespace_rule.parse(self, children)
+                if matched:
+                    some = True
+                    pairs.extend(children)
 
             if comment_rule and (
                 not self.rule_stack or self.rule_stack[-1].name != "COMMENT"
             ):
-                matched = comment_rule.parse(self, pairs) or matched
+                self.checkpoint()
+                matched = comment_rule.parse(self, children) or matched
+                if matched:
+                    some = True
+                    pairs.extend(children)
+                    self.ok()
+                else:
+                    self.restore()
 
             if not matched:
                 break
 
-        return matched
+        return some
 
     def checkpoint(self) -> None:
         """Take a snapshot of the current state for potential backtracking.

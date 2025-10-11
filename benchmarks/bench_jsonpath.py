@@ -14,13 +14,15 @@ from pest import Parser
 sys.path.append(os.getcwd())
 
 from examples.jsonpath.jsonpath import JSONPathParser
-from examples.jsonpath.jsonpath import grammar
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
     from collections.abc import Sequence
 
     from pest import Pairs
+
+with open("examples/jsonpath/jsonpath.pest") as fd:
+    grammar = fd.read()
 
 
 class GeneratedParser:
@@ -33,6 +35,10 @@ class GeneratedParser:
 
     def parse(self, start_rule: str, input_: str, *, start_pos: int = 0) -> Pairs:  # noqa: D102
         return self._parse(start_rule, input_, start_pos=start_pos)
+
+
+class OptimizedJSONPathParser(JSONPathParser):
+    PARSER = Parser.from_grammar(grammar)
 
 
 class UnoptimizedJSONPathParser(JSONPathParser):
@@ -116,7 +122,7 @@ def benchmark(number: int = 10, best_of: int = 3) -> None:
         JUST_COMPILE_STMT,
         globals={
             "QUERIES": QUERIES,
-            "PARSER": JSONPathParser(),
+            "PARSER": OptimizedJSONPathParser(),
         },
         number=number,
         repeat=best_of,
