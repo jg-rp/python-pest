@@ -35,7 +35,7 @@ class PositivePredicate(Expression):
             isinstance(other, PositivePredicate) and self.expression == other.expression
         )
 
-    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:  # noqa: ARG002
         """Try to parse all parts in sequence starting at `pos`."""
         state.checkpoint()
         matched = self.expression.parse(state, [])

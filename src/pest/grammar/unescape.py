@@ -1,15 +1,12 @@
 r"""Replace `\u{XX}` or `\u{XXXX}` escape sequences with Unicode code points."""
 
-from typing import List
-from typing import Tuple
-
 from .exceptions import PestGrammarSyntaxError
 from .tokens import Token
 
 
 def unescape_string(value: str, token: Token, quote: str = '"') -> str:
     """Return `value` with escape sequences replaced with Unicode code points."""
-    unescaped: List[str] = []
+    unescaped: list[str] = []
     index = 0
 
     while index < len(value):
@@ -26,7 +23,7 @@ def unescape_string(value: str, token: Token, quote: str = '"') -> str:
 
 def _decode_escape_sequence(  # noqa: PLR0911
     value: str, index: int, token: Token, quote: str
-) -> Tuple[str, int]:
+) -> tuple[str, int]:
     try:
         ch = value[index]
     except IndexError as err:
@@ -62,7 +59,7 @@ def _decode_escape_sequence(  # noqa: PLR0911
     )
 
 
-def _decode_hex_char(value: str, index: int, token: Token) -> Tuple[int, int]:
+def _decode_hex_char(value: str, index: int, token: Token) -> tuple[int, int]:
     # TODO: use a regular expression?
     index += 1  # move past 'u'
 

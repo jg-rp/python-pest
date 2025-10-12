@@ -34,7 +34,7 @@ def test_choice_no_progress(parser: Parser) -> None:
 
     err = exec_info.value
     state = err.state
-    # NOTE: we differ from Rust pest here
+    # XXX: we differ from Rust pest here
     assert list(state.furthest_expected) == ["a", "b", "c"]
     assert list(state.furthest_unexpected) == []
     assert state.furthest_pos == 0

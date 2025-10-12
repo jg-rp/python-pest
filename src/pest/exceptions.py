@@ -13,7 +13,6 @@ class PestParsingError(Exception):
     """An exception raised when an input string can't be passed by a pest grammar."""
 
     def __init__(self, state: ParserState):
-        # TODO: suppress trivia
         super().__init__(
             self.expected(state.furthest_expected, state.furthest_unexpected)
         )
