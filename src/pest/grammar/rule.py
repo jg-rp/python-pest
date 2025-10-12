@@ -62,6 +62,9 @@ class Rule(Expression):
         modifier = modifier_to_str(self.modifier)
         return f"{doc}{self.name} = {modifier}{{ {self.expression} }}"
 
+    def __hash__(self) -> int:
+        return hash((self.name, self.__class__.__name__))
+
     def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
         """Attempt to match this expression against the input at `start`."""
         start = state.pos

@@ -51,15 +51,15 @@ class ParserState:
     ) -> None:
         self.input = text
         self.pos = start_pos
-        self.parser = parser  # parser will always be None in generated code.
+        self.parser = parser  # Always None in generated code.
 
         # Negative predicate depth
         self.neg_pred_depth = 0
 
         # Failure tracking
         self.furthest_pos = -1
-        self.furthest_expected: dict[str, int] = {}
-        self.furthest_unexpected: dict[str, int] = {}
+        self.furthest_expected: dict[str, list[str]] = {}
+        self.furthest_unexpected: dict[str, list[str]] = {}
         self.furthest_stack: list[Rule | RuleFrame] = []
 
         self._pos_history: list[int] = []
@@ -203,25 +203,32 @@ class ParserState:
             if self.tag_stack:
                 self.tag_stack.pop()
 
-    def fail(self, label: str) -> None:
+    def fail(
+        self, label: str, pos: int | None = None, rule_name: str | None = None
+    ) -> None:
         """Record a failure, inferring expected vs. unexpected context."""
         is_neg_context = self.neg_pred_depth % 2 == 1
+        rule_name = rule_name or self.rule_stack[-1].name
+        pos = pos or self.pos
 
-        if self.pos > self.furthest_pos:
-            self.furthest_pos = self.pos
+        if pos > self.furthest_pos:
+            self.furthest_pos = pos
             self.furthest_stack = list(self.rule_stack)
             if is_neg_context:
-                self.furthest_unexpected = {label: 1}
+                self.furthest_unexpected = {rule_name: [label]}
                 self.furthest_expected = {}
             else:
-                self.furthest_expected = {label: 1}
+                self.furthest_expected = {rule_name: [label]}
                 self.furthest_unexpected = {}
-        elif self.pos == self.furthest_pos:
+        elif pos == self.furthest_pos:
             target = (
                 self.furthest_unexpected if is_neg_context else self.furthest_expected
             )
 
-            target[label] = 1
+            if rule_name in target:
+                target[rule_name].append(label)
+            else:
+                target[rule_name] = [label]
 
 
 class RuleFrame:
@@ -235,3 +242,6 @@ class RuleFrame:
 
     def __repr__(self) -> str:
         return f"RuleFrame({self.name!r}, {self.modifier})"
+
+    def __hash__(self) -> int:
+        return hash((self.name, self.__class__.__name__))

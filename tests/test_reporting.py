@@ -1,66 +1,76 @@
-# TODO: revisit me
-# import pytest
-# from _pytest.fixtures import SubRequest
+"""These tests are translated from Rust pest's `reporting.rs`.
 
-# from pest import DEFAULT_OPTIMIZER
-# from pest import Parser
-# from pest import PestParsingError
+https://github.com/pest-parser/pest/blob/master/derive/tests/reporting.rs.
 
+See LICENSE_PEST.txt
+"""
 
-# @pytest.fixture(scope="module", params=["not optimized", "optimized"])
-# def parser(request: SubRequest) -> Parser:
-#     optimizer = DEFAULT_OPTIMIZER if request.param == "optimized" else None
-#     with open("tests/grammars/reporting.pest", encoding="utf-8") as fd:
-#         return Parser.from_grammar(fd.read(), optimizer=optimizer)
+import pytest
+
+from pest import Parser
+from pest import PestParsingError
 
 
-# def test_choices(parser: Parser) -> None:
-#     with pytest.raises(PestParsingError) as exec_info:
-#         parser.parse("choices", "x")
-
-#     err = exec_info.value
-#     assert err.positives == ["a", "b", "c"]
-#     assert err.negatives == []
-#     assert err.pos == 0
+@pytest.fixture(scope="module")
+def grammar() -> str:
+    with open("tests/grammars/reporting.pest", encoding="utf-8") as fd:
+        return fd.read()
 
 
-# def test_choice_no_progress(parser: Parser) -> None:
-#     with pytest.raises(PestParsingError) as exec_info:
-#         parser.parse("choices_no_progress", "x")
+def test_choices(parser: Parser) -> None:
+    with pytest.raises(PestParsingError) as exec_info:
+        parser.parse("choices", "x")
 
-#     err = exec_info.value
-#     assert err.positives == ["a", "b", "c"]  # XXX: we differ from Rust pest here
-#     assert err.negatives == []
-#     assert err.pos == 0
-
-
-# def test_choice_a_progress(parser: Parser) -> None:
-#     with pytest.raises(PestParsingError) as exec_info:
-#         parser.parse("choices_a_progress", "a")
-
-#     err = exec_info.value
-#     assert err.positives == ["a"]
-#     assert err.negatives == []
-#     assert err.pos == 1
+    err = exec_info.value
+    state = err.state
+    assert list(state.furthest_expected) == ["a", "b", "c"]
+    assert list(state.furthest_unexpected) == []
+    assert state.furthest_pos == 0
 
 
-# def test_choice_b_progress(parser: Parser) -> None:
-#     with pytest.raises(PestParsingError) as exec_info:
-#         parser.parse("choices_b_progress", "b")
+def test_choice_no_progress(parser: Parser) -> None:
+    with pytest.raises(PestParsingError) as exec_info:
+        parser.parse("choices_no_progress", "x")
 
-#     err = exec_info.value
-#     assert err.positives == ["b"]
-#     assert err.negatives == []
-#     assert err.pos == 1
+    err = exec_info.value
+    state = err.state
+    # NOTE: we differ from Rust pest here
+    assert list(state.furthest_expected) == ["a", "b", "c"]
+    assert list(state.furthest_unexpected) == []
+    assert state.furthest_pos == 0
 
 
-# TODO: finish me
+def test_choice_a_progress(parser: Parser) -> None:
+    with pytest.raises(PestParsingError) as exec_info:
+        parser.parse("choices_a_progress", "a")
 
-# def test_nested(parser: Parser) -> None:
-#     with pytest.raises(PestParsingError) as exec_info:
-#         parser.parse("level1", "x")
+    err = exec_info.value
+    state = err.state
+    assert list(state.furthest_expected) == ["a"]
+    assert list(state.furthest_unexpected) == []
+    assert state.furthest_pos == 1
 
-#     err = exec_info.value
-#     assert err.positives == ["a", "b", "c"]
-#     assert err.negatives == []
-#     assert err.pos == 0
+
+def test_choice_b_progress(parser: Parser) -> None:
+    with pytest.raises(PestParsingError) as exec_info:
+        parser.parse("choices_b_progress", "b")
+
+    err = exec_info.value
+    state = err.state
+    assert list(state.furthest_expected) == ["b"]
+    assert list(state.furthest_unexpected) == []
+    assert state.furthest_pos == 1
+
+
+def test_nested(parser: Parser) -> None:
+    with pytest.raises(PestParsingError) as exec_info:
+        parser.parse("level1", "x")
+
+    err = exec_info.value
+    state = err.state
+    assert list(state.furthest_expected) == ["a", "b", "c"]
+    assert list(state.furthest_unexpected) == []
+    assert state.furthest_pos == 0
+
+
+# TODO: negative

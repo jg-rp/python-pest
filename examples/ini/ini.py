@@ -41,9 +41,9 @@ current_section_name = ""
 for pair in file:
     match pair:
         case Pair(Rule.SECTION, [name]):  # { name }
-            current_section_name = str(name)
+            current_section_name = name.text
         case Pair(Rule.PROPERTY, [name, value]):  # { name ~ "=" ~ value }
-            properties[current_section_name][str(name)] = str(value)
+            properties[current_section_name][name.text] = value.text
         case Pair(Rule.EOI):
             break
         case _:

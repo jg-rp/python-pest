@@ -482,6 +482,7 @@ class String(Terminal):
 
     def __str__(self) -> str:
         # TODO: replace non-printing characters with \u{XXXX} escape sequence
+        # TODO: escape literal `"`
         value = (
             self.value.replace("\t", "\\t").replace("\r", "\\r").replace("\n", "\\n")
         )

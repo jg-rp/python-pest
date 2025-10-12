@@ -2,59 +2,104 @@
 
 from __future__ import annotations
 
+from itertools import chain
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
-
-    from pest.grammar import Rule
-    from pest.state import RuleFrame
+    from pest.state import ParserState
 
 
 class PestParsingError(Exception):
     """An exception raised when an input string can't be passed by a pest grammar."""
 
-    def __init__(
-        self,
-        rule_stack: Sequence[Rule | RuleFrame],
-        positives: list[str],
-        negatives: list[str],
-        pos: int,
-        line: str,
-        lineno: int,
-        col: int,
-    ):
-        # TODO: use negatives
+    def __init__(self, state: ParserState):
+        # TODO: suppress trivia
         super().__init__(
-            f"expected {join_with_limit(positives, ', ', last_separator=' or ')}"
+            self.expected(state.furthest_expected, state.furthest_unexpected)
         )
-        self.rule_stack = rule_stack
-        self.positives = positives
-        self.negatives = negatives
-        self.pos = pos
-        self.line = line
-        self.lineno = lineno
-        self.col = col
+        self.state = state
 
     def __str__(self) -> str:
         return self.detailed_message()
 
     def detailed_message(self) -> str:
         """Return an error message formatted with extra context info."""
-        msg = self.args[0]
-        pad = " " * len(str(self.lineno))
-        pointer = (" " * self.col) + "^"
+        line, lineno, col = error_context(self.state.input, self.state.furthest_pos)
 
-        return (
-            f"{' > '.join(f.name for f in self.rule_stack)}\n"
-            f"{pad} -> {self.lineno}:{self.col}\n"
-            f"{pad} |\n"
-            f"{self.lineno} | {self.line}\n"
-            f"{pad} | {pointer} {msg}\n"
+        msg = self.args[0]
+        pad = " " * len(str(lineno))
+        pointer = (" " * (col - 1)) + "^"
+        no_pointer = " " * (col)
+        rule_stack = " > ".join(f.name for f in self.state.furthest_stack)
+
+        labels = self.expected_labels(
+            self.state.furthest_expected, self.state.furthest_unexpected
         )
 
+        return (
+            f"{msg}\n"
+            f"{pad} -> {rule_stack} {lineno}:{col}\n"
+            f"{pad} |\n"
+            f"{lineno} | {line}\n"
+            f"{pad} | {pointer} {msg}\n"
+            f"{pad} | {no_pointer} ({labels})\n"
+        )
 
-def join_with_limit(
+    def expected(
+        self, expected: dict[str, list[str]], unexpected: dict[str, list[str]]
+    ) -> str:
+        """Return the expected/unexpected part of a detailed error message."""
+        if expected and not unexpected:
+            return "expected " + join_with_limit(
+                list(expected), ", ", last_separator=" or "
+            )
+
+        if expected and unexpected:
+            _expected = "expected " + join_with_limit(
+                list(expected), ", ", last_separator=" or ", limit=40
+            )
+
+            _unexpected = "unexpected " + join_with_limit(
+                list(unexpected), ", ", last_separator=" or ", limit=40
+            )
+
+            return f"{_unexpected}; {_expected}"
+
+        if unexpected:
+            return "unexpected " + join_with_limit(
+                list(unexpected), ", ", last_separator=" or "
+            )
+
+        # Not context available
+        return "pest parsing error"
+
+    def expected_labels(
+        self, expected: dict[str, list[str]], unexpected: dict[str, list[str]]
+    ) -> str | None:
+        """Return a string representation of expected and unexpected labels."""
+        if expected and not unexpected:
+            _expected = list(chain(*expected.values()))
+            return join_with_limit(_expected, ", ", last_separator=" or ")
+
+        if expected and unexpected:
+            _expected = join_with_limit(
+                list(chain(*expected.values())), ", ", last_separator=" or ", limit=40
+            )
+
+            _unexpected = "not " + join_with_limit(
+                list(chain(*unexpected.values())), ", ", last_separator=" or ", limit=40
+            )
+
+            return f"{_unexpected}; {_expected}"
+
+        if unexpected:
+            _unexpected = list(chain(*expected.values()))
+            return "not " + join_with_limit(_unexpected, ", ", last_separator=" or ")
+
+        return None
+
+
+def join_with_limit(  # noqa: PLR0911
     items: list[str],
     separator: str = ", ",
     last_separator: str | None = None,
@@ -163,7 +208,7 @@ def error_context(text: str, index: int) -> tuple[str, int, int]:
     # Line number (1-based)
     line_number = target_line_index + 1
     # Column number within the line
-    column_number = index - (cumulative_length - len(lines[target_line_index]))
+    column_number = index - (cumulative_length - len(lines[target_line_index])) + 1
     current_line = lines[target_line_index].rstrip()
 
     return (current_line, line_number, column_number)

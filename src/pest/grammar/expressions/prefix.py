@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING
 from typing import Self
 
 from pest.grammar import Expression
+from pest.grammar.expressions.terminals import Identifier
+from pest.grammar.rule import Rule
 
 if TYPE_CHECKING:
     from pest.grammar.codegen.builder import Builder
@@ -98,7 +100,14 @@ class NegativePredicate(Expression):
         state.restore()
 
         if matched:
-            state.fail(str(self.expression))
+            # If self.expression is a rule, by now it has been popped off the stack.
+            if isinstance(self.expression, Identifier):
+                failed_rule_name = self.expression.value
+            elif isinstance(self.expression, Rule):
+                failed_rule_name = self.expression.name
+            else:
+                failed_rule_name = None
+            state.fail(str(self.expression), rule_name=failed_rule_name)
 
         state.neg_pred_depth -= 1
         return not matched
@@ -125,7 +134,16 @@ class NegativePredicate(Expression):
             # Inner matched, so the negative predicate fails.
             gen.writeln("state.restore()")
             gen.writeln(f"{matched_var} = False")
-            gen.writeln(f"state.fail({str(self.expression)!r})")
+            # If self.expression is a rule, by now it has been popped off the stack.
+            if isinstance(self.expression, Identifier):
+                failed_rule_name = self.expression.value
+            elif isinstance(self.expression, Rule):
+                failed_rule_name = self.expression.name
+            else:
+                failed_rule_name = ""
+            gen.writeln(
+                f"state.fail({str(self.expression)!r}, rule_name={failed_rule_name!r})"
+            )
 
         gen.writeln("state.neg_pred_depth -= 1")
         gen.writeln("# </NegativePredicate>")

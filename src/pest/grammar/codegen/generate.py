@@ -234,14 +234,7 @@ def generate_parse_entry_point() -> str:
         with gen.block():
             gen.writeln("return Pairs(pairs)")
 
-        gen.writeln(
-            "raise PestParsingError("
-            "state.furthest_stack, "
-            "list(state.furthest_expected), "
-            "list(state.furthest_unexpected), "
-            "state.furthest_pos, "
-            "*error_context(state.input, state.furthest_pos),)"
-        )
+        gen.writeln("raise PestParsingError(state)")
 
     gen.writeln("\nclass Parser:")
     with gen.block():
