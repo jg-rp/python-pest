@@ -35,14 +35,14 @@ class _Any(Expression):
     def __str__(self) -> str:
         return "ANY"
 
-    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:  # noqa: ARG002
         """Attempt to match this expression against the input at `start`."""
         if state.pos < len(state.input):
             state.pos += 1
             return True
         return False
 
-    def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
+    def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:  # noqa: ARG002
         """Emit Python source code that implements this grammar expression."""
         gen.writeln("if state.pos < len(state.input):")
         with gen.block():

@@ -204,9 +204,17 @@ class ParserState:
                 self.tag_stack.pop()
 
     def fail(
-        self, label: str, pos: int | None = None, rule_name: str | None = None
+        self,
+        label: str,
+        *,
+        pos: int | None = None,
+        rule_name: str | None = None,
+        force: bool = False,
     ) -> None:
         """Record a failure, inferring expected vs. unexpected context."""
+        if self.neg_pred_depth > 0 and not force:
+            return
+
         is_neg_context = self.neg_pred_depth % 2 == 1
         rule_name = rule_name or self.rule_stack[-1].name
         pos = pos or self.pos

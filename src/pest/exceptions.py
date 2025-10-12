@@ -32,6 +32,7 @@ class PestParsingError(Exception):
         no_pointer = " " * (col)
         rule_stack = " > ".join(f.name for f in self.state.furthest_stack)
 
+        # TODO: if this is short, put it on the same line as msg
         labels = self.expected_labels(
             self.state.furthest_expected, self.state.furthest_unexpected
         )
@@ -93,7 +94,7 @@ class PestParsingError(Exception):
             return f"{_unexpected}; {_expected}"
 
         if unexpected:
-            _unexpected = list(chain(*expected.values()))
+            _unexpected = list(chain(*unexpected.values()))
             return "not " + join_with_limit(_unexpected, ", ", last_separator=" or ")
 
         return None

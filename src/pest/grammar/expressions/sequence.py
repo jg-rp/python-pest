@@ -38,7 +38,6 @@ class Sequence(Expression):
 
         for i, expr in enumerate(self.expressions):
             matched = expr.parse(state, children)
-            print("!!", i, expr, matched, state.pos)
             if not matched:
                 return False
 

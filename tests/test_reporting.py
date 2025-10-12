@@ -73,4 +73,45 @@ def test_nested(parser: Parser) -> None:
     assert state.furthest_pos == 0
 
 
-# TODO: negative
+def test_negative(parser: Parser) -> None:
+    with pytest.raises(PestParsingError) as exec_info:
+        parser.parse("negative", "x")
+
+    err = exec_info.value
+    state = err.state
+    assert list(state.furthest_expected) == []
+    assert list(state.furthest_unexpected) == ["d"]
+    assert state.furthest_pos == 0
+
+
+def test_negative_match(parser: Parser) -> None:
+    with pytest.raises(PestParsingError) as exec_info:
+        parser.parse("negative_match", "x")
+
+    err = exec_info.value
+    state = err.state
+    assert list(state.furthest_expected) == ["b"]
+    assert list(state.furthest_unexpected) == []
+    assert state.furthest_pos == 0
+
+
+def test_mixed(parser: Parser) -> None:
+    with pytest.raises(PestParsingError) as exec_info:
+        parser.parse("mixed", "x")
+
+    err = exec_info.value
+    state = err.state
+    assert list(state.furthest_expected) == ["a"]
+    assert list(state.furthest_unexpected) == ["d"]
+    assert state.furthest_pos == 0
+
+
+def test_mixed_progress(parser: Parser) -> None:
+    with pytest.raises(PestParsingError) as exec_info:
+        parser.parse("mixed_progress", "b")
+
+    err = exec_info.value
+    state = err.state
+    assert list(state.furthest_expected) == ["a"]
+    assert list(state.furthest_unexpected) == []
+    assert state.furthest_pos == 1

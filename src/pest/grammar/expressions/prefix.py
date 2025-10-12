@@ -92,7 +92,7 @@ class NegativePredicate(Expression):
             isinstance(other, NegativePredicate) and self.expression == other.expression
         )
 
-    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:  # noqa: ARG002
         """Try to parse all parts in sequence starting at `pos`."""
         state.checkpoint()
         state.neg_pred_depth += 1
@@ -103,11 +103,15 @@ class NegativePredicate(Expression):
             # If self.expression is a rule, by now it has been popped off the stack.
             if isinstance(self.expression, Identifier):
                 failed_rule_name = self.expression.value
+                assert state.parser
+                label = str(state.parser.rules[failed_rule_name].expression)
             elif isinstance(self.expression, Rule):
                 failed_rule_name = self.expression.name
+                label = str(self.expression.expression)
             else:
                 failed_rule_name = None
-            state.fail(str(self.expression), rule_name=failed_rule_name)
+                label = str(self.expression)
+            state.fail(label, rule_name=failed_rule_name, force=True)
 
         state.neg_pred_depth -= 1
         return not matched
@@ -142,7 +146,8 @@ class NegativePredicate(Expression):
             else:
                 failed_rule_name = ""
             gen.writeln(
-                f"state.fail({str(self.expression)!r}, rule_name={failed_rule_name!r})"
+                f"state.fail({str(self.expression)!r}, "
+                f"rule_name={failed_rule_name!r}, force=True)"
             )
 
         gen.writeln("state.neg_pred_depth -= 1")
