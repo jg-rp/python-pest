@@ -1,6 +1,6 @@
 from .choice import Choice
-from .choice import LazyChoiceRegex
-from .choice import LazyChoiceRepeat
+from .choice import OptimizedChoiceRepeat
+from .choice import OptimizedChoice
 from .group import Group
 from .postfix import Optional
 from .postfix import Repeat
@@ -52,6 +52,6 @@ __all__ = (
     "RepeatMin",
     "RepeatOnce",
     "RepeatMinMax",
-    "LazyChoiceRepeat",
-    "LazyChoiceRegex",
+    "OptimizedChoiceRepeat",
+    "OptimizedChoice",
 )

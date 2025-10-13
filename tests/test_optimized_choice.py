@@ -4,7 +4,7 @@ from pest.grammar.expressions.choice import ChoiceCase
 from pest.grammar.expressions.choice import ChoiceChoice
 from pest.grammar.expressions.choice import ChoiceLiteral
 from pest.grammar.expressions.choice import ChoiceRange
-from pest.grammar.expressions.choice import LazyChoiceRegex
+from pest.grammar.expressions.choice import OptimizedChoice
 from pest.grammar.expressions.choice import build_optimized_pattern
 from pest.grammar.rules.unicode import UnicodePropertyRule
 
@@ -114,7 +114,7 @@ def test_single_within_range_removed() -> None:
 
 def test_lazy_choice_regex_initial_and_update() -> None:
     greek = UnicodePropertyRule("\\p{Script=Greek}", "MOCK_PROP")
-    regex_builder = LazyChoiceRegex([ChoiceLiteral("a", ChoiceCase.SENSITIVE)])
+    regex_builder = OptimizedChoice([ChoiceLiteral("a", ChoiceCase.SENSITIVE)])
     regex_builder.update(
         ChoiceRange("0", "9"), ChoiceLiteral("x", ChoiceCase.INSENSITIVE), greek
     )
@@ -130,7 +130,7 @@ def test_lazy_choice_regex_initial_and_update() -> None:
 
 
 def test_lazy_choice_regex_empty_then_update() -> None:
-    regex_builder = LazyChoiceRegex()
+    regex_builder = OptimizedChoice()
     regex_builder.update(ChoiceLiteral("b", ChoiceCase.SENSITIVE))
     assert regex_builder.build_optimized_pattern() == "[b]"
 
@@ -140,7 +140,7 @@ def test_lazy_choice_regex_empty_then_update() -> None:
 
 
 def test_large_range_and_literals_merging() -> None:
-    regex_builder = LazyChoiceRegex()
+    regex_builder = OptimizedChoice()
     regex_builder.update(ChoiceRange("a", "f"))
     regex_builder.update(ChoiceRange("g", "k"))
     regex_builder.update(ChoiceRange("c", "h"))
@@ -153,7 +153,7 @@ def test_large_range_and_literals_merging() -> None:
 
 
 def test_large_mixed_literals_and_ranges() -> None:
-    regex_builder = LazyChoiceRegex()
+    regex_builder = OptimizedChoice()
     for ch in ["a", "d", "g", "j", "m", "p", "s", "v"]:
         start = ch
         end = chr(ord(ch) + 2)

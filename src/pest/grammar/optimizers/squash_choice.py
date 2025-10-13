@@ -12,7 +12,7 @@ from pest.grammar import String
 from pest.grammar.expressions.choice import ChoiceCase
 from pest.grammar.expressions.choice import ChoiceLiteral
 from pest.grammar.expressions.choice import ChoiceRange
-from pest.grammar.expressions.choice import LazyChoiceRegex
+from pest.grammar.expressions.choice import OptimizedChoice
 from pest.grammar.rules.unicode import UnicodePropertyRule
 
 if TYPE_CHECKING:
@@ -27,13 +27,13 @@ def squash_choice(expr: Expression, _rules: Mapping[str, Rule]) -> Expression:
         return expr
 
     exprs = expr.expressions
-    return squash(exprs, LazyChoiceRegex()) or expr
+    return squash(exprs, OptimizedChoice()) or expr
 
 
 def squash(
     exprs: list[Expression],
-    new_expr: LazyChoiceRegex,
-) -> LazyChoiceRegex | None:
+    new_expr: OptimizedChoice,
+) -> OptimizedChoice | None:
     for expr in exprs:
         if isinstance(expr, String):
             new_expr.update(ChoiceLiteral(expr.value, ChoiceCase.SENSITIVE))
@@ -48,7 +48,7 @@ def squash(
                 return None
         elif isinstance(expr, Choice):
             squash(expr.expressions, new_expr)
-        elif isinstance(expr, LazyChoiceRegex):
+        elif isinstance(expr, OptimizedChoice):
             new_expr.update(*expr._choices)  # noqa: SLF001
         else:
             return None

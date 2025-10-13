@@ -99,6 +99,8 @@ class ParserState:
                     if matched:
                         some = True
                         pairs.extend(children)
+                        # continue
+                    children.clear()
 
                 if comment_rule:
                     self.checkpoint()
@@ -109,6 +111,7 @@ class ParserState:
                         self.ok()
                     else:
                         self.restore()
+                    children.clear()
 
                 if not matched:
                     break

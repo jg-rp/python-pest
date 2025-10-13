@@ -127,7 +127,7 @@ class ChoiceRange(NamedTuple):
 ChoiceChoice: TypeAlias = ChoiceLiteral | ChoiceRange | UnicodePropertyRule
 
 
-class LazyChoiceRegex(Expression):
+class OptimizedChoice(Expression):
     """An optimized expression for matching a set of choices using a single regex.
 
     Supports single-character literals, multi-character literals (case-sensitive or
@@ -187,21 +187,23 @@ class LazyChoiceRegex(Expression):
         assert len(expressions) == 0
         return self
 
-    def update(self, *choices: ChoiceChoice) -> LazyChoiceRegex:
+    def update(self, *choices: ChoiceChoice) -> OptimizedChoice:
         """Add choices to this regex and return self."""
         self._choices.extend(choices)
         return self
 
-    def copy(self, *choices: ChoiceChoice) -> LazyChoiceRegex:
+    def copy(self, *choices: ChoiceChoice) -> OptimizedChoice:
         """Return a new LazyChoiceRegex with current and additional choices."""
-        return LazyChoiceRegex(self._choices).update(*choices)
+        return OptimizedChoice(self._choices).update(*choices)
 
     def build_optimized_pattern(self) -> str:
         """Return a regex pattern matching all collected choices."""
         return build_optimized_pattern(self._choices)
 
 
-class LazyChoiceRepeat(LazyChoiceRegex):
+class OptimizedChoiceRepeat(OptimizedChoice):
+    """An optimized `("a" | "b")*`."""
+
     def build_optimized_pattern(self) -> str:
         """Return a regex pattern matching all collected choices."""
         return build_optimized_pattern(self._choices, "*")

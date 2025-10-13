@@ -41,6 +41,7 @@ class Rule(StrEnum):
     PRIMARY = 'primary'
     INT = 'int'
     IDENT = 'ident'
+    SKIP = 'SKIP'
 
 def _parse_EOI() -> Callable[[ParserState, list[Pair]], bool]:
     rule_frame = RuleFrame('EOI', 0)
@@ -1127,22 +1128,37 @@ def _parse_ident() -> Callable[[ParserState, list[Pair]], bool]:
     
 parse_ident = _parse_ident()
 
+def _parse_SKIP() -> Callable[[ParserState, list[Pair]], bool]:
+    RE3 = re.compile('(?:\\\r\\\n|[\\\t\\\n\\\r\\ ])*', re.VERSION1)
+    
+    rule_frame = RuleFrame('SKIP', 6)
+    
+    def inner(state: ParserState, pairs: list[Pair]) -> bool:
+        """Parse SKIP."""
+        state.rule_stack.push(rule_frame)
+        children2: list[Pair] = []
+        with state.atomic_checkpoint():
+            state.atomic_depth += 1
+            # <ChoiceRegex>
+            if match := RE3.match(state.input, state.pos):
+                state.pos = match.end()
+                matched = True
+            else:
+                matched = False
+            # </ChoiceRegex>
+        state.rule_stack.pop()
+        # Silent rule 'SKIP'
+        pairs.extend(children2)
+        return matched
+    
+    return inner
+    
+parse_SKIP = _parse_SKIP()
+
 def parse_trivia(state: ParserState, pairs: list[Pair]) -> bool:
     if state.atomic_depth > 0:
         return True
-    with state.suppress_failures():
-        while True:
-            state.checkpoint()
-            matched = False
-            matched = parse_WHITESPACE(state, pairs)
-            if matched:
-                state.ok()
-                continue
-            else:
-                state.restore()
-            if not matched:
-                break
-    return True
+    return parse_SKIP(state, pairs)
 
 _RULE_MAP: dict[str, Callable[[ParserState, list[Pair]], bool]] = {
     'EOI': parse_EOI,
@@ -1162,6 +1178,7 @@ _RULE_MAP: dict[str, Callable[[ParserState, list[Pair]], bool]] = {
     'primary': parse_primary,
     'int': parse_int,
     'ident': parse_ident,
+    'SKIP': parse_SKIP,
 }
 
 def parse(start_rule: str, input_: str, *, start_pos: int = 0) -> Pairs:

@@ -13,10 +13,9 @@ from typing import TypeAlias
 from pest.grammar import Choice
 from pest.grammar import Repeat
 from pest.grammar import Rule
-from pest.grammar import String
-from pest.grammar.expressions import LazyChoiceRepeat
+from pest.grammar.expressions import OptimizedChoiceRepeat
 from pest.grammar.rule import SILENT
-from pest.grammar.rule import SILENT_COMPOUND
+from pest.grammar.rule import SILENT_ATOMIC
 
 from .expression import Expression
 from .optimizers.inliners import inline_builtin
@@ -88,6 +87,9 @@ class Optimizer:
         if debug:
             self.log.clear()
 
+        assert isinstance(rules, dict)
+        self._optimize_skip_rule(rules)
+
         for step in self.passes:
             if step.predicate and not step.predicate(rules):
                 continue
@@ -102,17 +104,12 @@ class Optimizer:
                     expr = self._run_once(expr, step, rules, name, debug=debug)
                 rules[name].expression = expr
 
-        # TODO:
-        # assert isinstance(rules, dict)
-        # self._optimize_skip_rule(rules)
-
         return rules
 
     def _optimize_skip_rule(self, rules: MutableMapping[str, Rule]) -> None:
         """Combine WHITESPACE and COMMENT into a single SKIP rule."""
         # NOTE: COMMENT and WHITESPACE are hard coded to always be atomic.
 
-        # TODO: only if both are silent
         comment = rules.get("COMMENT")
         whitespace = rules.get("WHITESPACE")
 
@@ -120,12 +117,17 @@ class Optimizer:
             # TODO:
             return
 
-        if comment:
-            rules["SKIP"] = Rule("SKIP", Repeat(comment.expression), SILENT_COMPOUND)
-        elif whitespace and isinstance(whitespace.expression, Choice):
-            expr = squash(whitespace.expression.expressions, LazyChoiceRepeat())
+        if comment and comment.modifier & SILENT:
+            rules["SKIP"] = Rule("SKIP", Repeat(comment.expression), SILENT_ATOMIC)
+
+        elif (
+            whitespace
+            and whitespace.modifier & SILENT
+            and isinstance(whitespace.expression, Choice)
+        ):
+            expr = squash(whitespace.expression.expressions, OptimizedChoiceRepeat())
             if expr:
-                rules["SKIP"] = Rule("SKIP", expr, SILENT)
+                rules["SKIP"] = Rule("SKIP", expr, SILENT_ATOMIC)
 
     def _run_once(
         self,

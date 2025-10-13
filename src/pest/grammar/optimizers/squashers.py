@@ -10,7 +10,7 @@ from pest.grammar import Choice
 from pest.grammar import Repeat
 from pest.grammar import Sequence
 from pest.grammar.expression import Terminal
-from pest.grammar.expressions.choice import LazyChoiceRegex
+from pest.grammar.expressions.choice import OptimizedChoice
 from pest.grammar.rule import SILENT
 from pest.grammar.rule import BuiltInRule
 

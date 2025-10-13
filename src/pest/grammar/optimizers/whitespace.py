@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from pest.grammar import Choice
 from pest.grammar import Rule
 from pest.grammar import Sequence
-from pest.grammar.expressions.choice import LazyChoiceRegex
+from pest.grammar.expressions.choice import OptimizedChoice
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
