@@ -32,6 +32,7 @@ class PestParsingError(Exception):
         rule_stack = " > ".join(f.name for f in self.state.furthest_stack)
 
         # TODO: if this is short, put it on the same line as msg
+        # TODO: suppress this if `(None)`
         labels = self.expected_labels(
             self.state.furthest_expected, self.state.furthest_unexpected
         )

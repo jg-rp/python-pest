@@ -1,9 +1,21 @@
 from pest import Parser
 
-with open("tests/grammars/reporting.pest") as fd:
-    grammar = fd.read()
 
-parser = Parser.from_grammar(grammar)
-parse_tree = parser.parse("mixed_progress", "b")
+parser = Parser.from_grammar(
+    """\
+start      = { SOI ~ EOI }
+COMMENT    = { ("#" | ";") ~ (!NEWLINE ~ ANY)* }
+WHITESPACE = { " " | NEWLINE }
+""",
+)
 
+parse_tree = parser.parse("start", "# some comment")
+
+# print(parser.rules["SKIP"].tree_view())
+
+print(parser.tree_view())
 print(parse_tree.dumps())
+
+# TODO: optimize sequence of literals ending with skip until
+# TODO: optimize sequence of choice of literals followed by skip until
+# TODO: remove group if it has a single expression of lazy choice

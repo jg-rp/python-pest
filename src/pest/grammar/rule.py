@@ -24,14 +24,14 @@ SILENT_ATOMIC = SILENT | ATOMIC
 SILENT_COMPOUND = SILENT | COMPOUND
 SILENT_NONATOMIC = SILENT | NONATOMIC
 
-MODIFIER_SYMBOLS = {
+MODIFIER_SYMBOLS: dict[int, str] = {
     SILENT: "_",
     ATOMIC: "@",
     COMPOUND: "$",
     NONATOMIC: "!",
 }
 
-MODIFIER_MAP = {v: k for k, v in MODIFIER_SYMBOLS.items()}
+MODIFIER_MAP: dict[str, int] = {v: k for k, v in MODIFIER_SYMBOLS.items()}
 
 
 def modifier_to_str(flags: int) -> str:
@@ -71,7 +71,10 @@ class Rule(Expression):
         state.rule_stack.push(self)
         children: list[Pair] = []
 
-        if self.modifier & (ATOMIC | COMPOUND):
+        if self.modifier & (ATOMIC | COMPOUND) or self.name in (
+            "COMMENT",
+            "WHITESPACE",
+        ):
             with state.atomic_checkpoint():
                 state.atomic_depth += 1
                 matched = self.expression.parse(state, children)
@@ -94,7 +97,7 @@ class Rule(Expression):
 
         tag: str | None = state.tag_stack.pop() if state.tag_stack else None
 
-        if self.modifier & ATOMIC:
+        if self.modifier & ATOMIC:  # TODO: COMMENT and WHITESPACE too?
             if isinstance(self.expression, Rule):
                 rule: Rule | None = self.expression
             elif isinstance(self.expression, Identifier):
@@ -136,7 +139,10 @@ class Rule(Expression):
             inner_pairs = gen.new_temp("children")
             gen.writeln(f"{inner_pairs}: list[Pair] = []")
 
-            if self.modifier & (ATOMIC | COMPOUND):
+            if self.modifier & (ATOMIC | COMPOUND) or self.name in (
+                "COMMENT",
+                "WHITESPACE",
+            ):
                 gen.writeln("with state.atomic_checkpoint():")
                 with gen.block():
                     gen.writeln("state.atomic_depth += 1")
@@ -167,7 +173,7 @@ class Rule(Expression):
                 with gen.block():
                     gen.writeln(f"{tag_var} = None")
 
-                if self.modifier & ATOMIC:
+                if self.modifier & ATOMIC:  # TODO: COMMENT and WHITESPACE too?
                     gen.writeln(f"# Atomic rule: {self.name!r}")
                     assert gen.rules is not None
                     if isinstance(self.expression, Rule):

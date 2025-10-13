@@ -201,7 +201,13 @@ class LazyChoiceRegex(Expression):
         return build_optimized_pattern(self._choices)
 
 
-def build_optimized_pattern(choices: list[ChoiceChoice]) -> str:  # noqa: PLR0912
+class LazyChoiceRepeat(LazyChoiceRegex):
+    def build_optimized_pattern(self) -> str:
+        """Return a regex pattern matching all collected choices."""
+        return build_optimized_pattern(self._choices, "*")
+
+
+def build_optimized_pattern(choices: list[ChoiceChoice], repeat: str = "") -> str:  # noqa: PLR0912
     """Build a regex pattern that matches any of the given choices."""
     if not choices:
         return ""
@@ -243,8 +249,10 @@ def build_optimized_pattern(choices: list[ChoiceChoice]) -> str:  # noqa: PLR091
     if not parts:
         return ""
     if len(parts) == 1:
+        if repeat:
+            return f"(?:{parts[0]}){repeat}"
         return parts[0]
-    return "(?:" + "|".join(parts) + ")"
+    return "(?:" + "|".join(parts) + ")" + repeat
 
 
 def _optimize_char_class(singles: list[str], ranges: list[tuple[str, str]]) -> str:

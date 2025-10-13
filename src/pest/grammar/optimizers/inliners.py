@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from pest.grammar import Rule
 
 
-def inline_builtin(expr: Expression, _rules: Mapping[str, Rule]) -> Expression:
+def inline_builtin(expr: Expression, rules: Mapping[str, Rule]) -> Expression:
     """Inline built-in rules.
 
     Inline rules are always silent so we can replace Identifier with the rule's

@@ -25,7 +25,6 @@ SkipUntil                             '(!("a" | "b") ~ ANY)*'
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Mapping
 
 from pest.grammar import Choice
 from pest.grammar import Group
@@ -39,6 +38,8 @@ from pest.grammar import String
 from pest.grammar.rules.special import Any
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from pest.grammar import Expression
 
 
@@ -60,6 +61,8 @@ def skip(expr: Expression, rules: Mapping[str, Rule]) -> Expression:
                     new_expr = _skip(inner, rules, [])
                     if new_expr:
                         return new_expr
+                case _:
+                    return expr
         case _:
             return expr
 

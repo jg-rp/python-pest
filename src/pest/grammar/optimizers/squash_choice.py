@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-from typing import Mapping
 
 from pest.grammar import Choice
 from pest.grammar import CIString
@@ -17,6 +16,8 @@ from pest.grammar.expressions.choice import LazyChoiceRegex
 from pest.grammar.rules.unicode import UnicodePropertyRule
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from pest.grammar import Expression
 
 
@@ -26,10 +27,10 @@ def squash_choice(expr: Expression, _rules: Mapping[str, Rule]) -> Expression:
         return expr
 
     exprs = expr.expressions
-    return _squash(exprs, LazyChoiceRegex()) or expr
+    return squash(exprs, LazyChoiceRegex()) or expr
 
 
-def _squash(
+def squash(
     exprs: list[Expression],
     new_expr: LazyChoiceRegex,
 ) -> LazyChoiceRegex | None:
@@ -43,10 +44,10 @@ def _squash(
         elif isinstance(expr, Range):
             new_expr.update(ChoiceRange(expr.start, expr.stop))
         elif isinstance(expr, Rule) and isinstance(expr.expression, Choice):
-            if not _squash(expr.expression.expressions, new_expr):
+            if not squash(expr.expression.expressions, new_expr):
                 return None
         elif isinstance(expr, Choice):
-            _squash(expr.expressions, new_expr)
+            squash(expr.expressions, new_expr)
         elif isinstance(expr, LazyChoiceRegex):
             new_expr.update(*expr._choices)  # noqa: SLF001
         else:

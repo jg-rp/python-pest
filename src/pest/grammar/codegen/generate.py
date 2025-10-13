@@ -24,7 +24,6 @@ from typing import TYPE_CHECKING
 import regex as re
 
 from pest.exceptions import PestParsingError
-from pest.exceptions import error_context
 from pest.pairs import Pair
 from pest.pairs import Pairs
 from pest.state import ParserState
@@ -151,27 +150,25 @@ def generate_parse_trivia(rules: dict[str, Rule]) -> str:
             gen.writeln("return parse_SKIP(state, pairs)")
             return gen.render()
 
-        gen.writeln("while True:")
+        gen.writeln("with state.suppress_failures():")
         with gen.block():
-            # TODO: do we need a checkpoint here?
-            gen.writeln("state.checkpoint()")
-            gen.writeln("matched = False")
+            gen.writeln("while True:")
+            with gen.block():
+                # TODO: do we need a checkpoint here?
+                gen.writeln("state.checkpoint()")
+                gen.writeln("matched = False")
 
-            if has_ws:
-                gen.writeln("matched = parse_WHITESPACE(state, pairs)")
-                gen.writeln("if matched:")
-                with gen.block():
-                    gen.writeln("state.ok()")
-                    gen.writeln("continue")
-                gen.writeln("else:")
-                with gen.block():
-                    gen.writeln("state.restore()")
+                if has_ws:
+                    gen.writeln("matched = parse_WHITESPACE(state, pairs)")
+                    gen.writeln("if matched:")
+                    with gen.block():
+                        gen.writeln("state.ok()")
+                        gen.writeln("continue")
+                    gen.writeln("else:")
+                    with gen.block():
+                        gen.writeln("state.restore()")
 
-            if has_comment:
-                gen.writeln(
-                    "if not state.rule_stack or state.rule_stack[-1].name != 'COMMENT':"
-                )
-                with gen.block():
+                if has_comment:
                     # TODO: do we need a checkpoint here?
                     gen.writeln("state.checkpoint()")
                     gen.writeln("matched = parse_COMMENT(state, pairs)")
@@ -182,9 +179,9 @@ def generate_parse_trivia(rules: dict[str, Rule]) -> str:
                     with gen.block():
                         gen.writeln("state.restore()")
 
-            gen.writeln("if not matched:")
-            with gen.block():
-                gen.writeln("break")
+                gen.writeln("if not matched:")
+                with gen.block():
+                    gen.writeln("break")
 
         gen.writeln("return True")
 

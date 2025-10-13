@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING
 import regex as re
 
 from pest.exceptions import PestParsingError
-from pest.exceptions import error_context
 from pest.pairs import Pair
 from pest.pairs import Pairs
 from pest.state import ParserState

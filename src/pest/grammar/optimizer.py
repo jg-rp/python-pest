@@ -2,25 +2,27 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from collections.abc import Mapping
+from collections.abc import MutableMapping
 from dataclasses import dataclass
 from enum import Enum
 from enum import auto
-from typing import Callable
-from typing import Mapping
-from typing import MutableMapping
 from typing import TypeAlias
 
 from pest.grammar import Choice
 from pest.grammar import Repeat
 from pest.grammar import Rule
+from pest.grammar import String
+from pest.grammar.expressions import LazyChoiceRepeat
 from pest.grammar.rule import SILENT
 from pest.grammar.rule import SILENT_COMPOUND
-from pest.grammar.rule import BuiltInRule
 
 from .expression import Expression
 from .optimizers.inliners import inline_builtin
 from .optimizers.inliners import inline_silent_rules
 from .optimizers.skippers import skip
+from .optimizers.squash_choice import squash
 from .optimizers.squash_choice import squash_choice
 from .optimizers.unroller import unroll
 
@@ -65,7 +67,6 @@ DEFAULT_OPTIMIZER_PASSES = [
     OptimizerStep("inline built-in", inline_builtin, PassDirection.PREORDER),
     OptimizerStep("squash_choice", squash_choice, PassDirection.POSTORDER),
     OptimizerStep("inline silent", inline_silent_rules, PassDirection.POSTORDER),
-    # OptimizerStep("search", search, PassDirection.PREORDER),
 ]
 
 
@@ -101,26 +102,30 @@ class Optimizer:
                     expr = self._run_once(expr, step, rules, name, debug=debug)
                 rules[name].expression = expr
 
+        # TODO:
+        # assert isinstance(rules, dict)
+        # self._optimize_skip_rule(rules)
+
         return rules
 
     def _optimize_skip_rule(self, rules: MutableMapping[str, Rule]) -> None:
         """Combine WHITESPACE and COMMENT into a single SKIP rule."""
-        # TODO: use me
+        # NOTE: COMMENT and WHITESPACE are hard coded to always be atomic.
+
+        # TODO: only if both are silent
         comment = rules.get("COMMENT")
         whitespace = rules.get("WHITESPACE")
 
         if comment and whitespace:
-            rules["SKIP"] = BuiltInRule(
-                "SKIP",
-                Repeat(Choice(whitespace.expression, comment.expression)),
-                SILENT_COMPOUND,  # TODO: only after inlining whitespace
-            )
-        elif comment:
-            rules["SKIP"] = BuiltInRule(
-                "SKIP", Repeat(comment.expression), SILENT_COMPOUND
-            )
-        elif whitespace:
-            rules["SKIP"] = BuiltInRule("SKIP", Repeat(whitespace.expression), SILENT)
+            # TODO:
+            return
+
+        if comment:
+            rules["SKIP"] = Rule("SKIP", Repeat(comment.expression), SILENT_COMPOUND)
+        elif whitespace and isinstance(whitespace.expression, Choice):
+            expr = squash(whitespace.expression.expressions, LazyChoiceRepeat())
+            if expr:
+                rules["SKIP"] = Rule("SKIP", expr, SILENT)
 
     def _run_once(
         self,

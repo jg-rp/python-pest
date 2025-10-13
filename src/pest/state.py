@@ -32,6 +32,7 @@ class ParserState:
 
     __slots__ = (
         "_pos_history",
+        "_suppress_failures",
         "atomic_depth",
         "furthest_expected",
         "furthest_pos",
@@ -63,6 +64,7 @@ class ParserState:
         self.furthest_stack: list[Rule | RuleFrame] = []
 
         self._pos_history: list[int] = []
+        self._suppress_failures = False
         self.atomic_depth = SnapshottingInt()
         self.rule_stack = Stack[Rule | RuleFrame]()  # RuleFrame is for generated code.
         self.tag_stack: list[str] = []  # User tags are always enabled
@@ -73,10 +75,12 @@ class ParserState:
         if self.atomic_depth > 0:
             return False
 
-        # TODO: look for optimized SKIP rule
+        assert self.parser
+
+        if skip := self.parser.rules.get("SKIP"):
+            return skip.parse(self, pairs)
 
         # Unoptimized whitespace and comment rules.
-        assert self.parser
         whitespace_rule = self.parser.rules.get("WHITESPACE")
         comment_rule = self.parser.rules.get("COMMENT")
 
@@ -86,29 +90,28 @@ class ParserState:
         children: list[Pair] = []
         some = False
 
-        while True:
-            matched = False
+        with self.suppress_failures():
+            while True:
+                matched = False
 
-            if whitespace_rule:
-                matched = whitespace_rule.parse(self, children)
-                if matched:
-                    some = True
-                    pairs.extend(children)
+                if whitespace_rule:
+                    matched = whitespace_rule.parse(self, children)
+                    if matched:
+                        some = True
+                        pairs.extend(children)
 
-            if comment_rule and (
-                not self.rule_stack or self.rule_stack[-1].name != "COMMENT"
-            ):
-                self.checkpoint()
-                matched = comment_rule.parse(self, children) or matched
-                if matched:
-                    some = True
-                    pairs.extend(children)
-                    self.ok()
-                else:
-                    self.restore()
+                if comment_rule:
+                    self.checkpoint()
+                    matched = comment_rule.parse(self, children) or matched
+                    if matched:
+                        some = True
+                        pairs.extend(children)
+                        self.ok()
+                    else:
+                        self.restore()
 
-            if not matched:
-                break
+                if not matched:
+                    break
 
         return some
 
@@ -188,20 +191,23 @@ class ParserState:
     def atomic_checkpoint(self) -> Iterator[ParserState]:
         """A context manager that restores atomic depth on exit."""
         self.atomic_depth.snapshot()
-        try:
-            yield self
-        finally:
-            self.atomic_depth.restore()
+        yield self
+        self.atomic_depth.restore()
+
+    @contextmanager
+    def suppress_failures(self) -> Iterator[ParserState]:
+        """A context manager that prevents rules contributing to failures."""
+        self._suppress_failures = True
+        yield self
+        self._suppress_failures = False
 
     @contextmanager
     def tag(self, tag_: str) -> Iterator[ParserState]:
         """A context manager that removes `tag_` on exit."""
         self.tag_stack.append(tag_)
-        try:
-            yield self
-        finally:
-            if self.tag_stack:
-                self.tag_stack.pop()
+        yield self
+        if self.tag_stack:
+            self.tag_stack.pop()
 
     def fail(
         self,
@@ -212,7 +218,7 @@ class ParserState:
         force: bool = False,
     ) -> None:
         """Record a failure, inferring expected vs. unexpected context."""
-        if self.neg_pred_depth > 0 and not force:
+        if (self.neg_pred_depth > 0 and not force) or self._suppress_failures:
             return
 
         is_neg_context = self.neg_pred_depth % 2 == 1

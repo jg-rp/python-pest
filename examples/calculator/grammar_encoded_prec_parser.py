@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING
 import regex as re
 
 from pest.exceptions import PestParsingError
-from pest.exceptions import error_context
 from pest.pairs import Pair
 from pest.pairs import Pairs
 from pest.state import ParserState
@@ -82,13 +81,15 @@ def _parse_WHITESPACE() -> Callable[[ParserState, list[Pair]], bool]:
         """Parse WHITESPACE."""
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
-        # <ChoiceRegex>
-        if match := RE3.match(state.input, state.pos):
-            state.pos = match.end()
-            matched = True
-        else:
-            matched = False
-        # </ChoiceRegex>
+        with state.atomic_checkpoint():
+            state.atomic_depth += 1
+            # <ChoiceRegex>
+            if match := RE3.match(state.input, state.pos):
+                state.pos = match.end()
+                matched = True
+            else:
+                matched = False
+            # </ChoiceRegex>
         state.rule_stack.pop()
         # Silent rule 'WHITESPACE'
         pairs.extend(children2)
@@ -1208,17 +1209,18 @@ parse_ident = _parse_ident()
 def parse_trivia(state: ParserState, pairs: list[Pair]) -> bool:
     if state.atomic_depth > 0:
         return True
-    while True:
-        state.checkpoint()
-        matched = False
-        matched = parse_WHITESPACE(state, pairs)
-        if matched:
-            state.ok()
-            continue
-        else:
-            state.restore()
-        if not matched:
-            break
+    with state.suppress_failures():
+        while True:
+            state.checkpoint()
+            matched = False
+            matched = parse_WHITESPACE(state, pairs)
+            if matched:
+                state.ok()
+                continue
+            else:
+                state.restore()
+            if not matched:
+                break
     return True
 
 _RULE_MAP: dict[str, Callable[[ParserState, list[Pair]], bool]] = {
