@@ -78,10 +78,10 @@ class Parser:
         doc = "".join(f"//!{line}\n" for line in self.doc) + "\n" if self.doc else ""
         return doc + "\n\n".join(str(rule) for rule in self.rules.values())
 
-    def parse(self, start_rule: str, input_: str, *, start_pos: int = 0) -> Pairs:
+    def parse(self, start_rule: str, text: str, *, start_pos: int = 0) -> Pairs:
         """Parse `input_` starting from `rule`."""
         rule = self.rules[start_rule]
-        state = ParserState(input_, start_pos, self)
+        state = ParserState(text, start_pos, self)
         pairs: list[Pair] = []
         matched = rule.parse(state, pairs)
 
