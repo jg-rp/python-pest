@@ -39,41 +39,245 @@ In short:
 - Hand-crafted parsers require explicit control over lexing and parsing.
 - Pest parsers let you define the grammar declaratively and focus on transforming the resulting structured tree into meaningful data.
 
-## Grammar syntax
+## Grammar syntax quick reference
 
 For a complete explanation of grammar syntax see the official [Pest Book](https://pest.rs/book/grammars/syntax.html).
 
-### Quick reference
+### Grammar rule
 
-| Syntax                | Meaning                                                         | Example                                       | Notes                           |
-| --------------------- | --------------------------------------------------------------- | --------------------------------------------- | ------------------------------- |
-| `rule = { ... }`      | Define a grammar rule                                           | `ident = { ASCII_ALPHA+ }`                    |                                 |
-| `rule = _{ ... }`     | Silent rule - does not appear in the parse tree                 | `WHITESPACE = _{ " " }`                       |                                 |
-| `rule = @{ ... }`     | Atomic rule - inner rules are silent and no implicit whitespace | `int = @{ ASCII_DIGIT+ }`                     |                                 |
-| `rule = ${ ... }`     | Compound atomic - no implicit whitespace                        | `full_time = ${ partial_time ~ time_offset }` |                                 |
-| `rule = !{ ... }`     | Non-atomic - even if a parent rule is atomic                    | `expr = !{ ... }`                             |                                 |
-| `"..."`               | Match an exact string                                           | `"let"`                                       | Strings are case-sensitive      |
-| `^"..."`              | Case insensitive string match                                   | `^"select"`                                   |                                 |
-| `'a'..'z'`            | Character range                                                 | `'\u{80}'..'\u{D7FF}'`                        |                                 |
-| `ANY`                 | Match any single character                                      | `ANY`                                         |                                 |
-| `~`                   | Sequence - a followed by b                                      | `"[" ~ "]"`                                   | Supports implicit whitespace    |
-| <code>&#124;</code>   | Ordered choice - a or b                                         | <code>"a" &#124; "b"</code>                   | First matching alternative wins |
-| `*`                   | Repeat zero or more times                                       | `ASCII_DIGIT*`                                | Never fails                     |
-| `+`                   | Repeat one or more times                                        | `ASCII_DIGIT+`                                | Equivalent to `{1,}`            |
-| `?`                   | Optional - match zero or one times                              | `"-"?`                                        |                                 |
-| `{n}`                 | Match exactly n times                                           | `ASCII_HEX_DIGIT{2}`                          |                                 |
-| `{m,n}`               | Match between m and n times, inclusive                          | `hex_digit{2, 6}`                             | n or m can be omitted           |
-| `&`                   | Positive predicate/lookahead (match but don't consume)          | `ident ~ &"="`                                |                                 |
-| `!`                   | Negative predicate/lookahead (not followed by)                  | `literal ~ !"="`                              |                                 |
-| `( )`                 | Group expressions                                               | <code>(A &#124; B)\*</code>                   |                                 |
-| `PUSH(expr)`          | Match `expr` and push the matched string onto the stack         | `PUSH(A)`                                     |                                 |
-| `PUSH_LITERAL("...")` | Push a string literal onto the stack                            | `PUSH("a")`                                   | Never fails                     |
-| `POP`                 | Pop and match the value on the top of the stack                 | `POP`                                         |                                 |
-| `PEEK`                | Match the value on the top oof the stack without removing it    | `PEEK`                                        |                                 |
-| `PEEK[..]`            | Match a slice of the stack from bottom to top                   | `PEEK[1..3]`                                  | Bottom to top                   |
-| `DROP`                | Pop from the stack without matching                             | `DROP`                                        | Fails if the stack is empty     |
-| `PEEK_ALL`            | Match all items from the stack from top to bottom               | `PEEK_ALL`                                    | Top to bottom                   |
-| `#tag`                | Tag an expression for later reference                           | `#literal hex_digit{2, 6}`                    | Always enabled in Python Pest   |
+```{title="syntax"}
+rule = { ... }
+```
+
+Defines a standard grammar rule. Rules can refer to other rules by name.
+
+```{title="example"}
+ident = { ASCII_ALPHA+ }
+```
+
+`ASCII_ALPHA` is a built-in rule. See the Pest book for a complete list of [built-in rules](https://pest.rs/book/grammars/built-ins.html).
+
+### Silent rule
+
+```{title="syntax"}
+rule = _{ ... }
+```
+
+A silent rule matches input but does not appear in the parse tree. `WHITESPACE` is a special rule. If defined, it enables implicit whitespace between items in a [sequence](#sequence) and when [repeating](#repetition) expressions.
+
+```{title="example"}
+WHITESPACE = _{ " " }
+```
+
+### Atomic rule
+
+```{title="syntax"}
+rule = _{ ... }
+```
+
+An atomic rule disables implicit whitespace and hides all inner rules, producing a single leaf node in the parse tree.
+
+```{title="example"}
+int = @{ ASCII_DIGIT+ }
+```
+
+### Compound atomic rule
+
+```{title="syntax"}
+rule = ${ ... }
+```
+
+A compound atomic rule disables implicit whitespace but keeps inner rules visible in the parse tree.
+
+```{title="example"}
+full_time = ${ partial_time ~ time_offset }
+```
+
+### Non-atomic rule
+
+```{title="syntax"}
+rule = !{ ... }
+```
+
+Cancels atomicity if called from an atomic parent rule.
+
+```{title="example"}
+expr = !{ term ~ ("+" ~ term)* }
+```
+
+### String literal
+
+```{title="syntax"}
+"..."
+```
+
+Matches an exact string, case-sensitively. String literals can contain escape sequences including Unicode escapes.
+
+```{title="example"}
+"let"
+```
+
+### Case-insensitive string
+
+```{title="syntax"}
+^"..."
+```
+
+Matches a string, case-insensitively.
+
+```{title="example"}
+^"select"
+```
+
+### Character range
+
+```{title="syntax"}
+'a'..'z'
+```
+
+Matches any character within the specified inclusive range. Unicode escapes are supported.
+
+```{title="example"}
+'\u{80}'..'\u{D7FF}'
+```
+
+### Any character
+
+```{title="syntax"}
+ANY
+```
+
+Matches any single character.
+
+### Sequence
+
+```{title="syntax"}
+A ~ B
+```
+
+Matches A followed by B, with implicit whitespace between them if the special `WHITESPACE` rule is defined, unless inside an atomic context.
+
+```{title="example"}
+"[" ~ int_list ~ "]"
+```
+
+### Ordered choice
+
+```{title="syntax"}
+A | B
+```
+
+Matches A or B, choosing the first successful alternative. PEG grammars are deterministic - once a branch succeeds, the others are not tried.
+
+```{title="example"}
+"a" | "b"
+```
+
+### Grouping
+
+```{title="syntax"}
+( ... )
+```
+
+Groups expressions and controls operator precedence.
+
+```{title="example"}
+( A | B )*
+```
+
+### Repetition
+
+```{title="syntax"}
+*
++
+?
+{n}
+{m,n}
+```
+
+Control how many times a pattern repeats:
+
+- `*` - zero or more
+- `+` - one or more
+- `?` - optional (zero or one)
+- `{n}` - exactly n times
+- `{m,n}` - between m and n times (inclusive). Either `m` or `n` can be omitted.
+
+```{title="examples"}
+ASCII_DIGIT*
+ASCII_DIGIT+
+"-"?
+ASCII_HEX_DIGIT{2}
+hex_digit{2, 6}
+```
+
+### Positive predicate
+
+```{title="syntax"}
+&A
+```
+
+Positive lookahead succeeds if `A` matches but does not consume input.
+
+```{title="example"}
+ident ~ &"="
+```
+
+### Negative predicate
+
+```{title="syntax"}
+!A
+```
+
+Negative lookahead succeeds if `A` **does not** match.
+
+```{title="example"}
+literal ~ !"="
+```
+
+### Stack operations
+
+```{title="syntax"}
+PUSH(expr)
+PUSH_LITERAL("...")
+POP
+PEEK
+PEEK[..]
+DROP
+PEEK_ALL
+```
+
+Pest provides a stack for stateful parsing.
+
+- `PUSH(expr)` - Match `expr` and push the matched string onto the stack
+- `PUSH_LITERAL("...")` - Push a string literal onto the stack. Never fails.
+- `POP` - Remove and match the value at the top of the stack.
+- `PEEK` - Match the value on the top oof the stack without removing it.
+- `PEEK` - Match a slice of the stack from bottom to top.
+- `DROP` - Pop from the stack without matching. Fails if the stack is empty.
+- `PEEK_ALL` - Match all items from the stack from top to bottom.
+
+```{title="examples"}
+PUSH(A)
+PUSS("a")
+POP
+PEEK
+PEEK[1..3]
+DROP
+PEEK_ALL
+```
+
+### Tags
+
+```{title="syntax"}
+#tag=A
+```
+
+Tags label expressions for later reference or tooling. Tags are always enabled in Python Pest.
+
+```{title="example"}
+#literal = hex_digit{2, 6}
+```
 
 ## Parse trees and token pairs
 
