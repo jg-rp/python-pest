@@ -142,7 +142,7 @@ print(numbers)
 
 ### Code generation
 
-So far we've parsed input text directly from a grammar tree (the `Parser` instance), but you can also generate a Python module with `Parser.generate()`. This is something you'd do only once after updating your grammar.
+So far we've parsed input text directly from a grammar tree (the `Parser` instance), but you can also generate a Python module with `Parser.generate()`. This is something you'd do once after modifying your grammar.
 
 TODO: Show how to do this with the CLI - once I've written it.
 
@@ -174,7 +174,7 @@ match parse_tree.first():
 print(numbers)
 ```
 
-Parse trees obtained from generated code are identical to those returned by `Parser.parse()`, although faster.
+Parse trees obtained from generated code are identical to those returned by `Parser.parse()`.
 
 ## More examples
 
@@ -185,5 +185,5 @@ More involved and realistic examples can be found in the `examples/` folder in t
 `examples/calculator` shows three different approaches to handling operator precedence:
 
 - `examples/calculator/prec_climber.py` - [Precedence climbing method](https://en.wikipedia.org/wiki/Operator-precedence_parser#Precedence_climbing_method),
-- `examples/calculator/pratt.py` - [Pratt parsing](https://en.wikipedia.org/wiki/Operator-precedence_parser#Pratt_parsing),
+- `examples/calculator/pratt.py` - [Pratt parsing](https://en.wikipedia.org/wiki/Operator-precedence_parser#Pratt_parsing) (this one is the most readable),
 - `examples/calculator/grammar_encoded_prec.py` - precedence encoded directly in the grammar.
