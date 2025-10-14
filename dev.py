@@ -1,42 +1,37 @@
-# grammar = """\
-# array      = { "[" ~ int_list ~ "]" }
-# int_list   = { int ~ ("," ~ int)* }
-# int        = @{ "0" | ASCII_NONZERO_DIGIT  ~ ASCII_DIGIT* }
-# WHITESPACE = _{ " " }
-# """
+from pest import Parser
 
-# parser = Parser.from_grammar(grammar)
-# parse_tree = parser.parse("array", "[1, 2, 3, 42]")
+grammar = """\
+WHITESPACE  = _{ " " | "\t" | NEWLINE }
 
-# print(parse_tree.dumps())
-# # - array > int_list
-# #   - int: "1"
-# #   - int: "2"
-# #   - int: "3"
-# #   - int: "42"
+program     =  { SOI ~ expr ~ EOI }
+expr        =  { add_sub }   // top-level expression
 
-# match parse_tree.first():
-#     case Pair("array", [int_list]):
-#         numbers = [int(p.text) for p in int_list.inner() if p.name == "int"]
-#     case _:
-#         raise ValueError("unexpected parse tree")
+add_sub     =  { mul_div ~ (add_op ~ mul_div)* }
+add_op      = _{ add | sub }
+  add       =  { "+" }
+  sub       =  { "-" }
 
-# print(numbers)
+mul_div     =  { pow_expr ~ (mul_op ~ pow_expr)* }
+mul_op      = _{ mul | div }
+  mul       =  { "*" }
+  div       =  { "/" }
 
+pow_expr    =  { prefix ~ (pow_op ~ pow_expr)? } // right-associative
+pow_op      = _{ pow }
+  pow       =  { "^" }
 
-# with open("parser.py", "w", encoding="utf-8") as fd:
-#     fd.write(parser.generate())
+prefix      =  { (neg)* ~ postfix }
+  neg       =  { "-" }
 
-from parser import Rule
-from parser import parse
-from pest import Pair
+postfix     =  { primary ~ (fac)* }
+  fac       =  { "!" }
 
-parse_tree = parse(Rule.ARRAY, "[1, 2, 3, 42]")
+primary     = _{ int | ident | "(" ~ expr ~ ")" }
+  int       = @{ (ASCII_NONZERO_DIGIT ~ ASCII_DIGIT* | "0") }
+  ident     = @{ ASCII_ALPHA+ }
+"""
 
-match parse_tree.first():
-    case Pair(Rule.ARRAY, [Pair(Rule.INT_LIST, inner)]):
-        numbers = [int(p.text) for p in inner]
-    case _:
-        raise ValueError("unexpected parse tree")
+parser = Parser.from_grammar(grammar)
+parse_tree = parser.parse("program", "2 * 3 + 4")
 
-print(numbers)
+print(parse_tree.dumps())

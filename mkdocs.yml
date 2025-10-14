@@ -44,7 +44,6 @@ plugins:
 nav:
   - Introduction: "index.md"
   - Overview: "overview.md"
-  - Operator precedence: "precedence.md"
   - API: "api.md"
 
 markdown_extensions:

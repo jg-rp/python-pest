@@ -4,7 +4,11 @@ Python Pest is a port of the [Rust Pest](https://pest.rs/) parsing library - a p
 
 ## Install
 
-TODO:
+Use `pip` or your favorite package manager.
+
+```
+python -m pip install python-pest
+```
 
 ## Example
 
@@ -176,5 +180,10 @@ Parse trees obtained from generated code are identical to those returned by `Par
 
 More involved and realistic examples can be found in the `examples/` folder in the root of this projects source tree.
 
-- `examples/jsonpath` is a compliant implementation of RFC 9535 that uses a precedence climbing technique to handle operator precedence. You can compare it directly to [python-jsonpath-rfc9535](https://github.com/jg-rp/python-jsonpath-rfc9535), which is implemented with a hand-crafted parser and identical internal representation.
-- `examples/calculator` shows three different approaches to handling operator precedence, precedence climbing, Pratt parsing and precedence encoded directly in the grammar. See the [Operator precedence](precedence.md) page for more information.
+`examples/jsonpath` is an implementation of RFC 9535 that uses the precedence climbing technique to handle operator precedence. You can compare it directly to [python-jsonpath-rfc9535](https://github.com/jg-rp/python-jsonpath-rfc9535), which is implemented with a hand-crafted parser and identical internal representation.
+
+`examples/calculator` shows three different approaches to handling operator precedence:
+
+- `examples/calculator/prec_climber.py` - [Precedence climbing method](https://en.wikipedia.org/wiki/Operator-precedence_parser#Precedence_climbing_method),
+- `examples/calculator/pratt.py` - [Pratt parsing](https://en.wikipedia.org/wiki/Operator-precedence_parser#Pratt_parsing),
+- `examples/calculator/grammar_encoded_prec.py` - precedence encoded directly in the grammar.

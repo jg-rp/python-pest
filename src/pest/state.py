@@ -251,6 +251,8 @@ class ParserState:
 class RuleFrame:
     """Rule meta data for the generated rule stack."""
 
+    # TODO: docs
+
     __slots__ = ("name", "modifier")
 
     def __init__(self, name: str, modifier: int):

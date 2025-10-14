@@ -12,6 +12,8 @@ if TYPE_CHECKING:
 class PestParsingError(Exception):
     """An exception raised when an input string can't be passed by a pest grammar."""
 
+    # TODO: docs
+
     def __init__(self, state: ParserState):
         super().__init__(
             self.expected(state.furthest_expected, state.furthest_unexpected)

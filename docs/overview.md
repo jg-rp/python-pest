@@ -39,6 +39,59 @@ In short:
 - Hand-crafted parsers require explicit control over lexing and parsing.
 - Pest parsers let you define the grammar declaratively and focus on transforming the resulting structured tree into meaningful data.
 
+## Parse trees and token pairs
+
+When you parse input with Python Pest, the result is a parse tree - a hierarchical representation of how your input text matched the grammar. Each node in this tree corresponds to a grammar rule that successfully matched part of the input.
+
+At the core of this structure is the `Pair` class. A `Pair` represents a pair of tokens: the start and end markers that delimit a substring of the original input. In other words, every `Pair` knows:
+
+- which rule it matched (`pair.name` or `pair.rule.name`),
+- the span of input text it covers (`pair.text` or `str(pair)`),
+- and any nested rules it contains (`for child in pair:` or `pair.inner()`).
+
+This structure mirrors your grammar exactly. If a rule in your grammar contains other rules, those inner rules appear as child `Pair` objects within the parent. Together, these pairs form the parse tree, which captures both the structure and meaning of your input.
+
+For example, using the calculator grammar in `examples/calculator/grammar_encoded_prec.pest`, the input `2 * 3 + 4` produces a parse tree like this:
+
+```
+- program
+  - expr > add_sub
+    - mul_div
+      - pow_expr > prefix > postfix > int: "2"
+      - mul: "*"
+      - pow_expr > prefix > postfix > int: "3"
+    - add: "+"
+    - mul_div > pow_expr > prefix > postfix > int: "4"
+  - EOI: ""
+```
+
+Notice that `2 * 3` is nested deeper than `+ 4`, encoding the fact that multiplication has higher precedence that addition.
+
+In practice, you'll typically walk the parse tree to transform it into a more useful data structure, such as an abstract syntax tree (AST) or a Python object model.
+
+### Destructuring token pairs
+
+Python Pest’s Pair class defines [`__match_args__`](https://peps.python.org/pep-0636/#matching-positional-attributes):
+
+```python
+__match_args__ = ("name", "children")
+```
+
+This makes `Pair` objects integrate seamlessly with Python's [structural pattern matching](https://peps.python.org/pep-0636/) (`match`/`case`). You can destructure pairs directly by their rule name and child structure, making parse tree traversal both concise and expressive. This example comes from `examples/jsonpath/jsonpath.py`.
+
+```python
+def parse_segment(self, segment: Pair) -> Segment:
+    match segment:
+        case Pair(Rule.CHILD_SEGMENT, [inner]):
+            return ChildSegment(segment, self.parse_segment_inner(inner))
+        case Pair(Rule.DESCENDANT_SEGMENT, [inner]):
+            return RecursiveDescentSegment(segment, self.parse_segment_inner(inner))
+        case Pair(Rule.NAME_SEGMENT, [inner]) | Pair(Rule.INDEX_SEGMENT, [inner]):
+            return ChildSegment(segment, [self.parse_selector(inner)])
+        case _:
+            raise JSONPathSyntaxError("expected a segment", segment)
+```
+
 ## Grammar syntax quick reference
 
 For a complete explanation of grammar syntax see the official [Pest Book](https://pest.rs/book/grammars/syntax.html).
@@ -278,11 +331,3 @@ Tags label expressions for later reference or tooling. Tags are always enabled i
 ```{title="example"}
 #literal = hex_digit{2, 6}
 ```
-
-## Parse trees and token pairs
-
-TODO:
-
-## More examples
-
-TODO:
