@@ -1,21 +1,42 @@
-from pest import Parser
+# grammar = """\
+# array      = { "[" ~ int_list ~ "]" }
+# int_list   = { int ~ ("," ~ int)* }
+# int        = @{ "0" | ASCII_NONZERO_DIGIT  ~ ASCII_DIGIT* }
+# WHITESPACE = _{ " " }
+# """
+
+# parser = Parser.from_grammar(grammar)
+# parse_tree = parser.parse("array", "[1, 2, 3, 42]")
+
+# print(parse_tree.dumps())
+# # - array > int_list
+# #   - int: "1"
+# #   - int: "2"
+# #   - int: "3"
+# #   - int: "42"
+
+# match parse_tree.first():
+#     case Pair("array", [int_list]):
+#         numbers = [int(p.text) for p in int_list.inner() if p.name == "int"]
+#     case _:
+#         raise ValueError("unexpected parse tree")
+
+# print(numbers)
 
 
-parser = Parser.from_grammar(
-    """\
-start      = { SOI ~ ANY ~ EOI }
-COMMENT = _{ "#" ~ (!NEWLINE ~ ANY)* }
-WHITESPACE = _{ " " | NEWLINE }
-""",
-)
+# with open("parser.py", "w", encoding="utf-8") as fd:
+#     fd.write(parser.generate())
 
-parse_tree = parser.parse("start", "  x  ")
+from parser import Rule
+from parser import parse
+from pest import Pair
 
-# print(parser.rules["SKIP"].tree_view())
+parse_tree = parse(Rule.ARRAY, "[1, 2, 3, 42]")
 
-print(parser.tree_view())
-print(parse_tree.dumps(compact=True))
+match parse_tree.first():
+    case Pair(Rule.ARRAY, [Pair(Rule.INT_LIST, inner)]):
+        numbers = [int(p.text) for p in inner]
+    case _:
+        raise ValueError("unexpected parse tree")
 
-# TODO: optimize sequence of literals ending with skip until
-# TODO: optimize sequence of choice of literals followed by skip until
-# TODO: remove group if it has a single expression of lazy choice
+print(numbers)
