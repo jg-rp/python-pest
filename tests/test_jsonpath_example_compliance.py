@@ -63,7 +63,7 @@ SKIP = {
 
 
 def cases() -> list[Case]:
-    with open("../jsonpath-compliance-test-suite/cts.json", encoding="utf8") as fd:
+    with open("tests/cts/cts.json", encoding="utf8") as fd:
         data = json.load(fd)
     return [Case(**case) for case in data["tests"]]
 

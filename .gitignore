@@ -12,3 +12,6 @@ wheels/
 # Dev
 dev.py
 .vscode/
+
+# Docs
+site/

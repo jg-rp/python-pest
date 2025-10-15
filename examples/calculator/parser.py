@@ -9,7 +9,7 @@ Usage:
 
 Running this module directly exposes a basic command line interface for
 debugging grammars.
-
+    
     python -m module_name --help
 """
 
@@ -34,30 +34,28 @@ if TYPE_CHECKING:
 
 class Rule(StrEnum):
     """Grammar rules."""
-
-    EOI = "EOI"
-    WHITESPACE = "WHITESPACE"
-    PROGRAM = "program"
-    EXPR = "expr"
-    INFIX = "infix"
-    ADD = "add"
-    SUB = "sub"
-    MUL = "mul"
-    DIV = "div"
-    POW = "pow"
-    PREFIX = "prefix"
-    NEG = "neg"
-    POSTFIX = "postfix"
-    FAC = "fac"
-    PRIMARY = "primary"
-    INT = "int"
-    IDENT = "ident"
-    SKIP = "SKIP"
-
+    EOI = 'EOI'
+    WHITESPACE = 'WHITESPACE'
+    PROGRAM = 'program'
+    EXPR = 'expr'
+    INFIX = 'infix'
+    ADD = 'add'
+    SUB = 'sub'
+    MUL = 'mul'
+    DIV = 'div'
+    POW = 'pow'
+    PREFIX = 'prefix'
+    NEG = 'neg'
+    POSTFIX = 'postfix'
+    FAC = 'fac'
+    PRIMARY = 'primary'
+    INT = 'int'
+    IDENT = 'ident'
+    SKIP = 'SKIP'
 
 def _parse_EOI() -> Callable[[ParserState, list[Pair]], bool]:
-    rule_frame = RuleFrame("EOI", 0)
-
+    rule_frame = RuleFrame('EOI', 0)
+    
     def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse EOI."""
         pos1 = state.pos
@@ -73,29 +71,18 @@ def _parse_EOI() -> Callable[[ParserState, list[Pair]], bool]:
         else:
             tag3 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag3,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag3,))
         return matched
-
+    
     return inner
-
-
+    
 parse_EOI = _parse_EOI()
 
-
 def _parse_WHITESPACE() -> Callable[[ParserState, list[Pair]], bool]:
-    RE3 = re.compile("(?:\\\r\\\n|[\\\t\\\n\\\r\\ ])", re.VERSION1)
-
-    rule_frame = RuleFrame("WHITESPACE", 2)
-
+    RE3 = re.compile('(?:\\\r\\\n|[\\\t\\\n\\\r\\ ])', re.VERSION1)
+    
+    rule_frame = RuleFrame('WHITESPACE', 2)
+    
     def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse WHITESPACE."""
         state.rule_stack.push(rule_frame)
@@ -113,16 +100,14 @@ def _parse_WHITESPACE() -> Callable[[ParserState, list[Pair]], bool]:
         # Silent rule 'WHITESPACE'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_WHITESPACE = _parse_WHITESPACE()
 
-
 def _parse_program() -> Callable[[ParserState, list[Pair]], bool]:
-    rule_frame = RuleFrame("program", 0)
-
+    rule_frame = RuleFrame('program', 0)
+    
     def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse program."""
         pos1 = state.pos
@@ -164,27 +149,16 @@ def _parse_program() -> Callable[[ParserState, list[Pair]], bool]:
         else:
             tag5 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag5,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag5,))
         return matched
-
+    
     return inner
-
-
+    
 parse_program = _parse_program()
 
-
 def _parse_expr() -> Callable[[ParserState, list[Pair]], bool]:
-    rule_frame = RuleFrame("expr", 0)
-
+    rule_frame = RuleFrame('expr', 0)
+    
     def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse expr."""
         pos1 = state.pos
@@ -241,7 +215,7 @@ def _parse_expr() -> Callable[[ParserState, list[Pair]], bool]:
                 if all_ok9:
                     matched8 = False
                     # <String>
-                    if state.input.startswith("(", state.pos):
+                    if state.input.startswith('(', state.pos):
                         state.pos += 1
                         matched8 = True
                     else:
@@ -264,7 +238,7 @@ def _parse_expr() -> Callable[[ParserState, list[Pair]], bool]:
                 if all_ok9:
                     matched8 = False
                     # <String>
-                    if state.input.startswith(")", state.pos):
+                    if state.input.startswith(')', state.pos):
                         state.pos += 1
                         matched8 = True
                     else:
@@ -447,7 +421,7 @@ def _parse_expr() -> Callable[[ParserState, list[Pair]], bool]:
                         if all_ok21:
                             matched20 = False
                             # <String>
-                            if state.input.startswith("(", state.pos):
+                            if state.input.startswith('(', state.pos):
                                 state.pos += 1
                                 matched20 = True
                             else:
@@ -470,7 +444,7 @@ def _parse_expr() -> Callable[[ParserState, list[Pair]], bool]:
                         if all_ok21:
                             matched20 = False
                             # <String>
-                            if state.input.startswith(")", state.pos):
+                            if state.input.startswith(')', state.pos):
                                 state.pos += 1
                                 matched20 = True
                             else:
@@ -552,27 +526,16 @@ def _parse_expr() -> Callable[[ParserState, list[Pair]], bool]:
         else:
             tag24 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag24,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag24,))
         return matched
-
+    
     return inner
-
-
+    
 parse_expr = _parse_expr()
 
-
 def _parse_infix() -> Callable[[ParserState, list[Pair]], bool]:
-    rule_frame = RuleFrame("infix", 2)
-
+    rule_frame = RuleFrame('infix', 2)
+    
     def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse infix."""
         state.rule_stack.push(rule_frame)
@@ -640,23 +603,21 @@ def _parse_infix() -> Callable[[ParserState, list[Pair]], bool]:
         # Silent rule 'infix'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_infix = _parse_infix()
 
-
 def _parse_add() -> Callable[[ParserState, list[Pair]], bool]:
-    rule_frame = RuleFrame("add", 0)
-
+    rule_frame = RuleFrame('add', 0)
+    
     def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse add."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
         # <String>
-        if state.input.startswith("+", state.pos):
+        if state.input.startswith('+', state.pos):
             state.pos += 1
             matched = True
         else:
@@ -669,34 +630,23 @@ def _parse_add() -> Callable[[ParserState, list[Pair]], bool]:
         else:
             tag3 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag3,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag3,))
         return matched
-
+    
     return inner
-
-
+    
 parse_add = _parse_add()
 
-
 def _parse_sub() -> Callable[[ParserState, list[Pair]], bool]:
-    rule_frame = RuleFrame("sub", 0)
-
+    rule_frame = RuleFrame('sub', 0)
+    
     def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse sub."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
         # <String>
-        if state.input.startswith("-", state.pos):
+        if state.input.startswith('-', state.pos):
             state.pos += 1
             matched = True
         else:
@@ -709,34 +659,23 @@ def _parse_sub() -> Callable[[ParserState, list[Pair]], bool]:
         else:
             tag3 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag3,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag3,))
         return matched
-
+    
     return inner
-
-
+    
 parse_sub = _parse_sub()
 
-
 def _parse_mul() -> Callable[[ParserState, list[Pair]], bool]:
-    rule_frame = RuleFrame("mul", 0)
-
+    rule_frame = RuleFrame('mul', 0)
+    
     def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse mul."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
         # <String>
-        if state.input.startswith("*", state.pos):
+        if state.input.startswith('*', state.pos):
             state.pos += 1
             matched = True
         else:
@@ -749,34 +688,23 @@ def _parse_mul() -> Callable[[ParserState, list[Pair]], bool]:
         else:
             tag3 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag3,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag3,))
         return matched
-
+    
     return inner
-
-
+    
 parse_mul = _parse_mul()
 
-
 def _parse_div() -> Callable[[ParserState, list[Pair]], bool]:
-    rule_frame = RuleFrame("div", 0)
-
+    rule_frame = RuleFrame('div', 0)
+    
     def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse div."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
         # <String>
-        if state.input.startswith("/", state.pos):
+        if state.input.startswith('/', state.pos):
             state.pos += 1
             matched = True
         else:
@@ -789,34 +717,23 @@ def _parse_div() -> Callable[[ParserState, list[Pair]], bool]:
         else:
             tag3 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag3,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag3,))
         return matched
-
+    
     return inner
-
-
+    
 parse_div = _parse_div()
 
-
 def _parse_pow() -> Callable[[ParserState, list[Pair]], bool]:
-    rule_frame = RuleFrame("pow", 0)
-
+    rule_frame = RuleFrame('pow', 0)
+    
     def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse pow."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
         # <String>
-        if state.input.startswith("^", state.pos):
+        if state.input.startswith('^', state.pos):
             state.pos += 1
             matched = True
         else:
@@ -829,27 +746,16 @@ def _parse_pow() -> Callable[[ParserState, list[Pair]], bool]:
         else:
             tag3 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag3,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag3,))
         return matched
-
+    
     return inner
-
-
+    
 parse_pow = _parse_pow()
 
-
 def _parse_prefix() -> Callable[[ParserState, list[Pair]], bool]:
-    rule_frame = RuleFrame("prefix", 2)
-
+    rule_frame = RuleFrame('prefix', 2)
+    
     def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse prefix."""
         state.rule_stack.push(rule_frame)
@@ -861,23 +767,21 @@ def _parse_prefix() -> Callable[[ParserState, list[Pair]], bool]:
         # Silent rule 'prefix'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_prefix = _parse_prefix()
 
-
 def _parse_neg() -> Callable[[ParserState, list[Pair]], bool]:
-    rule_frame = RuleFrame("neg", 0)
-
+    rule_frame = RuleFrame('neg', 0)
+    
     def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse neg."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
         # <String>
-        if state.input.startswith("-", state.pos):
+        if state.input.startswith('-', state.pos):
             state.pos += 1
             matched = True
         else:
@@ -890,27 +794,16 @@ def _parse_neg() -> Callable[[ParserState, list[Pair]], bool]:
         else:
             tag3 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag3,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag3,))
         return matched
-
+    
     return inner
-
-
+    
 parse_neg = _parse_neg()
 
-
 def _parse_postfix() -> Callable[[ParserState, list[Pair]], bool]:
-    rule_frame = RuleFrame("postfix", 2)
-
+    rule_frame = RuleFrame('postfix', 2)
+    
     def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse postfix."""
         state.rule_stack.push(rule_frame)
@@ -922,23 +815,21 @@ def _parse_postfix() -> Callable[[ParserState, list[Pair]], bool]:
         # Silent rule 'postfix'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_postfix = _parse_postfix()
 
-
 def _parse_fac() -> Callable[[ParserState, list[Pair]], bool]:
-    rule_frame = RuleFrame("fac", 0)
-
+    rule_frame = RuleFrame('fac', 0)
+    
     def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse fac."""
         pos1 = state.pos
         state.rule_stack.push(rule_frame)
         children2: list[Pair] = []
         # <String>
-        if state.input.startswith("!", state.pos):
+        if state.input.startswith('!', state.pos):
             state.pos += 1
             matched = True
         else:
@@ -951,27 +842,16 @@ def _parse_fac() -> Callable[[ParserState, list[Pair]], bool]:
         else:
             tag3 = None
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    children2,
-                    tag3,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, children2, tag3,))
         return matched
-
+    
     return inner
-
-
+    
 parse_fac = _parse_fac()
 
-
 def _parse_primary() -> Callable[[ParserState, list[Pair]], bool]:
-    rule_frame = RuleFrame("primary", 2)
-
+    rule_frame = RuleFrame('primary', 2)
+    
     def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse primary."""
         state.rule_stack.push(rule_frame)
@@ -997,7 +877,7 @@ def _parse_primary() -> Callable[[ParserState, list[Pair]], bool]:
             if all_ok5:
                 matched4 = False
                 # <String>
-                if state.input.startswith("(", state.pos):
+                if state.input.startswith('(', state.pos):
                     state.pos += 1
                     matched4 = True
                 else:
@@ -1020,7 +900,7 @@ def _parse_primary() -> Callable[[ParserState, list[Pair]], bool]:
             if all_ok5:
                 matched4 = False
                 # <String>
-                if state.input.startswith(")", state.pos):
+                if state.input.startswith(')', state.pos):
                     state.pos += 1
                     matched4 = True
                 else:
@@ -1053,21 +933,19 @@ def _parse_primary() -> Callable[[ParserState, list[Pair]], bool]:
         # Silent rule 'primary'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_primary = _parse_primary()
 
-
 def _parse_int() -> Callable[[ParserState, list[Pair]], bool]:
-    RE6 = re.compile("[1-9]", re.I)
-    RE9 = re.compile("[0-9]", re.I)
-    RE12 = re.compile("[0-9]", re.I)
-    RE13 = re.compile("[0-9]", re.I)
-
-    rule_frame = RuleFrame("int", 4)
-
+    RE6 = re.compile('[1-9]', re.I)
+    RE9 = re.compile('[0-9]', re.I)
+    RE12 = re.compile('[0-9]', re.I)
+    RE13 = re.compile('[0-9]', re.I)
+    
+    rule_frame = RuleFrame('int', 4)
+    
     def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse int."""
         pos1 = state.pos
@@ -1181,30 +1059,19 @@ def _parse_int() -> Callable[[ParserState, list[Pair]], bool]:
             tag14 = None
         # Atomic rule: 'int'
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    [],
-                    tag14,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, [], tag14,))
         return matched
-
+    
     return inner
-
-
+    
 parse_int = _parse_int()
 
-
 def _parse_ident() -> Callable[[ParserState, list[Pair]], bool]:
-    RE5 = re.compile("[A-Za-z]", re.VERSION1)
-    RE8 = re.compile("[A-Za-z]", re.VERSION1)
-
-    rule_frame = RuleFrame("ident", 4)
-
+    RE5 = re.compile('[A-Za-z]', re.VERSION1)
+    RE8 = re.compile('[A-Za-z]', re.VERSION1)
+    
+    rule_frame = RuleFrame('ident', 4)
+    
     def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse ident."""
         pos1 = state.pos
@@ -1264,29 +1131,18 @@ def _parse_ident() -> Callable[[ParserState, list[Pair]], bool]:
             tag9 = None
         # Atomic rule: 'ident'
         if matched:
-            pairs.append(
-                Pair(
-                    state.input,
-                    pos1,
-                    state.pos,
-                    rule_frame,
-                    [],
-                    tag9,
-                )
-            )
+            pairs.append(Pair(state.input, pos1, state.pos, rule_frame, [], tag9,))
         return matched
-
+    
     return inner
-
-
+    
 parse_ident = _parse_ident()
 
-
 def _parse_SKIP() -> Callable[[ParserState, list[Pair]], bool]:
-    RE3 = re.compile("(?:\\\r\\\n|[\\\t\\\n\\\r\\ ])*", re.VERSION1)
-
-    rule_frame = RuleFrame("SKIP", 6)
-
+    RE3 = re.compile('(?:\\\r\\\n|[\\\t\\\n\\\r\\ ])*', re.VERSION1)
+    
+    rule_frame = RuleFrame('SKIP', 6)
+    
     def inner(state: ParserState, pairs: list[Pair]) -> bool:
         """Parse SKIP."""
         state.rule_stack.push(rule_frame)
@@ -1304,40 +1160,36 @@ def _parse_SKIP() -> Callable[[ParserState, list[Pair]], bool]:
         # Silent rule 'SKIP'
         pairs.extend(children2)
         return matched
-
+    
     return inner
-
-
+    
 parse_SKIP = _parse_SKIP()
-
 
 def parse_trivia(state: ParserState, pairs: list[Pair]) -> bool:
     if state.atomic_depth > 0:
         return True
     return parse_SKIP(state, pairs)
 
-
 _RULE_MAP: dict[str, Callable[[ParserState, list[Pair]], bool]] = {
-    "EOI": parse_EOI,
-    "WHITESPACE": parse_WHITESPACE,
-    "program": parse_program,
-    "expr": parse_expr,
-    "infix": parse_infix,
-    "add": parse_add,
-    "sub": parse_sub,
-    "mul": parse_mul,
-    "div": parse_div,
-    "pow": parse_pow,
-    "prefix": parse_prefix,
-    "neg": parse_neg,
-    "postfix": parse_postfix,
-    "fac": parse_fac,
-    "primary": parse_primary,
-    "int": parse_int,
-    "ident": parse_ident,
-    "SKIP": parse_SKIP,
+    'EOI': parse_EOI,
+    'WHITESPACE': parse_WHITESPACE,
+    'program': parse_program,
+    'expr': parse_expr,
+    'infix': parse_infix,
+    'add': parse_add,
+    'sub': parse_sub,
+    'mul': parse_mul,
+    'div': parse_div,
+    'pow': parse_pow,
+    'prefix': parse_prefix,
+    'neg': parse_neg,
+    'postfix': parse_postfix,
+    'fac': parse_fac,
+    'primary': parse_primary,
+    'int': parse_int,
+    'ident': parse_ident,
+    'SKIP': parse_SKIP,
 }
-
 
 def parse(start_rule: str, text: str, *, start_pos: int = 0) -> Pairs:
     """Parse the given `text` starting from the specified `start_rule`.
@@ -1361,14 +1213,11 @@ def parse(start_rule: str, text: str, *, start_pos: int = 0) -> Pairs:
         return Pairs(pairs)
     raise PestParsingError(state)
 
-
 class Parser:
     """A class wrapping `parse()` in `Parser.parse()`."""
-
     def parse(self, start_rule: str, text: str, *, start_pos: int = 0) -> Pairs:
         """Parse the given `text` starting from the specified `start_rule`."""
         return parse(start_rule, text, start_pos=start_pos)
-
 
 def main() -> None:
     parser = argparse.ArgumentParser(
@@ -1412,8 +1261,6 @@ def main() -> None:
         parse(args.rule, text).dumps(compact=not args.verbose)
     )
 
-
 if __name__ == "__main__":
     import argparse
-
     main()
