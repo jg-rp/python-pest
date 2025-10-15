@@ -22,4 +22,4 @@ python -m pip install python-pest
 
 `python-pest` is distributed under the terms of the [MIT](https://spdx.org/licenses/MIT.html) license.
 
-`python-pest` is a port of the [Rust pest](https://pest.rs/). See `LICENSE_PEST.txt`.
+`python-pest` is a port of [Rust pest](https://pest.rs/). See `LICENSE_PEST.txt`.
