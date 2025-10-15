@@ -1,27 +1,25 @@
-# pest for Python
+# Python Pest
 
-TODO
+Python Pest is a port of the [Rust pest](https://pest.rs/) parsing library - a powerful, elegant PEG (Parsing Expression Grammar) parser generator. We use exactly the same grammar syntax as Pest v2, so existing Pest grammars can be used without modification.
 
-## Pest parser vs hand-crafted parsers
+## Install
 
-When writing a hand-crafted parser we might start with a lexer (aka scanner aka lexical scanner). The lexer is responsible for scanning input text and producing tokens, which we must choose and define by hand. A parser then consumes tokens produced by the lexer and builds an abstract syntax tree.
-
-```
-Lexer -> Tokens -> Parser -> AST ..
-```
-
-When using pest we start by writing a grammar. That grammar is used by pest to build a parse tree from input text. Each non-silent rule in the grammar becomes a pair of tokens in the parse tree. It is then up to us to parse those token pairs into an abstract syntax tree.
+Use `pip` or your favorite package manager.
 
 ```
-Grammar -> Parse Tree -> Parser -> AST ..
+python -m pip install python-pest
 ```
 
-Pest parse trees are usually more structured than a flat sequence of tokens. They model the structure of the grammar making it easier to reason about...
+## Links
 
-## Parsing grammars with operator precedence (WIP)
+- Documentation: https://jg-rp.github.io/python-pest/.
+- Change log: https://github.com/jg-rp/python-pest/blob/main/CHANGELOG.md
+- PyPi: https://pypi.org/project/python-pest
+- Source code: https://github.com/jg-rp/python-pest
+- Issue tracker: https://github.com/jg-rp/python-pest/issues
 
-`examples/calculator/grammar_encoded_prec.py` is an example of parsing a grammar with precedence represented directly in the grammar.
+## License
 
-`examples/calculator/prec_climber.py` is an example of parsing a grammar using the precedence climbing technique, a kind of recursive descent parser.
+`python-pest` is distributed under the terms of the [MIT](https://spdx.org/licenses/MIT.html) license.
 
-`examples/calculator/pratt.py` is an example of parsing a grammar using a Pratt parser, which is also a recursive descent parser, but more extensible/composable than the precedence climbing technique.
+`python-pest` is a port of the [Rust pest](https://pest.rs/). See `LICENSE_PEST.txt`.

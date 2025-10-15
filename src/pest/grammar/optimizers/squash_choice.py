@@ -34,6 +34,7 @@ def squash(
     exprs: list[Expression],
     new_expr: OptimizedChoice,
 ) -> OptimizedChoice | None:
+    """Squash a choice expression into an optimized regular expression."""
     for expr in exprs:
         if isinstance(expr, String):
             new_expr.update(ChoiceLiteral(expr.value, ChoiceCase.SENSITIVE))
@@ -49,7 +50,7 @@ def squash(
         elif isinstance(expr, Choice):
             squash(expr.expressions, new_expr)
         elif isinstance(expr, OptimizedChoice):
-            new_expr.update(*expr._choices)  # noqa: SLF001
+            new_expr.update(*expr.choices)  # noqa: SLF001
         else:
             return None
 

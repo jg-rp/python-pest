@@ -167,7 +167,7 @@ class RegexExpression(Terminal):
     def __str__(self) -> str:
         return f"`{self.pattern}`"
 
-    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:  # noqa: ARG002
         """Attempt to match this expression against the input at `start`."""
         if match := self.regex.match(state.input, state.pos):
             state.pos = match.end()

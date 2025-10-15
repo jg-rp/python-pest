@@ -140,8 +140,12 @@ convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
 "src/pest/__init__.py" = ["D104"]
+"src/pest/grammar/codegen/__init__.py" = ["D104"]
+"src/pest/grammar/optimizers/__init__.py" = ["D104"]
+"src/pest/grammar/rules/__init__.py" = ["D104"]
 "src/pest/grammar/__init__.py" = ["D104"]
 "src/pest/grammar/expressions/__init__.py" = ["D104"]
+"src/pest/grammar/expressions/postfix.py" = ["D102"]
 "src/pest/grammar/expressions/terminals.py" = ["ARG002"]
 "src/pest/grammar/parser.py" = ["D102"]
 "src/pest/grammar/rules/unicode.py" = ["D101"]

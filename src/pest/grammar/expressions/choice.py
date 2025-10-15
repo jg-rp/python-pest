@@ -137,11 +137,11 @@ class OptimizedChoice(Expression):
         choices: Optional initial list of choices to match.
     """
 
-    __slots__ = ("_choices", "_compiled")
+    __slots__ = ("choices", "_compiled")
 
     def __init__(self, choices: list[ChoiceChoice] | None = None):
         super().__init__(None)
-        self._choices = choices or []
+        self.choices = choices or []
         self._compiled: re.Pattern[str] | None = None
 
     def __str__(self) -> str:
@@ -154,7 +154,7 @@ class OptimizedChoice(Expression):
             self._compiled = re.compile(self.build_optimized_pattern(), re.VERSION1)
         return self._compiled
 
-    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:  # noqa: ARG002
         """Attempt to match this expression against the input at `start`."""
         if match := self.pattern.match(state.input, state.pos):
             state.pos = match.end()
@@ -189,16 +189,16 @@ class OptimizedChoice(Expression):
 
     def update(self, *choices: ChoiceChoice) -> OptimizedChoice:
         """Add choices to this regex and return self."""
-        self._choices.extend(choices)
+        self.choices.extend(choices)
         return self
 
     def copy(self, *choices: ChoiceChoice) -> OptimizedChoice:
         """Return a new LazyChoiceRegex with current and additional choices."""
-        return OptimizedChoice(self._choices).update(*choices)
+        return OptimizedChoice(self.choices).update(*choices)
 
     def build_optimized_pattern(self) -> str:
         """Return a regex pattern matching all collected choices."""
-        return build_optimized_pattern(self._choices)
+        return build_optimized_pattern(self.choices)
 
 
 class OptimizedChoiceRepeat(OptimizedChoice):
@@ -206,7 +206,7 @@ class OptimizedChoiceRepeat(OptimizedChoice):
 
     def build_optimized_pattern(self) -> str:
         """Return a regex pattern matching all collected choices."""
-        return build_optimized_pattern(self._choices, "*")
+        return build_optimized_pattern(self.choices, "*")
 
 
 def build_optimized_pattern(choices: list[ChoiceChoice], repeat: str = "") -> str:  # noqa: PLR0912

@@ -82,11 +82,11 @@ class _SOI(Expression):
     def __str__(self) -> str:
         return "SOI"
 
-    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:  # noqa: ARG002
         """Attempt to match this expression against the input at `start`."""
         return state.pos == 0
 
-    def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
+    def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:  # noqa: ARG002
         """Emit Python source code that implements this grammar expression."""
         gen.writeln("if state.pos == 0:")
         with gen.block():
@@ -125,11 +125,11 @@ class _EOI(Expression):
     def __str__(self) -> str:
         return "EOI"
 
-    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:
+    def parse(self, state: ParserState, pairs: list[Pair]) -> bool:  # noqa: ARG002
         """Attempt to match this expression against the input at `start`."""
         return state.pos == len(state.input)
 
-    def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:
+    def generate(self, gen: Builder, matched_var: str, pairs_var: str) -> None:  # noqa: ARG002
         """Emit Python source code that implements this grammar expression."""
         gen.writeln("if state.pos != len(state.input):")
         with gen.block():

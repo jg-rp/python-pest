@@ -1,6 +1,6 @@
 from .choice import Choice
-from .choice import OptimizedChoiceRepeat
 from .choice import OptimizedChoice
+from .choice import OptimizedChoiceRepeat
 from .group import Group
 from .postfix import Optional
 from .postfix import Repeat

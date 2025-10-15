@@ -22,7 +22,6 @@ from __future__ import annotations
 from itertools import chain
 from itertools import repeat
 from typing import TYPE_CHECKING
-from typing import Mapping
 
 from pest.grammar import Group
 from pest.grammar import Optional
@@ -30,12 +29,14 @@ from pest.grammar import Repeat
 from pest.grammar import RepeatExact
 from pest.grammar import RepeatMax
 from pest.grammar import RepeatMin
-from pest.grammar import RepeatOnce
 from pest.grammar import RepeatMinMax
+from pest.grammar import RepeatOnce
 from pest.grammar import Rule
 from pest.grammar import Sequence
 
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
     from pest.grammar import Expression
 
 
