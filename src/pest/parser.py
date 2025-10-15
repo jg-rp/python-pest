@@ -63,7 +63,11 @@ class Parser:
         optimizer: Optimizer | None = DEFAULT_OPTIMIZER,
         debug: bool = False,
     ) -> Parser:
-        """Parse `grammar` and return a new `Parser` for it."""
+        """Parse `grammar` and return a new `Parser` for it.
+
+        Raises:
+            PestGrammarSyntaxError if `grammar` is invalid.
+        """
         rules, doc = parse(grammar, cls.BUILTIN)
 
         # TODO: validate rules
@@ -79,7 +83,7 @@ class Parser:
         return doc + "\n\n".join(str(rule) for rule in self.rules.values())
 
     def parse(self, start_rule: str, text: str, *, start_pos: int = 0) -> Pairs:
-        """Parse `input_` starting from `rule`."""
+        """Parse `text` starting from `start_rule`."""
         rule = self.rules[start_rule]
         state = ParserState(text, start_pos, self)
         pairs: list[Pair] = []

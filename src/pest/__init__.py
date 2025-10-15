@@ -1,4 +1,8 @@
+from importlib.metadata import version
+
 from .exceptions import PestParsingError
+from .grammar.exceptions import PestGrammarError
+from .grammar.exceptions import PestGrammarSyntaxError
 from .grammar.optimizer import DEFAULT_OPTIMIZER
 from .grammar.optimizer import DEFAULT_OPTIMIZER_PASSES
 from .grammar.optimizer import Optimizer
@@ -16,22 +20,26 @@ from .pratt import PrattParser
 from .state import ParserState
 from .state import RuleFrame
 
+__version__ = version("python-pest")
+
 __all__ = (
-    "DEFAULT_OPTIMIZER",
     "DEFAULT_OPTIMIZER_PASSES",
+    "DEFAULT_OPTIMIZER",
+    "End",
     "Optimizer",
-    "PestParsingError",
     "Pair",
     "Pairs",
     "Parser",
-    "Stream",
-    "Token",
-    "PrattParser",
-    "End",
-    "Position",
-    "Span",
-    "Start",
     "ParserState",
+    "PestGrammarError",
+    "PestGrammarSyntaxError",
+    "PestParsingError",
+    "Position",
+    "PrattParser",
     "Rule",
     "RuleFrame",
+    "Span",
+    "Start",
+    "Stream",
+    "Token",
 )

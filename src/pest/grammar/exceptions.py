@@ -1,3 +1,5 @@
+"""Pest grammar errors."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -7,6 +9,8 @@ if TYPE_CHECKING:
 
 
 class PestGrammarError(Exception):
+    """Base class for exceptions raised when parsing pest grammars."""
+
     def __init__(self, *args: object, token: Token | None = None) -> None:
         super().__init__(*args)
         self.token = token
@@ -78,4 +82,4 @@ class PestGrammarError(Exception):
 
 
 class PestGrammarSyntaxError(PestGrammarError):
-    """An exception raised due to invalid pest grammar."""
+    """An exception raised due to invalid pest grammar syntax."""
