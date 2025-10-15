@@ -81,8 +81,9 @@ class PestParsingError(Exception):
     ) -> str | None:
         """Return a string representation of expected and unexpected labels."""
         if expected and not unexpected:
-            _expected = list(chain(*expected.values()))
-            return join_with_limit(_expected, ", ", last_separator=" or ")
+            return join_with_limit(
+                list(chain(*expected.values())), ", ", last_separator=" or "
+            )
 
         if expected and unexpected:
             _expected = join_with_limit(
@@ -96,8 +97,9 @@ class PestParsingError(Exception):
             return f"{_unexpected}; {_expected}"
 
         if unexpected:
-            _unexpected = list(chain(*unexpected.values()))
-            return "not " + join_with_limit(_unexpected, ", ", last_separator=" or ")
+            return "not " + join_with_limit(
+                list(chain(*unexpected.values())), ", ", last_separator=" or "
+            )
 
         return None
 

@@ -210,3 +210,38 @@ def test_stack_ops() -> None:
     assert s.pop() == 0
     with pytest.raises(IndexError):
         s.pop()
+
+
+def test_clear_no_snapshot() -> None:
+    s: Stack[int] = Stack()
+    s.push(1)
+    s.push(2)
+    s.push(3)
+
+    s.clear()
+
+    assert list(s) == []  # items cleared
+    assert s.empty()
+    assert s.popped == []  # no snapshots => popped list cleared
+    assert s.lengths == []  # no snapshots => lengths cleared
+
+
+def test_clear_with_snapshot_restore() -> None:
+    s: Stack[int] = Stack()
+    s.push(10)
+    s.push(20)
+    s.snapshot()
+    s.push(30)
+    s.push(40)
+
+    s.clear()  # should empty items, but keep snapshot state
+
+    assert list(s) == []  # stack cleared
+    assert s.lengths, "snapshot state should be preserved"
+    assert len(s.popped) > 0, "popped should hold removed items"
+
+    s.restore()  # restore to snapshot
+
+    # Only the items that existed at snapshot should remain
+    assert list(s) == [10, 20]
+    assert s.lengths == []  # restore pops snapshot

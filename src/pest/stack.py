@@ -59,13 +59,22 @@ class Stack(Sequence[T]):
         return popped
 
     def clear(self) -> None:
-        """Remove all items from the stack."""
-        # TODO: optimize
-        while True:
-            try:
-                self.pop()
-            except IndexError:
-                return
+        """Remove all items from the stack, preserving snapshot state for restore()."""
+        if not self.items:
+            return
+
+        removed = self.items[:]
+        self.items.clear()
+
+        if self.lengths:
+            item_count, _ = self.lengths[-1]
+            # Mark all items as popped for the latest snapshot
+            self.lengths[-1] = (item_count, 0)
+            self.popped.extend(reversed(removed))
+        else:
+            # No snapshots to restore from; reset everything
+            self.popped.clear()
+            self.lengths.clear()
 
     @overload
     def __getitem__(self, index: int) -> T: ...
