@@ -1,0 +1,4264 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A general purpose parser written in Python.">
+      
+      
+      
+        <link rel="canonical" href="https://jg-rp.github.io/python-pest/api/">
+      
+      
+        <link rel="prev" href="../overview/">
+      
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.21">
+    
+    
+      
+        <title>API - Python Pest</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.2a3383ac.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="purple" data-md-color-accent="purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#api-reference" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Python Pest" class="md-header__button md-logo" aria-label="Python Pest" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Python Pest
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              API
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="purple" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="purple" data-md-color-accent="purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/jg-rp/python-pest" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    jg-rp/python-pest
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Python Pest" class="md-nav__button md-logo" aria-label="Python Pest" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Python Pest
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/jg-rp/python-pest" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.0.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    jg-rp/python-pest
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Introduction
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    API
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    API
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#pest.Parser" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parser
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Parser">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pest.Parser.from_grammar" class="md-nav__link">
+    <span class="md-ellipsis">
+      from_grammar
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Parser.generate" class="md-nav__link">
+    <span class="md-ellipsis">
+      generate
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Parser.parse" class="md-nav__link">
+    <span class="md-ellipsis">
+      parse
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Parser.tree_view" class="md-nav__link">
+    <span class="md-ellipsis">
+      tree_view
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pest.Pair" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pair
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Pair">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pair.inner_texts" class="md-nav__link">
+    <span class="md-ellipsis">
+      inner_texts
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pair.text" class="md-nav__link">
+    <span class="md-ellipsis">
+      text
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pair.as_str" class="md-nav__link">
+    <span class="md-ellipsis">
+      as_str
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pair.dump" class="md-nav__link">
+    <span class="md-ellipsis">
+      dump
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pair.dumps" class="md-nav__link">
+    <span class="md-ellipsis">
+      dumps
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pair.inner" class="md-nav__link">
+    <span class="md-ellipsis">
+      inner
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pair.line_col" class="md-nav__link">
+    <span class="md-ellipsis">
+      line_col
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pair.span" class="md-nav__link">
+    <span class="md-ellipsis">
+      span
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pair.stream" class="md-nav__link">
+    <span class="md-ellipsis">
+      stream
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pair.tokens" class="md-nav__link">
+    <span class="md-ellipsis">
+      tokens
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pest.Pairs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pairs
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Pairs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pairs.dump" class="md-nav__link">
+    <span class="md-ellipsis">
+      dump
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pairs.dumps" class="md-nav__link">
+    <span class="md-ellipsis">
+      dumps
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pairs.find_first_tagged" class="md-nav__link">
+    <span class="md-ellipsis">
+      find_first_tagged
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pairs.find_tagged" class="md-nav__link">
+    <span class="md-ellipsis">
+      find_tagged
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pairs.first" class="md-nav__link">
+    <span class="md-ellipsis">
+      first
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pairs.flatten" class="md-nav__link">
+    <span class="md-ellipsis">
+      flatten
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pairs.stream" class="md-nav__link">
+    <span class="md-ellipsis">
+      stream
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pairs.tokens" class="md-nav__link">
+    <span class="md-ellipsis">
+      tokens
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pest.PrattParser" class="md-nav__link">
+    <span class="md-ellipsis">
+      PrattParser
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="PrattParser">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pest.PrattParser.INFIX_OPS" class="md-nav__link">
+    <span class="md-ellipsis">
+      INFIX_OPS
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.PrattParser.LEFT_ASSOC" class="md-nav__link">
+    <span class="md-ellipsis">
+      LEFT_ASSOC
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.PrattParser.POSTFIX_OPS" class="md-nav__link">
+    <span class="md-ellipsis">
+      POSTFIX_OPS
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.PrattParser.PREFIX_OPS" class="md-nav__link">
+    <span class="md-ellipsis">
+      PREFIX_OPS
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.PrattParser.RIGHT_ASSOC" class="md-nav__link">
+    <span class="md-ellipsis">
+      RIGHT_ASSOC
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.PrattParser.parse_expr" class="md-nav__link">
+    <span class="md-ellipsis">
+      parse_expr
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.PrattParser.parse_infix" class="md-nav__link">
+    <span class="md-ellipsis">
+      parse_infix
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.PrattParser.parse_postfix" class="md-nav__link">
+    <span class="md-ellipsis">
+      parse_postfix
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.PrattParser.parse_prefix" class="md-nav__link">
+    <span class="md-ellipsis">
+      parse_prefix
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.PrattParser.parse_primary" class="md-nav__link">
+    <span class="md-ellipsis">
+      parse_primary
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pest.Stream" class="md-nav__link">
+    <span class="md-ellipsis">
+      Stream
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Stream">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pest.Stream.backup" class="md-nav__link">
+    <span class="md-ellipsis">
+      backup
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Stream.next" class="md-nav__link">
+    <span class="md-ellipsis">
+      next
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Stream.peek" class="md-nav__link">
+    <span class="md-ellipsis">
+      peek
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pest.Token" class="md-nav__link">
+    <span class="md-ellipsis">
+      Token
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pest.Start" class="md-nav__link">
+    <span class="md-ellipsis">
+      Start
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pest.End" class="md-nav__link">
+    <span class="md-ellipsis">
+      End
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pest.Position" class="md-nav__link">
+    <span class="md-ellipsis">
+      Position
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Position">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pest.Position.line_col" class="md-nav__link">
+    <span class="md-ellipsis">
+      line_col
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Position.line_of" class="md-nav__link">
+    <span class="md-ellipsis">
+      line_of
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pest.Span" class="md-nav__link">
+    <span class="md-ellipsis">
+      Span
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Span">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pest.Span.as_str" class="md-nav__link">
+    <span class="md-ellipsis">
+      as_str
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Span.end_pos" class="md-nav__link">
+    <span class="md-ellipsis">
+      end_pos
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Span.lines" class="md-nav__link">
+    <span class="md-ellipsis">
+      lines
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Span.split" class="md-nav__link">
+    <span class="md-ellipsis">
+      split
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Span.start_pos" class="md-nav__link">
+    <span class="md-ellipsis">
+      start_pos
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pest.Rule" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rule
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Rule">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pest.Rule.children" class="md-nav__link">
+    <span class="md-ellipsis">
+      children
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Rule.generate" class="md-nav__link">
+    <span class="md-ellipsis">
+      generate
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Rule.parse" class="md-nav__link">
+    <span class="md-ellipsis">
+      parse
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Rule.with_children" class="md-nav__link">
+    <span class="md-ellipsis">
+      with_children
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pest.RuleFrame" class="md-nav__link">
+    <span class="md-ellipsis">
+      RuleFrame
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pest.PestParsingError" class="md-nav__link">
+    <span class="md-ellipsis">
+      PestParsingError
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="PestParsingError">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pest.PestParsingError.detailed_message" class="md-nav__link">
+    <span class="md-ellipsis">
+      detailed_message
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.PestParsingError.expected" class="md-nav__link">
+    <span class="md-ellipsis">
+      expected
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.PestParsingError.expected_labels" class="md-nav__link">
+    <span class="md-ellipsis">
+      expected_labels
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#pest.Parser" class="md-nav__link">
+    <span class="md-ellipsis">
+      Parser
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Parser">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pest.Parser.from_grammar" class="md-nav__link">
+    <span class="md-ellipsis">
+      from_grammar
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Parser.generate" class="md-nav__link">
+    <span class="md-ellipsis">
+      generate
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Parser.parse" class="md-nav__link">
+    <span class="md-ellipsis">
+      parse
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Parser.tree_view" class="md-nav__link">
+    <span class="md-ellipsis">
+      tree_view
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pest.Pair" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pair
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Pair">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pair.inner_texts" class="md-nav__link">
+    <span class="md-ellipsis">
+      inner_texts
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pair.text" class="md-nav__link">
+    <span class="md-ellipsis">
+      text
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pair.as_str" class="md-nav__link">
+    <span class="md-ellipsis">
+      as_str
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pair.dump" class="md-nav__link">
+    <span class="md-ellipsis">
+      dump
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pair.dumps" class="md-nav__link">
+    <span class="md-ellipsis">
+      dumps
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pair.inner" class="md-nav__link">
+    <span class="md-ellipsis">
+      inner
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pair.line_col" class="md-nav__link">
+    <span class="md-ellipsis">
+      line_col
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pair.span" class="md-nav__link">
+    <span class="md-ellipsis">
+      span
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pair.stream" class="md-nav__link">
+    <span class="md-ellipsis">
+      stream
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pair.tokens" class="md-nav__link">
+    <span class="md-ellipsis">
+      tokens
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pest.Pairs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pairs
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Pairs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pairs.dump" class="md-nav__link">
+    <span class="md-ellipsis">
+      dump
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pairs.dumps" class="md-nav__link">
+    <span class="md-ellipsis">
+      dumps
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pairs.find_first_tagged" class="md-nav__link">
+    <span class="md-ellipsis">
+      find_first_tagged
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pairs.find_tagged" class="md-nav__link">
+    <span class="md-ellipsis">
+      find_tagged
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pairs.first" class="md-nav__link">
+    <span class="md-ellipsis">
+      first
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pairs.flatten" class="md-nav__link">
+    <span class="md-ellipsis">
+      flatten
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pairs.stream" class="md-nav__link">
+    <span class="md-ellipsis">
+      stream
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Pairs.tokens" class="md-nav__link">
+    <span class="md-ellipsis">
+      tokens
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pest.PrattParser" class="md-nav__link">
+    <span class="md-ellipsis">
+      PrattParser
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="PrattParser">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pest.PrattParser.INFIX_OPS" class="md-nav__link">
+    <span class="md-ellipsis">
+      INFIX_OPS
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.PrattParser.LEFT_ASSOC" class="md-nav__link">
+    <span class="md-ellipsis">
+      LEFT_ASSOC
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.PrattParser.POSTFIX_OPS" class="md-nav__link">
+    <span class="md-ellipsis">
+      POSTFIX_OPS
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.PrattParser.PREFIX_OPS" class="md-nav__link">
+    <span class="md-ellipsis">
+      PREFIX_OPS
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.PrattParser.RIGHT_ASSOC" class="md-nav__link">
+    <span class="md-ellipsis">
+      RIGHT_ASSOC
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.PrattParser.parse_expr" class="md-nav__link">
+    <span class="md-ellipsis">
+      parse_expr
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.PrattParser.parse_infix" class="md-nav__link">
+    <span class="md-ellipsis">
+      parse_infix
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.PrattParser.parse_postfix" class="md-nav__link">
+    <span class="md-ellipsis">
+      parse_postfix
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.PrattParser.parse_prefix" class="md-nav__link">
+    <span class="md-ellipsis">
+      parse_prefix
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.PrattParser.parse_primary" class="md-nav__link">
+    <span class="md-ellipsis">
+      parse_primary
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pest.Stream" class="md-nav__link">
+    <span class="md-ellipsis">
+      Stream
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Stream">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pest.Stream.backup" class="md-nav__link">
+    <span class="md-ellipsis">
+      backup
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Stream.next" class="md-nav__link">
+    <span class="md-ellipsis">
+      next
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Stream.peek" class="md-nav__link">
+    <span class="md-ellipsis">
+      peek
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pest.Token" class="md-nav__link">
+    <span class="md-ellipsis">
+      Token
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pest.Start" class="md-nav__link">
+    <span class="md-ellipsis">
+      Start
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pest.End" class="md-nav__link">
+    <span class="md-ellipsis">
+      End
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pest.Position" class="md-nav__link">
+    <span class="md-ellipsis">
+      Position
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Position">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pest.Position.line_col" class="md-nav__link">
+    <span class="md-ellipsis">
+      line_col
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Position.line_of" class="md-nav__link">
+    <span class="md-ellipsis">
+      line_of
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pest.Span" class="md-nav__link">
+    <span class="md-ellipsis">
+      Span
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Span">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pest.Span.as_str" class="md-nav__link">
+    <span class="md-ellipsis">
+      as_str
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Span.end_pos" class="md-nav__link">
+    <span class="md-ellipsis">
+      end_pos
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Span.lines" class="md-nav__link">
+    <span class="md-ellipsis">
+      lines
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Span.split" class="md-nav__link">
+    <span class="md-ellipsis">
+      split
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Span.start_pos" class="md-nav__link">
+    <span class="md-ellipsis">
+      start_pos
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pest.Rule" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rule
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Rule">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pest.Rule.children" class="md-nav__link">
+    <span class="md-ellipsis">
+      children
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Rule.generate" class="md-nav__link">
+    <span class="md-ellipsis">
+      generate
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Rule.parse" class="md-nav__link">
+    <span class="md-ellipsis">
+      parse
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.Rule.with_children" class="md-nav__link">
+    <span class="md-ellipsis">
+      with_children
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pest.RuleFrame" class="md-nav__link">
+    <span class="md-ellipsis">
+      RuleFrame
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pest.PestParsingError" class="md-nav__link">
+    <span class="md-ellipsis">
+      PestParsingError
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="PestParsingError">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pest.PestParsingError.detailed_message" class="md-nav__link">
+    <span class="md-ellipsis">
+      detailed_message
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.PestParsingError.expected" class="md-nav__link">
+    <span class="md-ellipsis">
+      expected
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pest.PestParsingError.expected_labels" class="md-nav__link">
+    <span class="md-ellipsis">
+      expected_labels
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="api-reference">API Reference</h1>
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="pest.Parser" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">pest.Parser</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+        <p>A pest parser.</p>
+<p>This class provides methods to parse text using a pest grammar, generate parser
+source code, and inspect the grammar tree.</p>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">PARAMETER</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>rules</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Mapping of rule names to <code>Rule</code> objects.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><span title="collections.abc.Mapping">Mapping</span>[<span title="str">str</span>, <a class="autorefs autorefs-internal" title="pest.Rule (pest.grammar.rule.Rule)" href="#pest.Rule">Rule</a>]</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>doc</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Optional list of grammar documentation lines.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><span title="list">list</span>[<span title="str">str</span>] | None</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>None</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>optimizer</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Optional optimizer to apply to the rules.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><span title="pest.grammar.optimizer.Optimizer">Optimizer</span> | None</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>None</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>debug</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>If True, enables debug output during optimization.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><span title="bool">bool</span></code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>False</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">ATTRIBUTE</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><span title="pest.Parser.rules">rules</span></code></td>
+            <td class="doc-attribute-details">
+              <div class="doc-md-description">
+                <p>A mapping of rule names to <code>Rule</code> instances, including built-ins.</p>
+              </div>
+              <p>
+                  <span class="doc-attribute-annotation">
+                    <b>TYPE:</b>
+                      <code><span title="dict">dict</span>[<span title="str">str</span>, <a class="autorefs autorefs-internal" title="pest.Rule (pest.grammar.rule.Rule)" href="#pest.Rule">Rule</a>]</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="pest.Parser.doc">doc</span></code></td>
+            <td class="doc-attribute-details">
+              <div class="doc-md-description">
+                <p>An optional list of grammar documentation lines.</p>
+              </div>
+              <p>
+              </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.Parser.from_grammar" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">from_grammar</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">from_grammar</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">grammar</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="o">*</span><span class="p">,</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">DEFAULT_OPTIMIZER</span><span class="p">,</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Parser</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Parse a grammar definition and return a new <code>Parser</code> for it.</p>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">PARAMETER</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>grammar</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The grammar definition as a string.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><span title="str">str</span></code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>optimizer</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Optional optimizer to apply to the rules.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><span title="pest.grammar.optimizer.Optimizer">Optimizer</span> | None</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code><span title="pest.grammar.optimizer.DEFAULT_OPTIMIZER">DEFAULT_OPTIMIZER</span></code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>debug</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>If True, enables debug output during optimization.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><span title="bool">bool</span></code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>False</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">RETURNS</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>Parser</code>
+            </td>
+            <td class="doc-returns-details">
+              <div class="doc-md-description">
+                <p>A new parser instance for the given grammar.</p>
+              </div>
+                <p>
+                  <span class="doc-returns-annotation">
+                    <b>TYPE:</b>
+                      <code><a class="autorefs autorefs-internal" title="pest.Parser (pest.parser.Parser)" href="#pest.Parser">Parser</a></code>
+                  </span>
+                </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">RAISES</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+              <span class="doc-raises-annotation">
+                  <code><span title="pest.grammar.exceptions.PestGrammarSyntaxError">PestGrammarSyntaxError</span></code>
+              </span>
+            </td>
+            <td class="doc-raises-details">
+              <div class="doc-md-description">
+                <p>If <code>grammar</code> is invalid.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.Parser.generate" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">generate</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">generate</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return a generated parser as Python module source code.</p>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">RETURNS</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>str</code>
+            </td>
+            <td class="doc-returns-details">
+              <div class="doc-md-description">
+                <p>The generated Python source code for the parser.</p>
+              </div>
+                <p>
+                  <span class="doc-returns-annotation">
+                    <b>TYPE:</b>
+                      <code><span title="str">str</span></code>
+                  </span>
+                </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.Parser.parse" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">parse</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">parse</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">start_rule</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">start_pos</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Pairs</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Parse <code>text</code> starting from the specified <code>start_rule</code>.</p>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">PARAMETER</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>start_rule</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The name of the rule to start parsing from.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><span title="str">str</span></code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>text</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The input string to parse.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><span title="str">str</span></code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>start_pos</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The position in the input string to start parsing from
+(default: 0).</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><span title="int">int</span></code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>0</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">RETURNS</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>Pairs</code>
+            </td>
+            <td class="doc-returns-details">
+              <div class="doc-md-description">
+                <p>The parse tree as a <code>Pairs</code> object.</p>
+              </div>
+                <p>
+                  <span class="doc-returns-annotation">
+                    <b>TYPE:</b>
+                      <code><a class="autorefs autorefs-internal" title="pest.Pairs (pest.pairs.Pairs)" href="#pest.Pairs">Pairs</a></code>
+                  </span>
+                </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">RAISES</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+              <span class="doc-raises-annotation">
+                  <code><span title="KeyError">KeyError</span></code>
+              </span>
+            </td>
+            <td class="doc-raises-details">
+              <div class="doc-md-description">
+                <p>If <code>start_rule</code> is not a valid rule name.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+              <span class="doc-raises-annotation">
+                  <code><a class="autorefs autorefs-internal" title="pest.PestParsingError (pest.exceptions.PestParsingError)" href="#pest.PestParsingError">PestParsingError</a></code>
+              </span>
+            </td>
+            <td class="doc-raises-details">
+              <div class="doc-md-description">
+                <p>If the input <code>text</code> cannot be parsed according to the
+grammar.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.Parser.tree_view" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">tree_view</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">tree_view</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return a tree view for each non-built-in rule in this grammar.</p>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">RETURNS</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>str</code>
+            </td>
+            <td class="doc-returns-details">
+              <div class="doc-md-description">
+                <p>A string representation of the grammar's rule tree.</p>
+              </div>
+                <p>
+                  <span class="doc-returns-annotation">
+                    <b>TYPE:</b>
+                      <code><span title="str">str</span></code>
+                  </span>
+                </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="pest.Pair" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">pest.Pair</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+        <p>A matching pair of Tokens and everything between them.</p>
+<p>Represents a node in the parse tree, corresponding to a matched rule and its
+children.</p>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">PARAMETER</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>input_</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The input string.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><span title="str">str</span></code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>start</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Start position in the input.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><span title="int">int</span></code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>end</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>End position in the input.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><span title="int">int</span></code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>rule</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The rule or rule frame this pair represents.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><a class="autorefs autorefs-internal" title="pest.Rule (pest.grammar.rule.Rule)" href="#pest.Rule">Rule</a> | <a class="autorefs autorefs-internal" title="pest.RuleFrame (pest.state.RuleFrame)" href="#pest.RuleFrame">RuleFrame</a></code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>children</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>List of child pairs (subrules).</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><span title="list">list</span>[<a class="autorefs autorefs-internal" title="pest.Pair (pest.pairs.Pair)" href="#pest.Pair">Pair</a>] | None</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>None</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>tag</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>Optional tag for this node.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><span title="str">str</span> | None</code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>None</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="pest.Pair.inner_texts" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">inner_texts</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">inner_texts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The list of substrings pointed to by this pair's children.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="pest.Pair.text" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">text</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-property"><code>property</code></small>
+  </span>
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">text</span><span class="p">:</span> <span class="nb">str</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>The substring pointed to by this token pair.</p>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.Pair.as_str" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">as_str</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">as_str</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the substring pointed to by this token pair.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.Pair.dump" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">dump</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">dump</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return a pest-debug-like JSON structure representing this pair.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.Pair.dumps" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">dumps</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">dumps</span><span class="p">(</span><span class="n">indent</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">new_line</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return a string representation of this token pair and all its children.</p>
+<p>Translated from the <code>format_pair</code> function found in the source for pest.rs.</p>
+<p>https://github.com/pest-parser/site/blob/master/src/lib.rs.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.Pair.inner" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">inner</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">inner</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Pairs</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return inner pairs between this token pair.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.Pair.line_col" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">line_col</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">line_col</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the line and column number of this pair's start position.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.Pair.span" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">span</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">span</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Span</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the (start, end) span of this node.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.Pair.stream" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">stream</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">stream</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Stream</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return inner pairs as a stream.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.Pair.tokens" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">tokens</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">tokens</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Token</span><span class="p">]</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Yield start and end tokens for this pair and any children in between.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="pest.Pairs" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">pest.Pairs</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="collections.abc.Sequence">Sequence</span>[<a class="autorefs autorefs-internal" title="pest.Pair (pest.pairs.Pair)" href="#pest.Pair">Pair</a>]</code></p>
+
+
+        <p>A sequence of token pairs.</p>
+<p>Provides sequence and utility methods for working with lists of Pair objects.</p>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">PARAMETER</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>pairs</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>List of Pair objects.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><span title="list">list</span>[<a class="autorefs autorefs-internal" title="pest.Pair (pest.pairs.Pair)" href="#pest.Pair">Pair</a>]</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.Pairs.dump" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">dump</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">dump</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return pairs as a JSON-like list of dicts.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.Pairs.dumps" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">dumps</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">dumps</span><span class="p">(</span><span class="o">*</span><span class="p">,</span> <span class="n">compact</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return a JSON formatted string representation of this node.</p>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">PARAMETER</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>compact</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>If True, returns a compact string; otherwise, pretty-prints JSON.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><span title="bool">bool</span></code>
+                  </span>
+                  <span class="doc-param-default">
+                    <b>DEFAULT:</b>
+                      <code>True</code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">RETURNS</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <span class="doc-returns-annotation">
+                    <code><span title="str">str</span></code>
+                </span>
+            </td>
+            <td class="doc-returns-details">
+              <div class="doc-md-description">
+                <p>A string representation of the pairs.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.Pairs.find_first_tagged" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">find_first_tagged</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">find_first_tagged</span><span class="p">(</span><span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Pair</span> <span class="o">|</span> <span class="kc">None</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Finds the first pair that has its node tagged with <code>label</code>.</p>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">PARAMETER</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>label</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The tag to search for.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><span title="str">str</span></code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">RETURNS</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <span class="doc-returns-annotation">
+                    <code><a class="autorefs autorefs-internal" title="pest.Pair (pest.pairs.Pair)" href="#pest.Pair">Pair</a> | None</code>
+                </span>
+            </td>
+            <td class="doc-returns-details">
+              <div class="doc-md-description">
+                <p>The first Pair with the given tag, or None if not found.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.Pairs.find_tagged" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">find_tagged</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">find_tagged</span><span class="p">(</span><span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Pair</span><span class="p">]</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Iterate over pairs tagged with <code>label</code>.</p>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">PARAMETER</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>label</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>The tag to search for.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><span title="str">str</span></code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">RETURNS</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <span class="doc-returns-annotation">
+                    <code><span title="collections.abc.Iterator">Iterator</span>[<a class="autorefs autorefs-internal" title="pest.Pair (pest.pairs.Pair)" href="#pest.Pair">Pair</a>]</code>
+                </span>
+            </td>
+            <td class="doc-returns-details">
+              <div class="doc-md-description">
+                <p>An iterator over all Pairs with the given tag.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.Pairs.first" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">first</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">first</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Pair</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the single root pair.</p>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">RETURNS</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <span class="doc-returns-annotation">
+                    <code><a class="autorefs autorefs-internal" title="pest.Pair (pest.pairs.Pair)" href="#pest.Pair">Pair</a></code>
+                </span>
+            </td>
+            <td class="doc-returns-details">
+              <div class="doc-md-description">
+                <p>The first Pair in the sequence.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.Pairs.flatten" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">flatten</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">flatten</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Pair</span><span class="p">]</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Generate a flat iterator over all pairs and their descendants.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.Pairs.stream" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">stream</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">stream</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Stream</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return pairs as a stream that can be stepped through.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.Pairs.tokens" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">tokens</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">tokens</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Token</span><span class="p">]</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Yield start and end tokens for each pair in the sequence.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="pest.PrattParser" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">pest.PrattParser</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="abc.ABC">ABC</span></code>, <code><span title="typing.Generic">Generic</span>[<span title="pest.pratt.ExprT">ExprT</span>]</code></p>
+
+
+        <p>Generic Pratt parser base class operating on a pest <code>Stream</code> of <code>Pair</code>s.</p>
+<p>Subclasses define how to construct AST nodes by overriding the four
+abstract parse_* methods and providing operator-precedence tables.</p>
+
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="pest.PrattParser.INFIX_OPS" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">INFIX_OPS</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+  </span>
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">INFIX_OPS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Mapping of infix operator rule names to (precedence, right_associative).</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="pest.PrattParser.LEFT_ASSOC" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">LEFT_ASSOC</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">LEFT_ASSOC</span> <span class="o">=</span> <span class="kc">False</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>An alias for <code>False</code>.</p>
+<p>Use it as the second item in <code>INFIX_OPS</code> values, right_associative, for
+improved readability.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="pest.PrattParser.POSTFIX_OPS" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">POSTFIX_OPS</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+  </span>
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">POSTFIX_OPS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Mapping of postfix operator rule names to precedence levels.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="pest.PrattParser.PREFIX_OPS" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">PREFIX_OPS</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+  </span>
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">PREFIX_OPS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Mapping of prefix operator rule names to precedence levels.</p>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="pest.PrattParser.RIGHT_ASSOC" class="doc doc-heading">
+            <span class="doc doc-object-name doc-attribute-name">RIGHT_ASSOC</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-class-attribute"><code>class-attribute</code></small>
+      <small class="doc doc-label doc-label-instance-attribute"><code>instance-attribute</code></small>
+  </span>
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">RIGHT_ASSOC</span> <span class="o">=</span> <span class="kc">True</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>An alias for <code>True</code>.</p>
+<p>Use it as the second item in <code>INFIX_OPS</code> values, right_associative, for
+improved readability.</p>
+
+    </div>
+
+</div>
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.PrattParser.parse_expr" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">parse_expr</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">parse_expr</span><span class="p">(</span><span class="n">stream</span><span class="p">:</span> <span class="n">Stream</span><span class="p">,</span> <span class="n">min_prec</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExprT</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Parse an expression from a pest <code>Stream</code> using Pratt precedence rules.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.PrattParser.parse_infix" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">parse_infix</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
+  </span>
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">parse_infix</span><span class="p">(</span><span class="n">lhs</span><span class="p">:</span> <span class="n">ExprT</span><span class="p">,</span> <span class="n">op</span><span class="p">:</span> <span class="n">Pair</span><span class="p">,</span> <span class="n">rhs</span><span class="p">:</span> <span class="n">ExprT</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExprT</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Build a node for an infix operator expression.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.PrattParser.parse_postfix" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">parse_postfix</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
+  </span>
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">parse_postfix</span><span class="p">(</span><span class="n">lhs</span><span class="p">:</span> <span class="n">ExprT</span><span class="p">,</span> <span class="n">op</span><span class="p">:</span> <span class="n">Pair</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExprT</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Build a node for a postfix operator expression.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.PrattParser.parse_prefix" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">parse_prefix</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
+  </span>
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">parse_prefix</span><span class="p">(</span><span class="n">op</span><span class="p">:</span> <span class="n">Pair</span><span class="p">,</span> <span class="n">rhs</span><span class="p">:</span> <span class="n">ExprT</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExprT</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Build a node for a prefix operator expression.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.PrattParser.parse_primary" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">parse_primary</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
+  </span>
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">parse_primary</span><span class="p">(</span><span class="n">pair</span><span class="p">:</span> <span class="n">Pair</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ExprT</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Parse a primary expression: literal, variable, or parenthesized.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="pest.Stream" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">pest.Stream</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+        <p>Step through pairs of tokens.</p>
+<p>Provides a simple interface for sequential access to a list of Pair objects.</p>
+
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.Stream.backup" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">backup</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">backup</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Go back one position in the stream, if possible.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.Stream.next" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">next</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">next</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Pair</span> <span class="o">|</span> <span class="kc">None</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the next pair and advance the stream.</p>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">RETURNS</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <span class="doc-returns-annotation">
+                    <code><a class="autorefs autorefs-internal" title="pest.Pair (pest.pairs.Pair)" href="#pest.Pair">Pair</a> | None</code>
+                </span>
+            </td>
+            <td class="doc-returns-details">
+              <div class="doc-md-description">
+                <p>The next Pair, or None if at the end of the stream.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.Stream.peek" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">peek</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">peek</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Pair</span> <span class="o">|</span> <span class="kc">None</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the next pair without advancing the stream.</p>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">RETURNS</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <span class="doc-returns-annotation">
+                    <code><a class="autorefs autorefs-internal" title="pest.Pair (pest.pairs.Pair)" href="#pest.Pair">Pair</a> | None</code>
+                </span>
+            </td>
+            <td class="doc-returns-details">
+              <div class="doc-md-description">
+                <p>The next Pair, or None if at the end of the stream.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="pest.Token" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">pest.Token</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+        <p>User-facing token stream element (start or end of a rule).</p>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">PARAMETER</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>rule</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>name of the matched rule.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><a class="autorefs autorefs-internal" title="pest.Rule (pest.grammar.rule.Rule)" href="#pest.Rule">Rule</a> | <a class="autorefs autorefs-internal" title="pest.RuleFrame (pest.state.RuleFrame)" href="#pest.RuleFrame">RuleFrame</a></code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>pos</code>
+            </td>
+            <td class="doc-param-details">
+              <div class="doc-md-description">
+                <p>start position in Unicode code points.</p>
+              </div>
+              <p>
+                  <span class="doc-param-annotation">
+                    <b>TYPE:</b>
+                      <code><span title="int">int</span></code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="pest.Start" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">pest.Start</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="pest.Token (pest.pairs.Token)" href="#pest.Token">Token</a></code></p>
+
+
+        <p>A token indicating the start of a rule.</p>
+
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="pest.End" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">pest.End</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="pest.Token (pest.pairs.Token)" href="#pest.Token">Token</a></code></p>
+
+
+        <p>A token indicating the end of a rule.</p>
+
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="pest.Position" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">pest.Position</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="typing.NamedTuple">NamedTuple</span></code></p>
+
+
+        <p>A position in a string as a Unicode codepoint offset.</p>
+<p>Provides utilities for determining line and column numbers.</p>
+
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.Position.line_col" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">line_col</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">line_col</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the line and column number of this position.</p>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">RETURNS</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <span class="doc-returns-annotation">
+                    <code><span title="tuple">tuple</span>[<span title="int">int</span>, <span title="int">int</span>]</code>
+                </span>
+            </td>
+            <td class="doc-returns-details">
+              <div class="doc-md-description">
+                <p>A tuple (line_number, column_number), both 1-based.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.Position.line_of" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">line_of</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">line_of</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the line of text that contains this position.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="pest.Span" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">pest.Span</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="typing.NamedTuple">NamedTuple</span></code></p>
+
+
+        <p>A half-open interval [start, end) into the input string.</p>
+<p>Represents a substring of the input, along with its start and end positions.</p>
+
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.Span.as_str" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">as_str</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">as_str</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the slice of the source corresponding to this span.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.Span.end_pos" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">end_pos</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">end_pos</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Position</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return this span's end position.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.Span.lines" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">lines</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">lines</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return a list of lines covered by this span.</p>
+<p>Includes lines that are partially covered.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.Span.split" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">split</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">split</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Position</span><span class="p">,</span> <span class="n">Position</span><span class="p">]</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return a tuple of start position and end position.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.Span.start_pos" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">start_pos</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">start_pos</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Position</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return this span's start position.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="pest.Rule" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">pest.Rule</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="pest.grammar.Expression">Expression</span></code></p>
+
+
+        <p>Base class for all rules.</p>
+
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.Rule.children" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">children</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">children</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Expression</span><span class="p">]</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return this expression's children.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.Rule.generate" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">generate</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">generate</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">gen</span><span class="p">:</span> <span class="n">Builder</span><span class="p">,</span> <span class="n">matched_var</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">pairs_var</span><span class="p">:</span> <span class="nb">str</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Emit Python source code that implements this grammar expression.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.Rule.parse" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">parse</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">parse</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">ParserState</span><span class="p">,</span> <span class="n">pairs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Pair</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Attempt to match this expression against the input at <code>start</code>.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.Rule.with_children" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">with_children</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">with_children</span><span class="p">(</span><span class="n">expressions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Expression</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Self</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return a new instance of this expression with child expressions replaced.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="pest.RuleFrame" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">pest.RuleFrame</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+
+
+        <p>Rule meta data for the generated rule stack.</p>
+<p>Generated parser don't have access to complete <code>Rule</code> object. <code>RuleFrame</code>
+is a lightweight stand in.</p>
+
+
+<table>
+      <thead>
+        <tr>
+          <th><span class="doc-section-title">ATTRIBUTE</span></th>
+          <th><span>DESCRIPTION</span></th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><span title="pest.RuleFrame.name">name</span></code></td>
+            <td class="doc-attribute-details">
+              <div class="doc-md-description">
+                <p>The rule's name.</p>
+              </div>
+              <p>
+                  <span class="doc-attribute-annotation">
+                    <b>TYPE:</b>
+                      <code><span title="str">str</span></code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="pest.RuleFrame.modifier">modifier</span></code></td>
+            <td class="doc-attribute-details">
+              <div class="doc-md-description">
+                <p>A bit mask encoding modifiers applied to the rule.</p>
+              </div>
+              <p>
+                  <span class="doc-attribute-annotation">
+                    <b>TYPE:</b>
+                      <code><span title="int">int</span></code>
+                  </span>
+              </p>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="pest.PestParsingError" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">pest.PestParsingError</span>
+
+
+</h2>
+
+
+    <div class="doc doc-contents first">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="Exception">Exception</span></code></p>
+
+
+        <p>An exception raised when an input string can't be passed by a pest grammar.</p>
+
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.PestParsingError.detailed_message" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">detailed_message</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">detailed_message</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return an error message formatted with extra context info.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.PestParsingError.expected" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">expected</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">expected</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">expected</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">unexpected</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the expected/unexpected part of a detailed error message.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pest.PestParsingError.expected_labels" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">expected_labels</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">expected_labels</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">expected</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">unexpected</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return a string representation of expected and unexpected labels.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "..", "features": ["navigation.sections", "content.code.copy"], "search": "../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>
