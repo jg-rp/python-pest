@@ -27,7 +27,7 @@ int        = @{ "0" | ASCII_NONZERO_DIGIT  ~ ASCII_DIGIT* }
 WHITESPACE = _{ " " }
 ```
 
-`array`, `int_list` `int` and `WHITESPACE` are [rules](overview.md#grammar-rule). A rule can reference other rules by name. `~` means [followed by](overview.md#sequence) and `|` is [ordered choice](overview.md#ordered-choice).
+`array`, `int_list`, `int` and `WHITESPACE` are [rules](overview.md#grammar-rule). A rule can reference other rules by name. `~` means [followed by](overview.md#sequence) and `|` is [ordered choice](overview.md#ordered-choice).
 
 To use a Pest grammar in Python we pass it to the static method `Parser.from_grammar()`, which returns a new instance of `Parser`.
 
