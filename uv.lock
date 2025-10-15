@@ -646,7 +646,6 @@ name = "python-pest"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "mkdocs-material" },
     { name = "regex" },
 ]
 
@@ -663,10 +662,7 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "mkdocs-material", specifier = ">=9.6.21" },
-    { name = "regex", specifier = ">=2025.7.34" },
-]
+requires-dist = [{ name = "regex", specifier = ">=2025.7.34" }]
 
 [package.metadata.requires-dev]
 dev = [
