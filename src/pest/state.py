@@ -249,9 +249,15 @@ class ParserState:
 
 
 class RuleFrame:
-    """Rule meta data for the generated rule stack."""
+    """Rule meta data for the generated rule stack.
 
-    # TODO: docs
+    Generated parser don't have access to complete `Rule` object. `RuleFrame`
+    is a lightweight stand in.
+
+    Attributes:
+        name (str): The rule's name.
+        modifier (int): A bit mask encoding modifiers applied to the rule.
+    """
 
     __slots__ = ("name", "modifier")
 

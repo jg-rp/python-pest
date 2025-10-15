@@ -1191,9 +1191,22 @@ _RULE_MAP: dict[str, Callable[[ParserState, list[Pair]], bool]] = {
     'SKIP': parse_SKIP,
 }
 
-def parse(start_rule: str, input_: str, *, start_pos: int = 0) -> Pairs:
-    """Parse `input_` starting from `rule`."""
-    state = ParserState(input_, start_pos)
+def parse(start_rule: str, text: str, *, start_pos: int = 0) -> Pairs:
+    """Parse the given `text` starting from the specified `start_rule`.
+
+    Args:
+        start_rule: The name of the rule to start parsing from.
+        text: The input string to parse.
+        start_pos: The position in the input string to start parsing from (default: 0).
+
+    Returns:
+        Pairs: The parse tree as a `Pairs` object.
+
+    Raises:
+        KeyError: If `start_rule` is not a valid rule name.
+        PestParsingError: If the input `text` cannot be parsed according to the grammar.
+    """
+    state = ParserState(text, start_pos)
     pairs: list[Pair] = []
     matched = _RULE_MAP[start_rule](state, pairs)
     if matched:
@@ -1202,9 +1215,9 @@ def parse(start_rule: str, input_: str, *, start_pos: int = 0) -> Pairs:
 
 class Parser:
     """A class wrapping `parse()` in `Parser.parse()`."""
-    def parse(self, start_rule: str, input_: str, *, start_pos: int = 0) -> Pairs:
-        """Parse `input_` starting from `start_rule`."""
-        return parse(start_rule, input_, start_pos=start_pos)
+    def parse(self, start_rule: str, text: str, *, start_pos: int = 0) -> Pairs:
+        """Parse the given `text` starting from the specified `start_rule`."""
+        return parse(start_rule, text, start_pos=start_pos)
 
 def main() -> None:
     parser = argparse.ArgumentParser(

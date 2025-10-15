@@ -1,4 +1,8 @@
-"""A pest generated parser."""
+"""A pest grammar tree.
+
+This module provides the `Parser` class representing rules in a pest grammar,
+as well as utilities for generating parser source code and inspecting grammar rules.
+"""
 
 from __future__ import annotations
 
@@ -28,9 +32,18 @@ if TYPE_CHECKING:
 class Parser:
     """A pest parser.
 
+    This class provides methods to parse text using a pest grammar, generate parser
+    source code, and inspect the grammar tree.
+
+    Args:
+        rules: Mapping of rule names to `Rule` objects.
+        doc: Optional list of grammar documentation lines.
+        optimizer: Optional optimizer to apply to the rules.
+        debug: If True, enables debug output during optimization.
+
     Attributes:
-        rules: A mapping of rule names to `Rule` instances.
-        doc: An optional list of `GRAMMAR_DOC` lines.
+        rules: A mapping of rule names to `Rule` instances, including built-ins.
+        doc: An optional list of grammar documentation lines.
     """
 
     BUILTIN: dict[str, Rule] = {
@@ -63,10 +76,18 @@ class Parser:
         optimizer: Optimizer | None = DEFAULT_OPTIMIZER,
         debug: bool = False,
     ) -> Parser:
-        """Parse `grammar` and return a new `Parser` for it.
+        """Parse a grammar definition and return a new `Parser` for it.
+
+        Args:
+            grammar: The grammar definition as a string.
+            optimizer: Optional optimizer to apply to the rules.
+            debug: If True, enables debug output during optimization.
+
+        Returns:
+            Parser: A new parser instance for the given grammar.
 
         Raises:
-            PestGrammarSyntaxError if `grammar` is invalid.
+            PestGrammarSyntaxError: If `grammar` is invalid.
         """
         rules, doc = parse(grammar, cls.BUILTIN)
 
@@ -83,7 +104,22 @@ class Parser:
         return doc + "\n\n".join(str(rule) for rule in self.rules.values())
 
     def parse(self, start_rule: str, text: str, *, start_pos: int = 0) -> Pairs:
-        """Parse `text` starting from `start_rule`."""
+        """Parse `text` starting from the specified `start_rule`.
+
+        Args:
+            start_rule: The name of the rule to start parsing from.
+            text: The input string to parse.
+            start_pos: The position in the input string to start parsing from
+                (default: 0).
+
+        Returns:
+            Pairs: The parse tree as a `Pairs` object.
+
+        Raises:
+            KeyError: If `start_rule` is not a valid rule name.
+            PestParsingError: If the input `text` cannot be parsed according to the
+                grammar.
+        """
         rule = self.rules[start_rule]
         state = ParserState(text, start_pos, self)
         pairs: list[Pair] = []
@@ -95,11 +131,19 @@ class Parser:
         raise PestParsingError(state)
 
     def generate(self) -> str:
-        """Return a generated parser as Python module source code."""
+        """Return a generated parser as Python module source code.
+
+        Returns:
+            str: The generated Python source code for the parser.
+        """
         return generate_module(self.rules)
 
     def tree_view(self) -> str:
-        """Return a tree view for each non-built-in rule in this grammar."""
+        """Return a tree view for each non-built-in rule in this grammar.
+
+        Returns:
+            str: A string representation of the grammar's rule tree.
+        """
         trees = [
             rule.tree_view()
             for rule in self.rules.values()

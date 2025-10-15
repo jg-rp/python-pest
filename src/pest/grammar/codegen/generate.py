@@ -222,17 +222,34 @@ def generate_rule_map(rules: dict[str, Rule]) -> str:
     return gen.render()
 
 
+_PARSE_DOC = '''\
+    """Parse the given `text` starting from the specified `start_rule`.
+
+    Args:
+        start_rule: The name of the rule to start parsing from.
+        text: The input string to parse.
+        start_pos: The position in the input string to start parsing from (default: 0).
+
+    Returns:
+        Pairs: The parse tree as a `Pairs` object.
+
+    Raises:
+        KeyError: If `start_rule` is not a valid rule name.
+        PestParsingError: If the input `text` cannot be parsed according to the grammar.
+    """'''
+
+
 def generate_parse_entry_point() -> str:
     """Generate a `parse` function."""
     gen = Builder()
     gen.writeln(
-        "def parse(start_rule: str, input_: str, *, start_pos: int = 0) -> Pairs:"
+        "def parse(start_rule: str, text: str, *, start_pos: int = 0) -> Pairs:"
     )
-    with gen.block():
-        # TODO: improve doc comment
-        gen.writeln('"""Parse `input_` starting from `rule`."""')
-        gen.writeln("state = ParserState(input_, start_pos)")
 
+    gen.writeln(_PARSE_DOC)
+
+    with gen.block():
+        gen.writeln("state = ParserState(text, start_pos)")
         gen.writeln("pairs: list[Pair] = []")
         gen.writeln("matched = _RULE_MAP[start_rule](state, pairs)")
 
@@ -247,17 +264,17 @@ def generate_parse_entry_point() -> str:
         gen.writeln('"""A class wrapping `parse()` in `Parser.parse()`."""')
         gen.writeln(
             "def parse("
-            "self, start_rule: str, input_: str, *, start_pos: int = 0"
+            "self, start_rule: str, text: str, *, start_pos: int = 0"
             ") -> Pairs:"
         )
         with gen.block():
-            gen.writeln('"""Parse `input_` starting from `start_rule`."""')
-            gen.writeln("return parse(start_rule, input_, start_pos=start_pos)")
+            gen.writeln(
+                '"""Parse the given `text` starting from the specified `start_rule`."""'
+            )
+            gen.writeln("return parse(start_rule, text, start_pos=start_pos)")
 
     return gen.render()
 
-
-# TODO: handle unknown start rule
 
 CLI = """\
 def main() -> None:
