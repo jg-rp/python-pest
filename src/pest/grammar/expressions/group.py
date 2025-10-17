@@ -8,8 +8,11 @@ from typing import Self
 from pest.grammar import Expression
 
 if TYPE_CHECKING:
+    from hypothesis import strategies as st
+
     from pest.grammar.codegen.builder import Builder
     from pest.pairs import Pair
+    from pest.parser import Parser
     from pest.state import ParserState
 
 
@@ -60,6 +63,10 @@ class Group(Expression):
             self.expression.generate(gen, matched_var, pairs_var)
 
         gen.writeln("# </Group>")
+
+    def strategy(self, parser: Parser) -> st.SearchStrategy[str]:
+        """Return a Hypothesis strategy producing strings that match this rule."""
+        return self.expression.strategy(parser)
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""

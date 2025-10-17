@@ -12,7 +12,10 @@ from pest.pairs import Pair
 if TYPE_CHECKING:
     from collections.abc import Iterable
 
+    from hypothesis import strategies as st
+
     from pest.grammar.codegen.builder import Builder
+    from pest.parser import Parser
     from pest.state import ParserState
 
 SILENT = 1 << 1  # _
@@ -197,6 +200,10 @@ class Rule(Expression):
                 with gen.block():
                     gen.writeln(f"{pairs_var}.append({pair})")
                 gen.writeln(f"return {matched_var}")
+
+    def strategy(self, parser: Parser) -> st.SearchStrategy[str]:
+        """Return a Hypothesis strategy producing strings that match this rule."""
+        return self.expression.strategy(parser)
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""

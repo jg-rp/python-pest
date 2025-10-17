@@ -9,11 +9,13 @@ from typing import NamedTuple
 from typing import Self
 
 import regex as re
+from hypothesis import strategies as st
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from pest.pairs import Pair
+    from pest.parser import Parser
     from pest.state import ParserState
 
     from .codegen.builder import Builder
@@ -87,6 +89,11 @@ class Expression(ABC):
     @abstractmethod
     def with_children(self, expressions: list[Expression]) -> Self:
         """Return a new instance of this expression with child expressions replaced."""
+
+    # TODO: @abstractmethod
+    def strategy(self, parser: Parser) -> st.SearchStrategy[str]:
+        """Return a Hypothesis strategy producing strings that match this rule."""
+        raise NotImplementedError(f"{self.__class__.__name__}.strategy")
 
     def tag_str(self) -> str:
         """Return a string representation of this expressions tag."""
@@ -186,3 +193,7 @@ class RegexExpression(Terminal):
         gen.writeln("else:")
         with gen.block():
             gen.writeln(f"{matched_var} = False")
+
+    def strategy(self, parser: Parser) -> st.SearchStrategy[str]:  # noqa: ARG002
+        """Return a Hypothesis strategy producing strings that match this rule."""
+        return st.from_regex(self.pattern, fullmatch=True)
