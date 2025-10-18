@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing_extensions import Self
+from typing import Self
 
 
 class SnapshottingInt:
