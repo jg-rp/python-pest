@@ -5,10 +5,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from typing import Self
 
+from hypothesis import strategies as st
+
 from pest.grammar import Expression
 
 if TYPE_CHECKING:
     from pest.grammar.codegen.builder import Builder
+    from pest.grammar.strategy import StrategyContext
     from pest.pairs import Pair
     from pest.state import ParserState
 
@@ -83,6 +86,24 @@ class Sequence(Expression):
         # Sequence succeeds only if all parts matched
         gen.writeln(f"{matched_var} = {all_ok}")
         gen.writeln("# </Sequence>")
+
+    def strategy(self, ctx: StrategyContext) -> st.SearchStrategy[str]:
+        """Return a Hypothesis strategy producing strings that match this rule."""
+        ws = (
+            ctx.rules["WHITESPACE"].strategy(ctx) if "WHITESPACE" in ctx.rules else None
+        )
+
+        # Build child strategies, join into a single string.
+        parts: list[st.SearchStrategy[str]] = []
+        for i, child in enumerate(self.expressions):
+            s = child.strategy(ctx)
+
+            if i > 0 and ctx.atomic_depth == 0 and ws is not None:
+                s = st.tuples(ws, s).map(lambda t: t[0] + t[1])
+
+            parts.append(s)
+
+        return st.just("") if not parts else st.tuples(*parts).map("".join)
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""

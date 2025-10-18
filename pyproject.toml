@@ -17,6 +17,7 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
 dependencies = [
+    "hypothesis>=6.142.1",
     "regex>=2025.7.34",
 ]
 
