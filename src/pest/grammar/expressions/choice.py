@@ -18,8 +18,8 @@ from pest.grammar.rules.unicode import UnicodePropertyRule
 
 if TYPE_CHECKING:
     from pest.grammar.codegen.builder import Builder
+    from pest.grammar.strategy import StrategyContext
     from pest.pairs import Pair
-    from pest.parser import Parser
     from pest.state import ParserState
 
 
@@ -96,9 +96,9 @@ class Choice(Expression):
 
         gen.writeln("# </Choice>")
 
-    def strategy(self, parser: Parser) -> st.SearchStrategy[str]:
+    def strategy(self, ctx: StrategyContext) -> st.SearchStrategy[str]:
         """Return a Hypothesis strategy producing strings that match this rule."""
-        return st.one_of(*(expr.strategy(parser) for expr in self.expressions))
+        return st.one_of(*(expr.strategy(ctx) for expr in self.expressions))
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""

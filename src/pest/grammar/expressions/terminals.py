@@ -15,8 +15,8 @@ from pest.grammar.expression import Terminal
 if TYPE_CHECKING:
     from pest.grammar.codegen.builder import Builder
     from pest.grammar.rule import Rule
+    from pest.grammar.strategy import StrategyContext
     from pest.pairs import Pair
-    from pest.parser import Parser
     from pest.state import ParserState
 
 
@@ -455,9 +455,15 @@ class Identifier(Expression):
 
         gen.writeln("# </Identifier>")
 
-    def strategy(self, parser: Parser) -> st.SearchStrategy[str]:
+    def strategy(self, ctx: StrategyContext) -> st.SearchStrategy[str]:
         """Return a Hypothesis strategy producing strings that match this rule."""
-        return parser.rules[self.value].strategy(parser)
+        rule = ctx.rules[self.value]
+
+        try:
+            with ctx.descend(atomic=rule.atomic):
+                return rule.expression.strategy(ctx)
+        except RecursionError:
+            return st.just("")
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""
@@ -520,7 +526,7 @@ class String(Terminal):
 
         gen.writeln("# </String>")
 
-    def strategy(self, parser: Parser) -> st.SearchStrategy[str]:
+    def strategy(self, ctx: StrategyContext) -> st.SearchStrategy[str]:
         """Return a Hypothesis strategy producing strings that match this rule."""
         return st.just(self.value)
 
@@ -571,7 +577,7 @@ class CIString(Terminal):
 
         gen.writeln("# </CIString>")
 
-    def strategy(self, parser: Parser) -> st.SearchStrategy[str]:
+    def strategy(self, ctx: StrategyContext) -> st.SearchStrategy[str]:
         """Return a Hypothesis strategy producing strings that match this rule."""
         letters = [st.sampled_from([c.lower(), c.upper()]) for c in self.value]
         return st.tuples(*letters).map("".join)
@@ -616,7 +622,7 @@ class Range(Terminal):
 
         gen.writeln("# </Range>")
 
-    def strategy(self, parser: Parser) -> st.SearchStrategy[str]:
+    def strategy(self, ctx: StrategyContext) -> st.SearchStrategy[str]:
         """Return a Hypothesis strategy producing strings that match this rule."""
         chars = [chr(c) for c in range(ord(self.start), ord(self.stop) + 1)]
         return st.sampled_from(chars)

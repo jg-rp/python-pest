@@ -11,8 +11,8 @@ from pest.grammar import Expression
 
 if TYPE_CHECKING:
     from pest.grammar.codegen.builder import Builder
+    from pest.grammar.strategy import StrategyContext
     from pest.pairs import Pair
-    from pest.parser import Parser
     from pest.state import ParserState
 
 
@@ -67,8 +67,8 @@ class Optional(Expression):
         gen.writeln(f"{matched_var} = True")
         gen.writeln("# </Optional>")
 
-    def strategy(self, parser: Parser) -> st.SearchStrategy[str]:
-        inner = self.expression.strategy(parser)
+    def strategy(self, ctx: StrategyContext) -> st.SearchStrategy[str]:
+        inner = self.expression.strategy(ctx)
         return st.lists(inner, min_size=0, max_size=1).map("".join)
 
     def children(self) -> list[Expression]:
@@ -154,8 +154,8 @@ class Repeat(Expression):
 
         gen.writeln("# </Repeat>")
 
-    def strategy(self, parser: Parser) -> st.SearchStrategy[str]:
-        inner = self.expression.strategy(parser)
+    def strategy(self, ctx: StrategyContext) -> st.SearchStrategy[str]:
+        inner = self.expression.strategy(ctx)
         return st.lists(inner, max_size=10).map("".join)
 
     def children(self) -> list[Expression]:
@@ -263,8 +263,8 @@ class RepeatOnce(Expression):
 
         gen.writeln("# </RepeatOnce>")
 
-    def strategy(self, parser: Parser) -> st.SearchStrategy[str]:
-        inner = self.expression.strategy(parser)
+    def strategy(self, ctx: StrategyContext) -> st.SearchStrategy[str]:
+        inner = self.expression.strategy(ctx)
         return st.lists(inner, min_size=1, max_size=10).map("".join)
 
     def children(self) -> list[Expression]:
@@ -380,8 +380,8 @@ class RepeatExact(Expression):
 
         gen.writeln("# </RepeatExact>")
 
-    def strategy(self, parser: Parser) -> st.SearchStrategy[str]:
-        inner = self.expression.strategy(parser)
+    def strategy(self, ctx: StrategyContext) -> st.SearchStrategy[str]:
+        inner = self.expression.strategy(ctx)
         return st.lists(inner, min_size=self.number, max_size=self.number).map("".join)
 
     def children(self) -> list[Expression]:
@@ -488,8 +488,8 @@ class RepeatMin(Expression):
 
         gen.writeln("# </RepeatMin>")
 
-    def strategy(self, parser: Parser) -> st.SearchStrategy[str]:
-        inner = self.expression.strategy(parser)
+    def strategy(self, ctx: StrategyContext) -> st.SearchStrategy[str]:
+        inner = self.expression.strategy(ctx)
         return st.lists(inner, min_size=self.number, max_size=10).map("".join)
 
     def children(self) -> list[Expression]:
@@ -595,8 +595,8 @@ class RepeatMax(Expression):
         gen.writeln(f"{pairs_var}.extend({tmp_pairs})")
         gen.writeln("# </RepeatMax>")
 
-    def strategy(self, parser: Parser) -> st.SearchStrategy[str]:
-        inner = self.expression.strategy(parser)
+    def strategy(self, ctx: StrategyContext) -> st.SearchStrategy[str]:
+        inner = self.expression.strategy(ctx)
         return st.lists(inner, min_size=0, max_size=self.number).map("".join)
 
     def children(self) -> list[Expression]:
@@ -710,8 +710,8 @@ class RepeatMinMax(Expression):
 
         gen.writeln("# </RepeatMinMax>")
 
-    def strategy(self, parser: Parser) -> st.SearchStrategy[str]:
-        inner = self.expression.strategy(parser)
+    def strategy(self, ctx: StrategyContext) -> st.SearchStrategy[str]:
+        inner = self.expression.strategy(ctx)
         return st.lists(inner, min_size=self.min, max_size=self.max).map("".join)
 
     def children(self) -> list[Expression]:

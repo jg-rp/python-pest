@@ -14,9 +14,10 @@ if TYPE_CHECKING:
 
     from hypothesis import strategies as st
 
-    from pest.grammar.codegen.builder import Builder
-    from pest.parser import Parser
     from pest.state import ParserState
+
+    from .codegen.builder import Builder
+    from .strategy import StrategyContext
 
 SILENT = 1 << 1  # _
 ATOMIC = 1 << 2  # @
@@ -45,7 +46,14 @@ def modifier_to_str(flags: int) -> str:
 class Rule(Expression):
     """Base class for all rules."""
 
-    __slots__ = ("name", "expression", "modifier", "doc", "child_is_non_atomic")
+    __slots__ = (
+        "name",
+        "expression",
+        "modifier",
+        "doc",
+        "child_is_non_atomic",
+        "atomic",
+    )
 
     def __init__(
         self,
@@ -59,6 +67,7 @@ class Rule(Expression):
         self.expression = expression
         self.modifier = modifier
         self.doc = tuple(doc) if doc else None
+        self.atomic = bool(self.modifier & (ATOMIC | COMPOUND))
 
     def __str__(self) -> str:
         doc = "".join(f"///{line}\n" for line in self.doc) if self.doc else ""
@@ -201,9 +210,9 @@ class Rule(Expression):
                     gen.writeln(f"{pairs_var}.append({pair})")
                 gen.writeln(f"return {matched_var}")
 
-    def strategy(self, parser: Parser) -> st.SearchStrategy[str]:
+    def strategy(self, ctx: StrategyContext) -> st.SearchStrategy[str]:
         """Return a Hypothesis strategy producing strings that match this rule."""
-        return self.expression.strategy(parser)
+        return self.expression.strategy(ctx)
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""
