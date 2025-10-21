@@ -2,6 +2,10 @@
 
 Python Pest is a port of the [Rust pest](https://pest.rs/) parsing library - a powerful, elegant PEG (Parsing Expression Grammar) parser generator. We use exactly the same grammar syntax as Pest v2, so existing Pest grammars can be used without modification.
 
+![PyPI - License](https://img.shields.io/pypi/l/python-pest?style=flat-square)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/python-pest?style=flat-square)
+![PyPI - Version](https://img.shields.io/pypi/v/python-pest?style=flat-square)
+
 ## Install
 
 Use `pip` or your favorite package manager.
