@@ -18,6 +18,10 @@ python -m pip install python-pest
 - Source code: https://github.com/jg-rp/python-pest
 - Issue tracker: https://github.com/jg-rp/python-pest/issues
 
+## Contributing
+
+Please see [Contributing to Python Pest](https://github.com/jg-rp/python-pest/blob/main/CONTRIBUTING.md).
+
 ## License
 
 `python-pest` is distributed under the terms of the [MIT](https://spdx.org/licenses/MIT.html) license.
