@@ -18,11 +18,14 @@ from .grammar.rules.special import EOI
 from .grammar.rules.special import SOI
 from .grammar.rules.special import Any
 from .grammar.rules.unicode import UNICODE_RULES
+from .grammar.strategy import StrategyContext
 from .pairs import Pairs
 from .state import ParserState
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
+
+    from hypothesis import strategies as st
 
     from .grammar.optimizer import Optimizer
     from .grammar.rule import Rule
@@ -137,6 +140,10 @@ class Parser:
             str: The generated Python source code for the parser.
         """
         return generate_module(self.rules)
+
+    def strategy(self, start_rule: str) -> st.SearchStrategy[str]:
+        """Return a hypothesis strategy producing string that match `start_rule`."""
+        return self.rules[start_rule].strategy(StrategyContext(self.rules))
 
     def tree_view(self) -> str:
         """Return a tree view for each non-built-in rule in this grammar.

@@ -10,6 +10,7 @@ from typing import Self
 from typing import TypeAlias
 
 import regex as re
+from hypothesis import strategies as st
 
 from pest.grammar import Expression
 from pest.grammar.expression import RegexExpression
@@ -17,6 +18,7 @@ from pest.grammar.rules.unicode import UnicodePropertyRule
 
 if TYPE_CHECKING:
     from pest.grammar.codegen.builder import Builder
+    from pest.grammar.strategy import StrategyContext
     from pest.pairs import Pair
     from pest.state import ParserState
 
@@ -93,6 +95,10 @@ class Choice(Expression):
                     gen.writeln(f"{tmp_pairs}.clear()")
 
         gen.writeln("# </Choice>")
+
+    def strategy(self, ctx: StrategyContext) -> st.SearchStrategy[str]:
+        """Return a Hypothesis strategy producing strings that match this rule."""
+        return st.one_of(*(expr.strategy(ctx) for expr in self.expressions))
 
     def children(self) -> list[Expression]:
         """Return this expression's children."""

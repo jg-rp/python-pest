@@ -12,6 +12,7 @@ wheels/
 # Dev
 dev.py
 .vscode/
+.hypothesis/
 
 # Docs
 site/
