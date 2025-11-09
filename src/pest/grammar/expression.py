@@ -9,6 +9,7 @@ from typing import NamedTuple
 from typing import Self
 
 import regex as re
+from hypothesis import strategies as st
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -18,6 +19,7 @@ if TYPE_CHECKING:
 
     from .codegen.builder import Builder
     from .rule import Rule
+    from .strategy import StrategyContext
 
 
 class Match(NamedTuple):
@@ -79,6 +81,11 @@ class Expression(ABC):
             PestParserError: Generated code may raise this at runtime when the
             expression fails to match.
         """
+
+    # TODO: @abstractmethod
+    def strategy(self, ctx: StrategyContext) -> st.SearchStrategy[str]:
+        """Return a Hypothesis strategy producing strings that match this rule."""
+        raise NotImplementedError(f"{self.__class__.__name__}.strategy")
 
     @abstractmethod
     def children(self) -> list[Expression]:
@@ -186,3 +193,7 @@ class RegexExpression(Terminal):
         gen.writeln("else:")
         with gen.block():
             gen.writeln(f"{matched_var} = False")
+
+    def strategy(self, ctx: StrategyContext) -> st.SearchStrategy[str]:  # noqa: ARG002
+        """Return a Hypothesis strategy producing strings that match this rule."""
+        return st.from_regex(self.pattern, fullmatch=True)

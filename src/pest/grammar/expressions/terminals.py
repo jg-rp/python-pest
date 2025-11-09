@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from typing import Self
 
 import regex as re
+from hypothesis import strategies as st
 
 from pest.grammar.expression import Expression
 from pest.grammar.expression import Terminal
@@ -14,6 +15,7 @@ from pest.grammar.expression import Terminal
 if TYPE_CHECKING:
     from pest.grammar.codegen.builder import Builder
     from pest.grammar.rule import Rule
+    from pest.grammar.strategy import StrategyContext
     from pest.pairs import Pair
     from pest.state import ParserState
 
@@ -453,6 +455,16 @@ class Identifier(Expression):
 
         gen.writeln("# </Identifier>")
 
+    def strategy(self, ctx: StrategyContext) -> st.SearchStrategy[str]:
+        """Return a Hypothesis strategy producing strings that match this rule."""
+        rule = ctx.rules[self.value]
+
+        try:
+            with ctx.descend(atomic=rule.atomic):
+                return rule.expression.strategy(ctx)
+        except RecursionError:
+            return st.just("")
+
     def children(self) -> list[Expression]:
         """Return this expression's children."""
         return []
@@ -514,6 +526,10 @@ class String(Terminal):
 
         gen.writeln("# </String>")
 
+    def strategy(self, ctx: StrategyContext) -> st.SearchStrategy[str]:
+        """Return a Hypothesis strategy producing strings that match this rule."""
+        return st.just(self.value)
+
 
 class CIString(Terminal):
     """A terminal string literal that matches case insensitively."""
@@ -561,6 +577,11 @@ class CIString(Terminal):
 
         gen.writeln("# </CIString>")
 
+    def strategy(self, ctx: StrategyContext) -> st.SearchStrategy[str]:
+        """Return a Hypothesis strategy producing strings that match this rule."""
+        letters = [st.sampled_from([c.lower(), c.upper()]) for c in self.value]
+        return st.tuples(*letters).map("".join)
+
 
 class Range(Terminal):
     """A terminal range of characters."""
@@ -600,6 +621,11 @@ class Range(Terminal):
             gen.writeln(f"state.fail({str(self)!r})")
 
         gen.writeln("# </Range>")
+
+    def strategy(self, ctx: StrategyContext) -> st.SearchStrategy[str]:
+        """Return a Hypothesis strategy producing strings that match this rule."""
+        chars = [chr(c) for c in range(ord(self.start), ord(self.stop) + 1)]
+        return st.sampled_from(chars)
 
 
 class SkipUntil(Terminal):

@@ -29,6 +29,8 @@ class UnicodePropertyRule(BuiltInRule):
         assert len(expressions) == 1
         return self
 
+    # TODO: strategy
+
 
 def _make_registry(
     prop_type: str, mapping_or_list: dict[str, str] | list[str]
