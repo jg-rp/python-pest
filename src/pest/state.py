@@ -5,11 +5,12 @@ from __future__ import annotations
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
-from .checkpoint_int import SnapshottingInt
 from .grammar.rule import Rule
+from .stack import PersistentStack
 from .stack import Stack
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
     from collections.abc import Iterator
     from collections.abc import Sequence
 
@@ -22,8 +23,7 @@ class ParserState:
 
     The `ParserState` tracks the input text, current position, and multiple stacks
     for user values and modifiers. It supports checkpointing, restoration, and
-    stack operations to facilitate backtracking and complex parsing logic during
-    the execution of generated parsers.
+    stack operations to facilitate backtracking.
 
     Args:
         text: The input string to be parsed.
@@ -31,7 +31,7 @@ class ParserState:
     """
 
     __slots__ = (
-        "_pos_history",
+        "_pos_checkpoints",
         "_suppress_failures",
         "atomic_depth",
         "furthest_expected",
@@ -45,13 +45,13 @@ class ParserState:
         "rule_stack",
         "tag_stack",
         "user_stack",
+        "_atomic_depth_checkpoints",
     )
 
     def __init__(
         self, text: str, start_pos: int = 0, parser: Parser | None = None
     ) -> None:
         self.input = text
-        self.pos = start_pos
         self.parser = parser  # Always None in generated code.
 
         # Negative predicate depth
@@ -61,12 +61,19 @@ class ParserState:
         self.furthest_pos = -1
         self.furthest_expected: dict[str, list[str]] = {}
         self.furthest_unexpected: dict[str, list[str]] = {}
-        self.furthest_stack: list[Rule | RuleFrame] = []
-
-        self._pos_history: list[int] = []
+        self.furthest_stack: Iterable[Rule | RuleFrame] = []
         self._suppress_failures = False
-        self.atomic_depth = SnapshottingInt()
-        self.rule_stack = Stack[Rule | RuleFrame]()  # RuleFrame is for generated code.
+
+        # Ths current index into `self.input` with checkpoints for backtracking.
+        self.pos = start_pos
+        self._pos_checkpoints: list[int] = []
+
+        # The number of atomic rules in the rule stack with checkpoints for
+        # backtracking.
+        self.atomic_depth = 0
+        self._atomic_depth_checkpoints: list[int] = []
+
+        self.rule_stack = PersistentStack[Rule | RuleFrame]()
         self.tag_stack: list[str] = []  # User tags are always enabled
         self.user_stack = Stack[str]()  # PUSH/POP/PEEK/DROP
 
@@ -125,8 +132,8 @@ class ParserState:
         """
         self.user_stack.snapshot()
         self.rule_stack.snapshot()
-        self.atomic_depth.snapshot()
-        self._pos_history.append(self.pos)
+        self._atomic_depth_checkpoints.append(self.atomic_depth)
+        self._pos_checkpoints.append(self.pos)
 
     def ok(self) -> None:
         """Commit to the current state after a successful parse.
@@ -135,9 +142,9 @@ class ParserState:
         permanent.
         """
         self.user_stack.drop_snapshot()
-        self.rule_stack.drop_snapshot()
-        self.atomic_depth.drop()
-        self._pos_history.pop()
+        self.rule_stack.ok()
+        self._atomic_depth_checkpoints.pop()
+        self._pos_checkpoints.pop()
 
     def restore(self) -> None:
         """Restore the state to the most recent checkpoint.
@@ -147,8 +154,8 @@ class ParserState:
         """
         self.user_stack.restore()
         self.rule_stack.restore()
-        self.atomic_depth.restore()
-        self.pos = self._pos_history.pop()
+        self.atomic_depth = self._atomic_depth_checkpoints.pop()
+        self.pos = self._pos_checkpoints.pop()
 
     def push(self, value: str) -> None:
         """Push a value onto the user stack.
@@ -193,9 +200,9 @@ class ParserState:
     @contextmanager
     def atomic_checkpoint(self) -> Iterator[ParserState]:
         """A context manager that restores atomic depth on exit."""
-        self.atomic_depth.snapshot()
+        self._atomic_depth_checkpoints.append(self.atomic_depth)
         yield self
-        self.atomic_depth.restore()
+        self.atomic_depth = self._atomic_depth_checkpoints.pop()
 
     @contextmanager
     def suppress_failures(self) -> Iterator[ParserState]:
@@ -225,12 +232,12 @@ class ParserState:
             return
 
         is_neg_context = self.neg_pred_depth % 2 == 1
-        rule_name = rule_name or self.rule_stack[-1].name
+        rule_name = rule_name or self.rule_stack.peek().name
         pos = pos or self.pos
 
         if pos > self.furthest_pos:
             self.furthest_pos = pos
-            self.furthest_stack = list(self.rule_stack)
+            self.furthest_stack = self.rule_stack.copy()
             if is_neg_context:
                 self.furthest_unexpected = {rule_name: [label]}
                 self.furthest_expected = {}

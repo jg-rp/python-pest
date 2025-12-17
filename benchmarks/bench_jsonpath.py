@@ -59,7 +59,7 @@ class CTSCase(NamedTuple):
 
 
 def valid_queries() -> Sequence[CTSCase]:
-    with open("../jsonpath-compliance-test-suite/cts.json") as fd:
+    with open("tests/cts/cts.json") as fd:
         data = json.load(fd)
 
     return [

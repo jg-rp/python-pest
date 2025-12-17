@@ -80,7 +80,7 @@ class Rule(Expression):
                 matched = self.expression.parse(state, children)
         elif self.modifier & NONATOMIC:
             with state.atomic_checkpoint():
-                state.atomic_depth.zero()
+                state.atomic_depth = 0
                 matched = self.expression.parse(state, children)
         else:
             matched = self.expression.parse(state, children)
@@ -150,7 +150,7 @@ class Rule(Expression):
             elif self.modifier & NONATOMIC:
                 gen.writeln("with state.atomic_checkpoint():")
                 with gen.block():
-                    gen.writeln("state.atomic_depth.zero()")
+                    gen.writeln("state.atomic_depth = 0")
                     self.expression.generate(gen, matched_var, inner_pairs)
             else:
                 self.expression.generate(gen, matched_var, inner_pairs)

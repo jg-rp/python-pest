@@ -11,6 +11,9 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
+from typing import Generic
+from typing import Optional
+from typing import TypeAlias
 from typing import TypeVar
 from typing import overload
 
@@ -91,6 +94,9 @@ class Stack(Sequence[T]):
     def __iter__(self) -> Iterator[T]:
         return iter(self.items)
 
+    def __reversed__(self) -> Iterator[T]:
+        return reversed(self.items)
+
     def snapshot(self) -> None:
         """Take a snapshot of the current stack."""
         self.lengths.append((len(self.items), len(self.items)))
@@ -124,3 +130,80 @@ class Stack(Sequence[T]):
             del self.popped[new_size:]
             self.items.extend(reversed(recovered))
             assert len(self.popped) == new_size
+
+
+_Node: TypeAlias = tuple[T, Optional["_Node"]]
+
+
+class PersistentStack(Generic[T]):
+    """A simplified stack that stores items as persistent nodes."""
+
+    __slots__ = ("_top", "_checkpoints")
+
+    def __init__(self) -> None:
+        self._top: _Node[T] | None = None
+        self._checkpoints: list[_Node[T] | None] = []
+
+    def empty(self) -> bool:
+        """Return `True` if this stack is empty."""
+        return self._top is None
+
+    def push(self, item: T) -> None:
+        """Push item onto the stack."""
+        self._top = (item, self._top)
+
+    def pop(self) -> T:
+        """Remove and return the item at the top of the stack."""
+        if self._top is None:
+            raise IndexError("pop from empty stack")
+
+        value, node = self._top
+        self._top = node
+        return value
+
+    def peek(self) -> T:
+        """Return the item at the top of the stack without removing it."""
+        if self._top is None:
+            raise IndexError("peek from empty stack")
+        return self._top[0]
+
+    def snapshot(self) -> None:
+        """Take a snapshot of the stack for later restore."""
+        self._checkpoints.append(self._top)
+
+    def restore(self) -> None:
+        """Rewind the stack to the most recent snapshot."""
+        if not self._checkpoints:
+            self._top = None
+            return
+
+        self._top = self._checkpoints.pop()
+
+    def ok(self) -> None:
+        """Drop the last snapshot."""
+        if self._checkpoints:
+            self._checkpoints.pop()
+
+    def clear(self) -> None:
+        """Remove all items from the stack."""
+        self._top = None
+
+    def __iter__(self) -> Iterator[T]:
+        values: list[T] = []
+        current = self._top
+        while current is not None:
+            values.append(current[0])
+            current = current[1]
+        return iter(reversed(values))
+
+    def __reversed__(self) -> Iterator[T]:
+        current = self._top
+        while current is not None:
+            yield current[0]
+            current = current[1]
+
+    def copy(self) -> PersistentStack[T]:
+        """Return a copy of the stack without checkpoints."""
+        s = PersistentStack()
+        s.push(self.peek())
+        return s
