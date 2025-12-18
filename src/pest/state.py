@@ -6,8 +6,8 @@ from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
 from .grammar.rule import Rule
-from .stack import PersistentStack
 from .stack import Stack
+from .stack import UndoStack
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -73,7 +73,7 @@ class ParserState:
         self.atomic_depth = 0
         self._atomic_depth_checkpoints: list[int] = []
 
-        self.rule_stack = PersistentStack[Rule | RuleFrame]()
+        self.rule_stack = UndoStack[Rule | RuleFrame]()
         self.tag_stack: list[str] = []  # User tags are always enabled
         self.user_stack = Stack[str]()  # PUSH/POP/PEEK/DROP
 
@@ -142,7 +142,7 @@ class ParserState:
         permanent.
         """
         self.user_stack.drop_snapshot()
-        self.rule_stack.ok()
+        self.rule_stack.drop_snapshot()
         self._atomic_depth_checkpoints.pop()
         self._pos_checkpoints.pop()
 
@@ -218,6 +218,8 @@ class ParserState:
         yield self
         if self.tag_stack:
             self.tag_stack.pop()
+
+    # TODO: rule context manager
 
     def fail(
         self,
