@@ -1,6 +1,6 @@
 // pest. The Elegant Parser
 // Copyright (c) 2018 Dragoș Tiselice
-//
+// 
 // Licensed under the Apache License, Version 2.0
 // <LICENSE-APACHE or http://www.apache.org/licenses/LICENSE-2.0> or the MIT
 // license <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
@@ -15,19 +15,19 @@ pair        = { key ~ "=" ~ value }
 
 key   = @{ identifier | string | literal }
 value = _{
-    inline_table |
-    array |
-    multi_line_string |
-    string |
-    multi_line_literal |
-    literal |
-    date_time |
-    local_date_time |
-    full_date |
-    partial_time |
-    float |
-    integer |
-    boolean
+    inline_table
+  | array
+  | multi_line_string
+  | string
+  | multi_line_literal
+  | literal
+  | date_time
+  | local_date_time
+  | full_date
+  | partial_time
+  | float
+  | integer
+  | boolean
 }
 
 inline_table = { "{" ~ pair ~ ("," ~ pair)* ~ ","? ~ "}" | "{" ~ "}" }
