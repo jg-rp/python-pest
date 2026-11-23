@@ -1,24 +1,13 @@
 from importlib.metadata import version
 
 from .exceptions import PestParsingError
-from .grammar.exceptions import PestGrammarError
-from .grammar.exceptions import PestGrammarSyntaxError
-from .grammar.optimizer import DEFAULT_OPTIMIZER
-from .grammar.optimizer import DEFAULT_OPTIMIZER_PASSES
-from .grammar.optimizer import Optimizer
+from .grammar.exceptions import PestGrammarError, PestGrammarSyntaxError
+from .grammar.optimizer import DEFAULT_OPTIMIZER, DEFAULT_OPTIMIZER_PASSES, Optimizer
 from .grammar.rule import Rule
-from .pairs import End
-from .pairs import Pair
-from .pairs import Pairs
-from .pairs import Position
-from .pairs import Span
-from .pairs import Start
-from .pairs import Stream
-from .pairs import Token
+from .pairs import End, Pair, Pairs, Position, Span, Start, Stream, Token
 from .parser import Parser
 from .pratt import PrattParser
-from .state import ParserState
-from .state import RuleFrame
+from .state import ParserState, RuleFrame
 
 __version__ = version("python-pest")
 

@@ -86,19 +86,19 @@ class SnapshottingInt:
         return self
 
     def __eq__(self, value: object) -> bool:
-        return isinstance(value, int) and self._value == int(value)
+        return isinstance(value, int) and self._value == value
 
     def __ne__(self, value: object) -> bool:
-        return isinstance(value, int) and self._value != int(value)
+        return isinstance(value, int) and self._value != value
 
     def __lt__(self, value: object) -> bool:
-        return isinstance(value, int) and self._value < int(value)
+        return isinstance(value, int) and self._value < value
 
     def __le__(self, value: object) -> bool:
-        return isinstance(value, int) and self._value <= int(value)
+        return isinstance(value, int) and self._value <= value
 
     def __gt__(self, value: object) -> bool:
-        return isinstance(value, int) and self._value > int(value)
+        return isinstance(value, int) and self._value > value
 
     def __ge__(self, value: object) -> bool:
-        return isinstance(value, int) and self._value >= int(value)
+        return isinstance(value, int) and self._value >= value

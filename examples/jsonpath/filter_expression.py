@@ -2,11 +2,8 @@
 
 from __future__ import annotations
 
-from abc import ABC
-from abc import abstractmethod
-from typing import TYPE_CHECKING
-from typing import Generic
-from typing import TypeVar
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 from ._types import ExpressionType
 from .exceptions import JSONPathTypeError

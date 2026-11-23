@@ -36,8 +36,7 @@ IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 """
 
-from pest import Pair
-from pest import Parser
+from pest import Pair, Parser
 
 GRAMMAR = r"""
 field = { (ASCII_DIGIT | "." | "-")+ }

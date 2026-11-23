@@ -1,7 +1,6 @@
 r"""Replace `\uXXXX` escape sequences with Unicode code points."""
 
-from typing import List
-from typing import Tuple
+from typing import List, Tuple
 
 from pest import Pair
 

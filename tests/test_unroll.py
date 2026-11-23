@@ -1,14 +1,7 @@
 import pytest
 
-from pest import DEFAULT_OPTIMIZER_PASSES
-from pest import Optimizer
-from pest import Parser
-from pest.grammar import Identifier
-from pest.grammar import Optional
-from pest.grammar import Repeat
-from pest.grammar import Sequence
-from pest.grammar import String
-from pest.grammar import parse
+from pest import DEFAULT_OPTIMIZER_PASSES, Optimizer, Parser
+from pest.grammar import Identifier, Optional, Repeat, Sequence, String, parse
 
 
 @pytest.fixture

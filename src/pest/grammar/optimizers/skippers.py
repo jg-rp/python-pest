@@ -26,15 +26,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from pest.grammar import Choice
-from pest.grammar import Group
-from pest.grammar import Identifier
-from pest.grammar import NegativePredicate
-from pest.grammar import Repeat
-from pest.grammar import Rule
-from pest.grammar import Sequence
-from pest.grammar import SkipUntil
-from pest.grammar import String
+from pest.grammar import (
+    Choice,
+    Group,
+    Identifier,
+    NegativePredicate,
+    Repeat,
+    Rule,
+    Sequence,
+    SkipUntil,
+    String,
+)
 from pest.grammar.rules.special import Any
 
 if TYPE_CHECKING:

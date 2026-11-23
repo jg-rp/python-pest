@@ -1,11 +1,13 @@
 import regex as re
 
-from pest.grammar.expressions.choice import ChoiceCase
-from pest.grammar.expressions.choice import ChoiceChoice
-from pest.grammar.expressions.choice import ChoiceLiteral
-from pest.grammar.expressions.choice import ChoiceRange
-from pest.grammar.expressions.choice import OptimizedChoice
-from pest.grammar.expressions.choice import build_optimized_pattern
+from pest.grammar.expressions.choice import (
+    ChoiceCase,
+    ChoiceChoice,
+    ChoiceLiteral,
+    ChoiceRange,
+    OptimizedChoice,
+    build_optimized_pattern,
+)
 from pest.grammar.rules.unicode import UnicodePropertyRule
 
 

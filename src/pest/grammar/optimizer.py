@@ -2,27 +2,19 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from collections.abc import Mapping
-from collections.abc import MutableMapping
+from collections.abc import Callable, Mapping, MutableMapping
 from dataclasses import dataclass
-from enum import Enum
-from enum import auto
+from enum import Enum, auto
 from typing import TypeAlias
 
-from pest.grammar import Choice
-from pest.grammar import Repeat
-from pest.grammar import Rule
+from pest.grammar import Choice, Repeat, Rule
 from pest.grammar.expressions import OptimizedChoiceRepeat
-from pest.grammar.rule import SILENT
-from pest.grammar.rule import SILENT_ATOMIC
+from pest.grammar.rule import SILENT, SILENT_ATOMIC
 
 from .expression import Expression
-from .optimizers.inliners import inline_builtin
-from .optimizers.inliners import inline_silent_rules
+from .optimizers.inliners import inline_builtin, inline_silent_rules
 from .optimizers.skippers import skip
-from .optimizers.squash_choice import squash
-from .optimizers.squash_choice import squash_choice
+from .optimizers.squash_choice import squash, squash_choice
 from .optimizers.unroller import unroll
 
 OptimizerPass: TypeAlias = Callable[[Expression, Mapping[str, Rule]], Expression]

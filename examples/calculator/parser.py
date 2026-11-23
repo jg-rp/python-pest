@@ -21,10 +21,8 @@ from typing import TYPE_CHECKING
 import regex as re
 
 from pest.exceptions import PestParsingError
-from pest.pairs import Pair
-from pest.pairs import Pairs
-from pest.state import ParserState
-from pest.state import RuleFrame
+from pest.pairs import Pair, Pairs
+from pest.state import ParserState, RuleFrame
 
 if TYPE_CHECKING:
     from collections.abc import Callable

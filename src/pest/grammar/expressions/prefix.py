@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-from typing import Self
+from typing import TYPE_CHECKING, Self
 
 from pest.grammar import Expression
 from pest.grammar.expressions.terminals import Identifier

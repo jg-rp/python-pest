@@ -1,9 +1,7 @@
 import timeit
 import types
 
-from pest import DEFAULT_OPTIMIZER
-from pest import Pairs
-from pest import Parser
+from pest import DEFAULT_OPTIMIZER, Pairs, Parser
 
 
 class GeneratedParser:

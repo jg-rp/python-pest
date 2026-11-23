@@ -3,11 +3,9 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generator
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
-
     from pest.grammar.rule import Rule
 
 
@@ -37,7 +35,7 @@ class Builder:
         self.lines.append("    " * self.indent + line)
 
     @contextmanager
-    def block(self) -> Iterator[Builder]:
+    def block(self) -> Generator[Builder, None, None]:
         """Context manager to increase indentation for a block of code.
 
         Usage:

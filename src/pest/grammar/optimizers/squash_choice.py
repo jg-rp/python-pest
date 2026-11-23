@@ -4,15 +4,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from pest.grammar import Choice
-from pest.grammar import CIString
-from pest.grammar import Range
-from pest.grammar import Rule
-from pest.grammar import String
-from pest.grammar.expressions.choice import ChoiceCase
-from pest.grammar.expressions.choice import ChoiceLiteral
-from pest.grammar.expressions.choice import ChoiceRange
-from pest.grammar.expressions.choice import OptimizedChoice
+from pest.grammar import Choice, CIString, Range, Rule, String
+from pest.grammar.expressions.choice import (
+    ChoiceCase,
+    ChoiceLiteral,
+    ChoiceRange,
+    OptimizedChoice,
+)
 from pest.grammar.rules.unicode import UnicodePropertyRule
 
 if TYPE_CHECKING:

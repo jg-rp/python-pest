@@ -5,14 +5,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from pest.grammar import Identifier
-from pest.grammar.rule import SILENT
-from pest.grammar.rule import BuiltInRule
+from pest.grammar.rule import SILENT, BuiltInRule
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from pest.grammar import Expression
-    from pest.grammar import Rule
+    from pest.grammar import Expression, Rule
 
 
 def inline_builtin(expr: Expression, rules: Mapping[str, Rule]) -> Expression:  # noqa: ARG001

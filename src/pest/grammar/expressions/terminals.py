@@ -3,13 +3,11 @@
 from __future__ import annotations
 
 from contextlib import suppress
-from typing import TYPE_CHECKING
-from typing import Self
+from typing import TYPE_CHECKING, Self
 
 import regex as re
 
-from pest.grammar.expression import Expression
-from pest.grammar.expression import Terminal
+from pest.grammar.expression import Expression, Terminal
 
 if TYPE_CHECKING:
     from pest.grammar.codegen.builder import Builder

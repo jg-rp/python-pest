@@ -6,19 +6,22 @@ NOTE: If running this from the root of the Python pest source tree, use
 `python -m examples.json.json_` to work around relative import issues.
 """
 
-from enum import StrEnum  # Requires Python 3.11+
-from enum import auto
+from enum import (
+    StrEnum,  # Requires Python 3.11+
+    auto,
+)
 
-from pest import Pair
-from pest import Parser
+from pest import Pair, Parser
 
-from ._ast import JSONArray
-from ._ast import JSONBool
-from ._ast import JSONNull
-from ._ast import JSONNumber
-from ._ast import JSONObject
-from ._ast import JSONString
-from ._ast import JSONValue
+from ._ast import (
+    JSONArray,
+    JSONBool,
+    JSONNull,
+    JSONNumber,
+    JSONObject,
+    JSONString,
+    JSONValue,
+)
 
 with open("examples/json/json.pest") as fd:
     grammar = fd.read()

@@ -19,20 +19,21 @@ Sequence              'a ~ a ~ a'
 
 from __future__ import annotations
 
-from itertools import chain
-from itertools import repeat
+from itertools import chain, repeat
 from typing import TYPE_CHECKING
 
-from pest.grammar import Group
-from pest.grammar import Optional
-from pest.grammar import Repeat
-from pest.grammar import RepeatExact
-from pest.grammar import RepeatMax
-from pest.grammar import RepeatMin
-from pest.grammar import RepeatMinMax
-from pest.grammar import RepeatOnce
-from pest.grammar import Rule
-from pest.grammar import Sequence
+from pest.grammar import (
+    Group,
+    Optional,
+    Repeat,
+    RepeatExact,
+    RepeatMax,
+    RepeatMin,
+    RepeatMinMax,
+    RepeatOnce,
+    Rule,
+    Sequence,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Mapping

@@ -2,16 +2,11 @@
 
 from __future__ import annotations
 
-from abc import ABC
-from abc import abstractmethod
-from typing import TYPE_CHECKING
-from typing import ClassVar
-from typing import Generic
-from typing import TypeVar
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
 
 if TYPE_CHECKING:
-    from pest import Pair
-    from pest import Stream
+    from pest import Pair, Stream
 
 ExprT = TypeVar("ExprT")
 

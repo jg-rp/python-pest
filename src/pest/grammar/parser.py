@@ -5,35 +5,34 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .exceptions import PestGrammarSyntaxError
-from .expressions import Choice
-from .expressions import CIString
-from .expressions import Drop
-from .expressions import Group
-from .expressions import Identifier
-from .expressions import NegativePredicate
-from .expressions import Optional
-from .expressions import Peek
-from .expressions import PeekAll
-from .expressions import PeekSlice
-from .expressions import Pop
-from .expressions import PopAll
-from .expressions import PositivePredicate
-from .expressions import Push
-from .expressions import PushLiteral
-from .expressions import Range
-from .expressions import Repeat
-from .expressions import RepeatExact
-from .expressions import RepeatMax
-from .expressions import RepeatMin
-from .expressions import RepeatMinMax
-from .expressions import RepeatOnce
-from .expressions import Sequence
-from .expressions import String
-from .rule import MODIFIER_MAP
-from .rule import GrammarRule
-from .rule import Rule
-from .tokens import Token
-from .tokens import TokenKind
+from .expressions import (
+    Choice,
+    CIString,
+    Drop,
+    Group,
+    Identifier,
+    NegativePredicate,
+    Optional,
+    Peek,
+    PeekAll,
+    PeekSlice,
+    Pop,
+    PopAll,
+    PositivePredicate,
+    Push,
+    PushLiteral,
+    Range,
+    Repeat,
+    RepeatExact,
+    RepeatMax,
+    RepeatMin,
+    RepeatMinMax,
+    RepeatOnce,
+    Sequence,
+    String,
+)
+from .rule import MODIFIER_MAP, GrammarRule, Rule
+from .tokens import Token, TokenKind
 from .unescape import unescape_string
 
 if TYPE_CHECKING:

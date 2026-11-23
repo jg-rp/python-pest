@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import json
-from abc import ABC
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from contextlib import suppress
 from typing import TYPE_CHECKING
 
@@ -12,9 +11,7 @@ from .exceptions import JSONPathTypeError
 from .filter_expression import FilterContext
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
-    from collections.abc import Iterator
-    from collections.abc import Sequence
+    from collections.abc import Iterable, Iterator, Sequence
 
     from pest import Pair
 

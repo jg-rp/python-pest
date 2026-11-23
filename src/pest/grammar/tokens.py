@@ -1,7 +1,6 @@
 """Pest grammar tokens."""
 
-from enum import Enum
-from enum import auto
+from enum import Enum, auto
 from typing import NamedTuple
 
 

@@ -4,11 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ._ast import IndexSelector
-from ._ast import NameSelector
-from ._ast import RecursiveDescentSegment
-from .node import JSONPathNode
-from .node import JSONPathNodeList
+from ._ast import IndexSelector, NameSelector, RecursiveDescentSegment
+from .node import JSONPathNode, JSONPathNodeList
 
 if TYPE_CHECKING:
     from collections.abc import Iterable

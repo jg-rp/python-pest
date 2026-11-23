@@ -2,19 +2,20 @@
 
 from __future__ import annotations
 
-from typing import Callable
-from typing import Never
-from typing import Optional
-from typing import TypeAlias
+from typing import Never, Protocol
 
 import regex as re
 
 from .exceptions import PestGrammarSyntaxError
-from .tokens import Token
-from .tokens import TokenKind
+from .tokens import Token, TokenKind
 from .unescape import unescape_string
 
-StateFn: TypeAlias = Callable[[], Optional["StateFn"]]
+
+class StateFn(Protocol):
+    """Tokenizer state transition function interface."""
+
+    def __call__(self) -> StateFn | None: ...
+
 
 RE_ASSIGN_OP = re.compile(r"=")  # TODO: scan until ch?
 RE_DROP = re.compile(r"DROP")

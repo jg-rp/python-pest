@@ -3,14 +3,13 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generator
 
 from .checkpoint_int import SnapshottingInt
 from .grammar.rule import Rule
 from .stack import Stack
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
     from collections.abc import Sequence
 
     from .pairs import Pair
@@ -191,21 +190,21 @@ class ParserState:
         return self.user_stack[slice(start, end)]
 
     @contextmanager
-    def atomic_checkpoint(self) -> Iterator[ParserState]:
+    def atomic_checkpoint(self) -> Generator[ParserState, None, None]:
         """A context manager that restores atomic depth on exit."""
         self.atomic_depth.snapshot()
         yield self
         self.atomic_depth.restore()
 
     @contextmanager
-    def suppress_failures(self) -> Iterator[ParserState]:
+    def suppress_failures(self) -> Generator[ParserState, None, None]:
         """A context manager that prevents rules contributing to failures."""
         self._suppress_failures = True
         yield self
         self._suppress_failures = False
 
     @contextmanager
-    def tag(self, tag_: str) -> Iterator[ParserState]:
+    def tag(self, tag_: str) -> Generator[ParserState, None, None]:
         """A context manager that removes `tag_` on exit."""
         self.tag_stack.append(tag_)
         yield self

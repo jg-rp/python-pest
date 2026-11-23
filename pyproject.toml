@@ -4,15 +4,15 @@ version = "0.1.1"
 description = "A general purpose parser written in Python."
 readme = "README.md"
 authors = [{ name = "James Prior", email = "jamesgr.prior@gmail.com" }]
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 classifiers = [
   "Development Status :: 4 - Beta",
   "License :: OSI Approved :: MIT License",
   "Programming Language :: Python",
-  "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3.15",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
@@ -34,7 +34,7 @@ dev = [
     "click==8.2.1",
     "mkdocs-material>=9.6.21",
     "mkdocstrings[python]>=0.30.1",
-    "mypy>=1.17.1",
+    "pyrefly>=1.5.0",
     "pytest>=8.4.1",
     "pytest-cov>=6.2.1",
     "ruff>=0.12.10",
@@ -45,23 +45,6 @@ dev = [
 [tool.uv.build-backend]
 module-root = "src"
 module-name = "pest"
-
-[tool.mypy]
-files = "src"
-python_version = "3.11"
-disallow_subclassing_any = true
-disallow_untyped_calls = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-no_implicit_optional = true
-local_partial_types = true
-no_implicit_reexport = true
-strict = true
-warn_redundant_casts = true
-warn_unused_configs = true
-warn_unused_ignores = false
-warn_return_any = true
-warn_unreachable = true
 
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.
@@ -86,14 +69,10 @@ exclude = [
   "dist",
   "node_modules",
   "venv",
-  "tests/nts",
+  "examples/**/parser.py",
 ]
 
-# Same as Black.
-line-length = 88
-
-# Assume Python 3.11.
-target-version = "py311"
+target-version = "py312"
 
 [tool.ruff.lint]
 select = [
@@ -102,7 +81,6 @@ select = [
   "B",
   "BLE",
   "C4",
-  "D",
   "E",
   "F",
   "FBT",
@@ -127,6 +105,7 @@ select = [
 ]
 
 ignore = [
+  "ARG002",
   "S105",
   "S101",
   "D107",
@@ -137,6 +116,8 @@ ignore = [
   "A005",
   "PLW1641",
   "PLR1730",
+  "PLR2004",
+  "PLR0917",
 ]
 
 fixable = ["I"]
@@ -145,33 +126,19 @@ unfixable = []
 # Allow unused variables when underscore-prefixed.
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
-[tool.ruff.lint.isort]
-force-single-line = true
-
-[tool.ruff.lint.pydocstyle]
-convention = "google"
-
 [tool.ruff.lint.per-file-ignores]
-"src/pest/__init__.py" = ["D104"]
-"src/pest/grammar/codegen/__init__.py" = ["D104"]
-"src/pest/grammar/optimizers/__init__.py" = ["D104"]
-"src/pest/grammar/rules/__init__.py" = ["D104"]
-"src/pest/grammar/__init__.py" = ["D104"]
-"src/pest/grammar/expressions/__init__.py" = ["D104"]
-"src/pest/grammar/expressions/postfix.py" = ["D102"]
-"src/pest/grammar/expressions/terminals.py" = ["ARG002"]
-"src/pest/grammar/parser.py" = ["D102"]
-"src/pest/grammar/rules/unicode.py" = ["D101"]
-"src/pest/grammar/scanner.py" = ["D102"]
-"src/pest/grammar/unescape.py" = ["PLR2004"]
-"benchmarks/*" = ["D100", "D101", "D104", "D103", "PLR2004", "T201"]
-"dev.py" = ["D100", "D101", "D104", "D103", "PLR2004", "T201"]
-"tests/*" = ["D100", "D101", "D102", "D104", "D103", "PLR2004"]
-"tests/test_sql_grammar.py" = ["E501"]
-"examples/calculator/calculator.py" = ["D101", "D102", "D103"]
-"examples/calculator/grammar_encoded_prec.py" = ["D101", "D102", "D103"]
-"examples/calculator/pratt.py" = ["D101", "D102", "D103"]
-"examples/calculator/prec_climber.py" = ["D101", "D102", "D103"]
-"examples/jsonpath/jsonpath.py" = ["D102", "PLR0911"]
-"examples/jsonpath/compliance.py" = ["D101", "D102", "D103"]
+"tests/*" = ["E501"]
+"examples/jsonpath/jsonpath.py" = ["PLR0911"]
 "examples/jsonpath/unescape.py" = ["PLR2004"]
+"examples/**/*" = ["Q000", "A001", "T201", "E501"]
+"benchmarks/*" = ["T201"]
+
+[tool.pyrefly]
+project-includes = ["src"]
+python-version = "3.12.0"
+preset = "strict"
+check-unannotated-defs = true
+infer-return-types = "never"
+
+[tool.pyrefly.errors]
+missing-override-decorator = false

@@ -1,10 +1,7 @@
 import pytest
 
-from pest import DEFAULT_OPTIMIZER_PASSES
-from pest import Optimizer
-from pest import Parser
-from pest.grammar import SkipUntil
-from pest.grammar import parse
+from pest import DEFAULT_OPTIMIZER_PASSES, Optimizer, Parser
+from pest.grammar import SkipUntil, parse
 
 
 @pytest.fixture

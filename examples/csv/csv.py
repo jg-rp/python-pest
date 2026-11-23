@@ -3,8 +3,7 @@
 https://pest.rs/book/examples/csv.html
 """
 
-from pest import Pair
-from pest import Parser
+from pest import Pair, Parser
 
 with open("examples/csv/csv.pest") as fd:
     grammar = fd.read()

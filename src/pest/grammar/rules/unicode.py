@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-from typing import Self
+from typing import TYPE_CHECKING, Self
 
 from pest.grammar.expression import RegexExpression
-from pest.grammar.rule import SILENT
-from pest.grammar.rule import BuiltInRule
+from pest.grammar.rule import SILENT, BuiltInRule
 
 if TYPE_CHECKING:
     from pest.grammar.expression import Expression

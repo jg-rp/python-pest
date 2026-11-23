@@ -14,9 +14,7 @@ from .grammar.codegen.generate import generate_module
 from .grammar.optimizer import DEFAULT_OPTIMIZER
 from .grammar.rule import BuiltInRule
 from .grammar.rules.ascii import ASCII_RULES
-from .grammar.rules.special import EOI
-from .grammar.rules.special import SOI
-from .grammar.rules.special import Any
+from .grammar.rules.special import EOI, SOI, Any
 from .grammar.rules.unicode import UNICODE_RULES
 from .pairs import Pairs
 from .state import ParserState

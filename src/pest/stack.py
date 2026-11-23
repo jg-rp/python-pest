@@ -10,9 +10,7 @@ See LICENSE_PEST.txt
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import TYPE_CHECKING
-from typing import TypeVar
-from typing import overload
+from typing import TYPE_CHECKING, TypeVar, overload
 
 if TYPE_CHECKING:
     from collections.abc import Iterator

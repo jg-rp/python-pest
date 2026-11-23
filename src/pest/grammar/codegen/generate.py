@@ -8,8 +8,7 @@ trivia parsing logic for whitespace and comments.
 from importlib.metadata import version
 
 from pest.grammar.codegen.builder import Builder
-from pest.grammar.rule import BuiltInRule
-from pest.grammar.rule import Rule
+from pest.grammar.rule import BuiltInRule, Rule
 
 VERSION = version("python-pest")
 

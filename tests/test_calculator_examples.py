@@ -24,18 +24,19 @@ with open(
 
 sys.path.append(os.getcwd())
 
-from examples.calculator._ast import Expression
-from examples.calculator._ast import InfixExpr
-from examples.calculator._ast import IntExpr
-from examples.calculator._ast import PostfixExpr
-from examples.calculator._ast import PrefixExpr
-from examples.calculator._ast import VarExpr
+from examples.calculator._ast import (
+    Expression,
+    InfixExpr,
+    IntExpr,
+    PostfixExpr,
+    PrefixExpr,
+    VarExpr,
+)
 from examples.calculator.grammar_encoded_prec import (
     parse_program as parse_program_implicit,
 )
 from examples.calculator.grammar_encoded_prec_parser import parse as parse_implicit
-from examples.calculator.parser import Rule
-from examples.calculator.parser import parse
+from examples.calculator.parser import Rule, parse
 from examples.calculator.pratt import CalculatorParser
 from examples.calculator.prec_climber import parse_program
 from pest import PestParsingError

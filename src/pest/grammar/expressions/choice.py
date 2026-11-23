@@ -2,12 +2,8 @@
 
 from __future__ import annotations
 
-from enum import Enum
-from enum import auto
-from typing import TYPE_CHECKING
-from typing import NamedTuple
-from typing import Self
-from typing import TypeAlias
+from enum import Enum, auto
+from typing import TYPE_CHECKING, NamedTuple, Self, TypeAlias
 
 import regex as re
 

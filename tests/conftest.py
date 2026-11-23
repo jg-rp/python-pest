@@ -1,13 +1,11 @@
 from __future__ import annotations
 
 import types
-from typing import TYPE_CHECKING
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 import pytest
 
-from pest import DEFAULT_OPTIMIZER
-from pest import Parser
+from pest import DEFAULT_OPTIMIZER, Parser
 
 if TYPE_CHECKING:
     from _pytest.fixtures import SubRequest

@@ -3,15 +3,11 @@
 from __future__ import annotations
 
 import re
-from abc import ABC
-from abc import abstractmethod
-from typing import TYPE_CHECKING
-from typing import Any
-from typing import Sized
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, Any, Sized
 
 from ._types import ExpressionType
-from .filter_expression import NOTHING
-from .filter_expression import Nothing
+from .filter_expression import NOTHING, Nothing
 
 if TYPE_CHECKING:
     from .node import JSONPathNodeList

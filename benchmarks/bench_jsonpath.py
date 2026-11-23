@@ -5,9 +5,7 @@ import os
 import sys
 import timeit
 import types
-from typing import TYPE_CHECKING
-from typing import Any
-from typing import NamedTuple
+from typing import TYPE_CHECKING, Any, NamedTuple
 
 from pest import Parser
 
@@ -16,8 +14,7 @@ sys.path.append(os.getcwd())
 from examples.jsonpath.jsonpath import JSONPathParser
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
-    from collections.abc import Sequence
+    from collections.abc import Mapping, Sequence
 
     from pest import Pairs
 

@@ -5,11 +5,12 @@ https://pest.rs/book/examples/ini.html
 
 import json
 from collections import defaultdict
-from enum import StrEnum  # Requires Python 3.11+
-from enum import auto
+from enum import (
+    StrEnum,  # Requires Python 3.11+
+    auto,
+)
 
-from pest import Pair
-from pest import Parser
+from pest import Pair, Parser
 
 with open("examples/ini/ini.pest") as fd:
     grammar = fd.read()
