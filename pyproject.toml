@@ -118,6 +118,10 @@ ignore = [
   "PLR1730",
   "PLR2004",
   "PLR0917",
+  "PLR0912",
+  "PLR0915",
+  "F403",
+  "F405",
 ]
 
 fixable = ["I"]
@@ -134,7 +138,7 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 "benchmarks/*" = ["T201"]
 
 [tool.pyrefly]
-project-includes = ["src"]
+project-includes = ["src", "tests", "tools"]
 python-version = "3.12.0"
 preset = "strict"
 check-unannotated-defs = true
