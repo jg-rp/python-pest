@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .tokens import Token
 
+# TODO: update for new token type
+
 
 class PestGrammarError(Exception):
     """Base class for exceptions raised when parsing pest grammars."""
