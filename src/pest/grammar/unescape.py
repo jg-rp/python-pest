@@ -1,105 +1,55 @@
-r"""Replace `\u{XX}` or `\u{XXXX}` escape sequences with Unicode code points."""
+import re
 
 from .exceptions import PestGrammarSyntaxError
 from .tokens import Token
 
+_RE_ESCAPE = re.compile(r"(\\u\{[0-9a-fA-F]{2,6}\}|\\x[0-9a-fA-F]{2}|\\.)")
 
-def unescape_string(value: str, token: Token, quote: str = '"') -> str:
-    """Return `value` with escape sequences replaced with Unicode code points."""
+
+def unescape_string(escaped: str, token: Token, quote: str = '"') -> str:
     unescaped: list[str] = []
-    index = 0
+    parts = [p for p in _RE_ESCAPE.split(escaped) if p]
+    length = len(parts)
+    pos = 0
 
-    while index < len(value):
-        ch = value[index]
-        if ch == "\\":
-            index += 1
-            _ch, index = _decode_escape_sequence(value, index, token, quote)
-            unescaped.append(_ch)
-        else:
-            unescaped.append(ch)
-        index += 1
-    return "".join(unescaped)
+    while pos < length:
+        part = parts[pos]
+        pos += 1
 
-
-def _decode_escape_sequence(  # noqa: PLR0911
-    value: str, index: int, token: Token, quote: str
-) -> tuple[str, int]:
-    try:
-        ch = value[index]
-    except IndexError as err:
-        raise PestGrammarSyntaxError("incomplete escape sequence", token=token) from err
-
-    # TODO: match these to Rust?
-    if ch == quote:
-        return quote, index
-    if ch == "\\":
-        return "\\", index
-    if ch == "/":
-        return "/", index
-    if ch == "b":
-        return "\x08", index
-    if ch == "f":
-        return "\x0c", index
-    if ch == "n":
-        return "\n", index
-    if ch == "r":
-        return "\r", index
-    if ch == "t":
-        return "\t", index
-    if ch == "x":
-        # TODO: handle incomplete \x escape sequence
-        return chr(int(value[index + 1 : index + 3], 16)), index + 3
-    if ch == "u":
-        codepoint, index = _decode_hex_char(value, index, token)
-        return chr(codepoint), index
-
-    raise PestGrammarSyntaxError(
-        f"unknown escape sequence at index {token.start + index - 1}",
-        token=token,
-    )
-
-
-def _decode_hex_char(value: str, index: int, token: Token) -> tuple[int, int]:
-    # TODO: use a regular expression?
-    index += 1  # move past 'u'
-
-    if value[index] != "{":
-        raise PestGrammarSyntaxError(
-            f"expected an opening brace, found {value[index]}",
-            token=token,
-        )
-
-    index += 1  # move past '{'
-    closing_brace_index = value.find("}", index)
-
-    if closing_brace_index == -1:
-        raise PestGrammarSyntaxError("unclosed Unicode escape sequence", token=token)
-
-    hex_digit_length = closing_brace_index - index
-    if hex_digit_length not in (2, 4, 6):
-        raise PestGrammarSyntaxError(
-            "expected \\u{00}, \\u{0000} or \\u{000000}", token=token
-        )
-
-    codepoint = _parse_hex_digits(value[index : index + hex_digit_length], token)
-    index += hex_digit_length
-    index += 1  # move past '}'
-    return codepoint, index
-
-
-def _parse_hex_digits(digits: str, token: Token) -> int:
-    codepoint = 0
-    for digit in digits.encode():
-        codepoint <<= 4
-        if digit >= 48 and digit <= 57:
-            codepoint |= digit - 48
-        elif digit >= 65 and digit <= 70:
-            codepoint |= digit - 65 + 10
-        elif digit >= 97 and digit <= 102:
-            codepoint |= digit - 97 + 10
-        else:
+        if not part.startswith("\\"):
+            unescaped.append(part)
+        elif part.endswith(quote):
+            unescaped.append(quote)
+        elif part == "\\\\":
+            unescaped.append("\\")
+        elif part == "\\/":
+            unescaped.append("/")
+        elif part == "\\b":
+            unescaped.append("\b")
+        elif part == "\\f":
+            unescaped.append("\f")
+        elif part == "\\n":
+            unescaped.append("\n")
+        elif part == "\\r":
+            unescaped.append("\r")
+        elif part == "\\t":
+            unescaped.append("\t")
+        elif part in ("\\u", "\\x"):
+            # No digits
             raise PestGrammarSyntaxError(
-                "invalid \\u{XXXX} escape sequence",
+                "invalid escape sequence",
                 token=token,
             )
-    return codepoint
+        elif part.startswith("\\u"):
+            code_point = int(part[3:-1], 16)
+            unescaped.append(chr(code_point))
+        elif part.startswith("\\x"):
+            code_point = int(part[2:], 16)
+            unescaped.append(chr(code_point))
+        else:
+            raise PestGrammarSyntaxError(
+                "invalid escape sequence",
+                token=token,
+            )
+
+    return "".join(unescaped)

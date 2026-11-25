@@ -56,7 +56,7 @@ type Expression = (
     | Rule
 )
 
-type Choice = tuple[Literal[1], Token, tuple[Expression, ...]]  # | infix
+type Choice = tuple[Literal[1], Token, Expression, Expression]  # | infix
 type Group = tuple[Literal[2], Token, str | None, Expression]
 type Optional = tuple[Literal[3], Token, Expression]  # ? postfix
 type Repeat = tuple[Literal[4], Token, Expression]  # * postfix
@@ -64,23 +64,23 @@ type RepeatOnce = tuple[Literal[5], Token, Expression]  # + postfix
 type RepeatExact = tuple[Literal[6], Token, Expression, int]  # {n} postfix
 type RepeatMin = tuple[Literal[7], Token, Expression, int]  # {n,} postfix
 type RepeatMax = tuple[Literal[8], Token, Expression, int]  # {,n} postfix
-type RepeatMinMax = tuple[Literal[8], Token, Expression, int, int]  # {n,m} postfix
+type RepeatMinMax = tuple[Literal[9], Token, Expression, int, int]  # {n,m} postfix
 type PositivePredicate = tuple[Literal[10], Token, str | None, Expression]  # & prefix
 type NegativePredicate = tuple[Literal[11], Token, str | None, Expression]  # ! prefix
-type Sequence = tuple[Literal[12], Token, tuple[Expression, ...]]  # ~ infix
+type Sequence = tuple[Literal[12], Token, Expression, Expression]  # ~ infix
 
 type PushLiteral = tuple[Literal[13], Token, str | None, str]
 type Push = tuple[Literal[14], Token, str | None, Expression]
 type PeekSlice = tuple[Literal[15], Token, str | None, int | None, int | None]
-type Peek = tuple[Literal[16], Token]
-type PeekAll = tuple[Literal[17], Token]
-type Pop = tuple[Literal[18], Token]
-type PopAll = tuple[Literal[19], Token]
-type Drop = tuple[Literal[20], Token]
+type Peek = tuple[Literal[16], Token, str | None]
+type PeekAll = tuple[Literal[17], Token, str | None]
+type Pop = tuple[Literal[18], Token, str | None]
+type PopAll = tuple[Literal[19], Token, str | None]
+type Drop = tuple[Literal[20], Token, str | None]
 type Ident = tuple[Literal[21], Token, str | None, str]  # Name of a rule
 type String = tuple[Literal[22], Token, str]
 type CIString = tuple[Literal[23], Token, str]  # Case insensitive string
 type Range = tuple[Literal[24], Token, str | None, str, str]
 
 # (type, token, name, expression, modifier, doc)
-type Rule = tuple[Literal[25], Token, str, Expression, int, tuple[str]]
+type Rule = tuple[Literal[25], Token, str, Expression, int, tuple[str, ...]]

@@ -13,7 +13,9 @@ if TYPE_CHECKING:
 class PestGrammarError(Exception):
     """Base class for exceptions raised when parsing pest grammars."""
 
-    def __init__(self, *args: object, token: Token | None = None) -> None:
+    def __init__(
+        self, *args: object, token: Token | None = None, source: str | None = None
+    ) -> None:
         super().__init__(*args)
         self.token = token
 

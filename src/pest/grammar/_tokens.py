@@ -42,10 +42,8 @@ __all__ = (
     "TOKEN_STRING",
     "TOKEN_STRING_ESC",
     "TOKEN_TILDE",
-    "TOKEN_U_CHAR",
     "TOKEN_UNDERSCORE",
     "TOKEN_UNKNOWN",
-    "TOKEN_X_CHAR",
 )
 
 type TokenKind = Literal[
@@ -90,8 +88,6 @@ type TokenKind = Literal[
     39,
     40,
     41,
-    42,
-    43,
 ]
 
 type Token = tuple[TokenKind, int, int]
@@ -136,10 +132,8 @@ TOKEN_SPAN: Literal[36] = 36
 TOKEN_STRING: Literal[37] = 37
 TOKEN_STRING_ESC: Literal[38] = 38
 TOKEN_TILDE: Literal[39] = 39
-TOKEN_U_CHAR: Literal[40] = 40
-TOKEN_UNDERSCORE: Literal[41] = 41
-TOKEN_UNKNOWN: Literal[42] = 42
-TOKEN_X_CHAR: Literal[43] = 43
+TOKEN_UNDERSCORE: Literal[40] = 40
+TOKEN_UNKNOWN: Literal[41] = 41
 
 TOKEN_NAMES = (
     None,
@@ -182,10 +176,8 @@ TOKEN_NAMES = (
     "STRING",
     "STRING_ESC",
     "TILDE",
-    "U_CHAR",
     "UNDERSCORE",
     "UNKNOWN",
-    "X_CHAR",
 )
 
 TOKEN_MAP = {
@@ -228,10 +220,8 @@ TOKEN_MAP = {
     TOKEN_STRING: "TOKEN_STRING",
     TOKEN_STRING_ESC: "TOKEN_STRING_ESC",
     TOKEN_TILDE: "TOKEN_TILDE",
-    TOKEN_U_CHAR: "TOKEN_U_CHAR",
     TOKEN_UNDERSCORE: "TOKEN_UNDERSCORE",
     TOKEN_UNKNOWN: "TOKEN_UNKNOWN",
-    TOKEN_X_CHAR: "TOKEN_X_CHAR",
 }
 
 

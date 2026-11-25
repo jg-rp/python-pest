@@ -40,10 +40,8 @@ TOKEN_DEFINITIONS = {
     "STRING": "STRING",
     "STRING_ESC": "STRING_ESC",
     "TILDE": "TILDE",
-    "U_CHAR": "U_CHAR",
     "UNDERSCORE": "UNDERSCORE",
     "UNKNOWN": "UNKNOWN",
-    "X_CHAR": "X_CHAR",
 }
 
 

@@ -108,7 +108,7 @@ def tokenize(source: str) -> list[Token]:
                     pos += 1
                     continue
 
-                m = RE_NEWLINE.search(source, pos)
+                m = RE_NEWLINE.search(source, pos)  # pyright: ignore[reportUnknownMemberType]
                 stop = m.start() if m else length
                 tokens.append((TOKEN_COMMENT_TEXT, pos, stop))
                 pos = stop
@@ -120,12 +120,6 @@ def tokenize(source: str) -> list[Token]:
             if char_literal is None:
                 tokens.append((TOKEN_UNKNOWN, pos, pos + 1))
                 pos += 1
-            elif char_literal.startswith("'\\u"):
-                tokens.append((TOKEN_U_CHAR, pos, pos + len(char_literal)))
-                pos += len(char_literal)
-            elif char_literal.startswith("'\\x"):
-                tokens.append((TOKEN_X_CHAR, pos, pos + len(char_literal)))
-                pos += len(char_literal)
             elif char_literal.startswith("'\\"):
                 tokens.append((TOKEN_ESC_CHAR, pos, pos + len(char_literal)))
                 pos += len(char_literal)
@@ -185,12 +179,12 @@ def tokenize(source: str) -> list[Token]:
 
 
 def _skip_trivia(source: str, pos: int) -> int:
-    m = RE_TRIVIA.match(source, pos)
+    m = RE_TRIVIA.match(source, pos)  # pyright: ignore[reportUnknownMemberType]
     return m.end() if m else pos
 
 
 def _scan(pattern: re.Pattern[str], source: str, pos: int) -> str | None:
-    m = pattern.match(source, pos)
+    m = pattern.match(source, pos)  # pyright: ignore[reportUnknownMemberType]
     return m.group() if m else None
 
 
