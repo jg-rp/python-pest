@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Generator
 from .grammar import _ast as ast
 from .grammar._modifiers import ATOMIC, COMPOUND, NONATOMIC, SILENT
 from .grammar._parser import Parser as Grammar
+from .grammar._serialize import serialize_expression
 from .pairs import Pair, Pairs
 
 if TYPE_CHECKING:
@@ -662,8 +663,3 @@ class _ParseState:
     atomic_depth: int = 0
     rules: list[Rule] = field(default_factory=list)  # pyright: ignore[reportUnknownVariableType]
     stack: list[str] = field(default_factory=list)  # pyright: ignore[reportUnknownVariableType]
-
-
-def serialize_expression(expr: Expression) -> str:
-    # TODO:
-    raise NotImplementedError

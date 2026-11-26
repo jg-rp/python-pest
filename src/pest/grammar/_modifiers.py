@@ -22,3 +22,8 @@ MODIFIER_MAP: dict[TokenKind, int] = {
     TOKEN_EXCLAIM: NONATOMIC,
     TOKEN_UNDERSCORE: NONATOMIC,
 }
+
+
+def modifier_to_str(flags: int) -> str:
+    """Convert a modifier bit field into a string of symbols, in defined order."""
+    return "".join(symbol for bit, symbol in MODIFIER_SYMBOLS.items() if flags & bit)
