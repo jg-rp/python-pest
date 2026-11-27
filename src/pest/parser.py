@@ -1,85 +1,34 @@
-"""A pest grammar tree.
-
-This module provides the `Parser` class representing rules in a pest grammar,
-as well as utilities for generating parser source code and inspecting grammar rules.
-"""
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from ._parse import Parse
 from .exceptions import PestParsingError
-from .grammar import parse
-from .grammar.codegen.generate import generate_module
-from .grammar.optimizer import DEFAULT_OPTIMIZER
-from .grammar.rule import BuiltInRule
-from .grammar.rules.ascii import ASCII_RULES
-from .grammar.rules.special import EOI, SOI, Any
-from .grammar.rules.unicode import UNICODE_RULES
-from .pairs import Pairs
-from .state import ParserState
+from .grammar import (
+    BUILTIN_RULES,
+    Grammar,
+    serialize_expression,
+    tree_view,
+)
+from .pairs import Pair, Pairs
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
-
-    from .grammar.optimizer import Optimizer
-    from .grammar.rule import Rule
-    from .pairs import Pair
+    from .grammar._ast import Rule
 
 
 class Parser:
-    """A pest parser.
+    __slots__ = ("doc", "rules")
 
-    This class provides methods to parse text using a pest grammar, generate parser
-    source code, and inspect the grammar tree.
-
-    Args:
-        rules: Mapping of rule names to `Rule` objects.
-        doc: Optional list of grammar documentation lines.
-        optimizer: Optional optimizer to apply to the rules.
-        debug: If True, enables debug output during optimization.
-
-    Attributes:
-        rules: A mapping of rule names to `Rule` instances, including built-ins.
-        doc: An optional list of grammar documentation lines.
-    """
-
-    BUILTIN: dict[str, Rule] = {
-        "ANY": Any(),
-        **ASCII_RULES,
-        **UNICODE_RULES,
-        "SOI": SOI(),
-        "EOI": EOI(),
-    }
-
-    def __init__(
-        self,
-        rules: Mapping[str, Rule],
-        doc: list[str] | None = None,
-        *,
-        optimizer: Optimizer | None = None,
-        debug: bool = False,
-    ):
-        # Built-in rules overwrite grammar defined rules.
-        self.rules: dict[str, Rule] = {**self.BUILTIN, **rules}
+    def __init__(self, rules: dict[str, Rule], doc: list[str]):
+        self.rules = rules
         self.doc = doc
-        if optimizer:
-            optimizer.optimize(self.rules, debug=debug)
 
     @classmethod
-    def from_grammar(
-        cls,
-        grammar: str,
-        *,
-        optimizer: Optimizer | None = DEFAULT_OPTIMIZER,
-        debug: bool = False,
-    ) -> Parser:
+    def from_grammar(cls, grammar: str) -> Parser:
         """Parse a grammar definition and return a new `Parser` for it.
 
         Args:
             grammar: The grammar definition as a string.
-            optimizer: Optional optimizer to apply to the rules.
-            debug: If True, enables debug output during optimization.
 
         Returns:
             Parser: A new parser instance for the given grammar.
@@ -87,19 +36,8 @@ class Parser:
         Raises:
             PestGrammarSyntaxError: If `grammar` is invalid.
         """
-        rules, doc = parse(grammar, cls.BUILTIN)
-
-        # TODO: validate rules
-        # - validate_repetition
-        # - validate_choices
-        # - validate_whitespace_comment
-        # - validate_tag_silent_rules
-
-        return cls(rules, doc, optimizer=optimizer, debug=debug)
-
-    def __str__(self) -> str:
-        doc = "".join(f"//!{line}\n" for line in self.doc) + "\n" if self.doc else ""
-        return doc + "\n\n".join(str(rule) for rule in self.rules.values())
+        rules, doc = Grammar.parse(grammar)
+        return cls({**BUILTIN_RULES, **rules}, doc)
 
     def parse(self, start_rule: str, text: str, *, start_pos: int = 0) -> Pairs:
         """Parse `text` starting from the specified `start_rule`.
@@ -118,33 +56,33 @@ class Parser:
             PestParsingError: If the input `text` cannot be parsed according to the
                 grammar.
         """
-        rule = self.rules[start_rule]
-        state = ParserState(text, start_pos, self)
         pairs: list[Pair] = []
-        matched = rule.parse(state, pairs)
+        parse = Parse(self.rules, text, start_pos)
+        if not parse.parse_rule(self.rules[start_rule], pairs):
+            raise PestParsingError(
+                source=text,
+                furthest_pos=parse.furthest_pos,
+                furthest_expected=parse.furthest_expected,
+                furthest_unexpected=parse.furthest_unexpected,
+                furthest_stack=parse.furthest_stack,
+            )
+        return Pairs(pairs)
 
-        if matched:
-            return Pairs(pairs)
-
-        raise PestParsingError(state)
-
-    def generate(self) -> str:
-        """Return a generated parser as Python module source code.
-
-        Returns:
-            str: The generated Python source code for the parser.
-        """
-        return generate_module(self.rules)
+    def __str__(self) -> str:
+        doc = "".join(f"//!{line}\n" for line in self.doc) + "\n" if self.doc else ""
+        return doc + "\n\n".join(
+            serialize_expression(rule) for rule in self.rules.values()
+        )
 
     def tree_view(self) -> str:
-        """Return a tree view for each non-built-in rule in this grammar.
+        """Return a tree view for each rule in this grammar.
 
         Returns:
             str: A string representation of the grammar's rule tree.
         """
         trees = [
-            rule.tree_view()
+            tree_view(rule)
             for rule in self.rules.values()
-            if not isinstance(rule, BuiltInRule)
+            if rule[2] not in BUILTIN_RULES
         ]
         return "\n\n".join(trees)

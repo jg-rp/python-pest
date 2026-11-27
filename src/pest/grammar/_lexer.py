@@ -158,6 +158,9 @@ def tokenize(source: str) -> list[Token]:
             elif word == "EOI":
                 tokens.append((TOKEN_EOI, pos, pos + 3))
                 pos += 3
+            elif word == "ANY":
+                tokens.append((TOKEN_ANY, pos, pos + 3))
+                pos += 3
             elif word is None:
                 tokens.append((TOKEN_UNKNOWN, pos, pos + 1))
                 pos += 1

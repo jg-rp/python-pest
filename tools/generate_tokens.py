@@ -2,9 +2,11 @@ import json
 
 TOKEN_DEFINITIONS = {
     "AMP": "AMP",
+    "ANY": "ANY",
     "ASSIGN": "ASSIGN",
     "ASTERISK": "ASTERISK",
     "AT": "AT",
+    "BUILTIN": "BUILTIN",
     "CARET": "CARET",
     "CHAR": "CHAR",
     "COMMA": "COMMA",
@@ -12,7 +14,8 @@ TOKEN_DEFINITIONS = {
     "DOLLAR": "DOLLAR",
     "DOUBLE_DOT": "DOUBLE_DOT",
     "DROP": "DROP",
-    "EOI": "EOI",
+    "EOI": "EOI",  # Built-in "EOI" rule
+    "EOF": "EOF",  # No more tokens
     "ESC_CHAR": "ESC_CHAR",
     "EXCLAIM": "EXCLAIM",
     "GRAMMAR_DOC": "GRAMMAR_DOC",
@@ -37,8 +40,8 @@ TOKEN_DEFINITIONS = {
     "RULE_DOC": "RULE_DOC",
     "SOI": "SOI",
     "SPAN": "SPAN",
-    "STRING": "STRING",
     "STRING_ESC": "STRING_ESC",
+    "STRING": "STRING",
     "TILDE": "TILDE",
     "UNDERSCORE": "UNDERSCORE",
     "UNKNOWN": "UNKNOWN",

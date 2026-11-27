@@ -12,9 +12,9 @@ def serialize_expression(expression: Expression) -> str:
             return f"{tag_}{name}"
 
         case (_ast.RULE, _, name, expr, modifier, doc):
-            doc = "".join(f"///{line}\n" for line in doc) if doc else ""
-            modifier = modifier_to_str(modifier)
-            return f"{doc}{name} = {modifier}{{ {serialize_expression(expr)} }}"
+            doc_ = "".join(f"///{line}\n" for line in doc) if doc else ""
+            modifier_ = modifier_to_str(modifier)
+            return f"{doc_}{name} = {modifier_}{{ {serialize_expression(expr)} }}"
 
         case (_ast.CHOICE, _, left, right):
             return f"{serialize_expression(left)} | {serialize_expression(right)}"
@@ -96,3 +96,15 @@ def serialize_expression(expression: Expression) -> str:
         case (_ast.RANGE, _, tag, start, stop):
             tag_ = f"#{tag}=" if tag else ""
             return f"{tag_}{start!r}..{stop!r}"
+
+        case (_ast.REGEX, _, pattern):
+            return f"`{pattern}`"
+
+        case (_ast.SOI, _, _):
+            return "SOI"
+
+        case (_ast.EOI, _, _):
+            return "EOI"
+
+        case (_ast.ANY, _, _):
+            return "ANY"

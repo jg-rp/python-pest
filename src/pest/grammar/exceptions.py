@@ -4,38 +4,34 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from .tokens import Token
+from ._tokens import token_value
 
-# TODO: update for new token type
+if TYPE_CHECKING:
+    from ._tokens import Token
 
 
 class PestGrammarError(Exception):
     """Base class for exceptions raised when parsing pest grammars."""
 
-    def __init__(
-        self, *args: object, token: Token | None = None, source: str | None = None
-    ) -> None:
+    def __init__(self, *args: object, token: Token, source: str) -> None:
         super().__init__(*args)
         self.token = token
+        self.source = source
 
     def __str__(self) -> str:
         return self.detailed_message()
 
     def detailed_message(self) -> str:
         """Return an error message formatted with extra context info."""
-        if not self.token:
-            return super().__str__()
-
         lineno, col, _prev, current, _next = self._error_context(
-            self.token.grammar, self.token.start
+            self.source, self.token[1]
         )
 
         # if self.token.kind == TOKEN_EOF:
         #     col = len(current)
 
         pad = " " * len(str(lineno))
-        length = len(self.token.value)
+        length = len(token_value(self.token, self.source))
         pointer = (" " * col) + ("^" * max(length, 1))
 
         return (

@@ -27,6 +27,10 @@ STRING: Literal[22] = 22
 CI_STRING: Literal[23] = 23
 RANGE: Literal[24] = 24
 RULE: Literal[25] = 25
+REGEX: Literal[26] = 26
+SOI: Literal[27] = 27
+EOI: Literal[28] = 28
+ANY: Literal[29] = 29
 
 type Expression = (
     Choice
@@ -54,6 +58,10 @@ type Expression = (
     | CIString
     | Range
     | Rule
+    | Regex
+    | StartOfInput
+    | EndOfInput
+    | Any
 )
 
 type Choice = tuple[Literal[1], Token, Expression, Expression]  # | infix
@@ -84,3 +92,8 @@ type Range = tuple[Literal[24], Token, str | None, str, str]
 
 # (type, token, name, expression, modifier, doc)
 type Rule = tuple[Literal[25], Token, str, Expression, int, tuple[str, ...]]
+type Regex = tuple[Literal[26], Token, str]  # Regex pattern
+
+type StartOfInput = tuple[Literal[27], Token, str | None]
+type EndOfInput = tuple[Literal[28], Token, str | None]
+type Any = tuple[Literal[29], Token, str | None]

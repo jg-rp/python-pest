@@ -6,11 +6,17 @@ from contextlib import contextmanager
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Generator
 
+import regex as re
+
+from .grammar import (
+    ATOMIC,
+    COMPOUND,
+    NONATOMIC,
+    SILENT,
+    serialize_expression,
+)
 from .grammar import _ast as ast
-from .grammar._modifiers import ATOMIC, COMPOUND, NONATOMIC, SILENT
-from .grammar._parser import Parser as Grammar
-from .grammar._serialize import serialize_expression
-from .pairs import Pair, Pairs
+from .pairs import Pair
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -18,25 +24,7 @@ if TYPE_CHECKING:
     from .grammar._ast import Expression, Rule
 
 
-class Parser:
-    __slots__ = ("doc", "rules")
-
-    def __init__(self, rules: dict[str, Rule], doc: list[str]):
-        self.rules = rules
-        self.doc = doc
-
-    @classmethod
-    def from_grammar(cls, grammar: str) -> Parser:
-        rules, doc = Grammar.parse(grammar)
-        return cls(rules, doc)
-
-    def parse(self, start_rule: str, text: str, *, start_pos: int = 0) -> Pairs:
-        pairs: list[Pair] = []
-        _Parse(self.rules, text, start_pos).parse_rule(self.rules[start_rule], pairs)
-        return Pairs(pairs)
-
-
-class _Parse:
+class Parse:
     __slots__ = (
         "_trivia",
         "_suppress_failures",
@@ -56,8 +44,8 @@ class _Parse:
         self.rules = rules
         self.source = text
 
-        self.state = _ParseState(pos=start_pos)
-        self.history: list[_ParseState] = []
+        self.state = ParseState(pos=start_pos)
+        self.history: list[ParseState] = []
 
         self.tags: list[str] = []
 
@@ -87,7 +75,7 @@ class _Parse:
         self.state.stack.pop()
 
     def peek(self) -> str | None:
-        self.state.stack[-1] if self.state.stack else None
+        return self.state.stack[-1] if self.state.stack else None
 
     def peek_slice(
         self, start: int | None = None, end: int | None = None
@@ -97,7 +85,7 @@ class _Parse:
         return self.state.stack[slice(start, end)]
 
     @contextmanager
-    def atomic_checkpoint(self, rule: Rule) -> Generator[_Parse, None, None]:
+    def atomic_checkpoint(self, rule: Rule) -> Generator[Parse, None, None]:
         depth = self.state.atomic_depth
         self.state.rules.append(rule)
         yield self
@@ -105,19 +93,19 @@ class _Parse:
         self.state.atomic_depth = depth
 
     @contextmanager
-    def rule(self, rule: Rule) -> Generator[_Parse, None, None]:
+    def rule(self, rule: Rule) -> Generator[Parse, None, None]:
         self.state.rules.append(rule)
         yield self
         self.state.rules.pop()
 
     @contextmanager
-    def suppress_failures(self) -> Generator[_Parse, None, None]:
+    def suppress_failures(self) -> Generator[Parse, None, None]:
         self._suppress_failures = True
         yield self
         self._suppress_failures = False
 
     @contextmanager
-    def tag(self, tag_: str) -> Generator[_Parse, None, None]:
+    def tag(self, tag_: str) -> Generator[Parse, None, None]:
         self.tags.append(tag_)
         yield self
         if self.tags:
@@ -252,7 +240,7 @@ class _Parse:
                 return False
 
             case (ast.SEQUENCE, _, left, right):
-                children: list[Pair] = []
+                children = []
 
                 if not self.parse_expression(left, children):
                     return False
@@ -306,7 +294,7 @@ class _Parse:
 
             case (ast.OPTIONAL, _, expr):
                 self.checkpoint()
-                children: list[Pair] = []
+                children = []
 
                 if self.parse_expression(expr, children):
                     self.ok()
@@ -317,7 +305,7 @@ class _Parse:
                 return True
 
             case (ast.REPEAT, _, expr):
-                children: list[Pair] = []
+                children = []
 
                 while True:
                     self.checkpoint()
@@ -334,7 +322,7 @@ class _Parse:
                 return True
 
             case (ast.REPEAT_ONCE, _, expr):
-                children: list[Pair] = []
+                children = []
 
                 self.checkpoint()
 
@@ -343,6 +331,7 @@ class _Parse:
                     return False
 
                 self.ok()
+                self.parse_trivia(children)
                 pairs.extend(children)
                 children.clear()
 
@@ -365,7 +354,7 @@ class _Parse:
                     return True
 
                 accumulator: list[Pair] = []
-                children: list[Pair] = []
+                children = []
                 match_count = 0
 
                 self.checkpoint()
@@ -395,8 +384,8 @@ class _Parse:
                 return False
 
             case (ast.REPEAT_MIN, _, expr, n):
-                accumulator: list[Pair] = []
-                children: list[Pair] = []
+                accumulator = []
+                children = []
                 match_count = 0
 
                 self.checkpoint()
@@ -426,8 +415,8 @@ class _Parse:
                 if n <= 0:
                     return True
 
-                accumulator: list[Pair] = []
-                children: list[Pair] = []
+                accumulator = []
+                children = []
                 match_count = 0
 
                 self.checkpoint()
@@ -440,13 +429,16 @@ class _Parse:
                         break
 
                     self.ok()
-                    self.parse_trivia(children)
                     accumulator.extend(children)
                     children.clear()
                     match_count += 1
 
                     if match_count >= n:
                         break
+
+                    self.parse_trivia(children)
+                    accumulator.extend(children)
+                    children.clear()
 
                 if match_count <= n:
                     pairs.extend(accumulator)
@@ -457,8 +449,8 @@ class _Parse:
                 return False
 
             case (ast.REPEAT_MIN_MAX, _, expr, min_, max_):
-                accumulator: list[Pair] = []
-                children: list[Pair] = []
+                accumulator = []
+                children = []
                 match_count = 0
 
                 self.checkpoint()
@@ -493,7 +485,7 @@ class _Parse:
 
             case (ast.PUSH, _, _, expr):
                 start = self.state.pos
-                children: list[Pair] = []
+                children = []
 
                 if not self.parse_expression(expr, children):
                     return False
@@ -517,23 +509,25 @@ class _Parse:
                 return True
 
             case (ast.PEEK, _, _):
-                value = self.peek()
+                peeked = self.peek()
 
-                if value is not None and self.source.startswith(value, self.state.pos):
-                    self.state.pos += len(value)
+                if peeked is not None and self.source.startswith(
+                    peeked, self.state.pos
+                ):
+                    self.state.pos += len(peeked)
                     return True
 
-                if value:
-                    self.fail(value)
+                if peeked:
+                    self.fail(peeked)
 
                 return False
 
             case (ast.PEEK_ALL, _, _):
                 pos = self.state.pos
                 length = len(self.state.stack)
-                children: list[Pair] = []
+                children = []
 
-                for i, literal in enumerate(self.state.stack):
+                for i, literal in enumerate(reversed(self.state.stack)):
                     if not self.source.startswith(literal, pos):
                         self.fail(literal)
                         return False
@@ -548,21 +542,23 @@ class _Parse:
                 return True
 
             case (ast.POP, _, _):
-                value = self.peek()
+                peeked = self.peek()
 
-                if value is not None and self.source.startswith(value, self.state.pos):
+                if peeked is not None and self.source.startswith(
+                    peeked, self.state.pos
+                ):
                     self.state.stack.pop()
-                    self.state.pos += len(value)
+                    self.state.pos += len(peeked)
                     return True
 
-                if value:
-                    self.fail(value)
+                if peeked:
+                    self.fail(peeked)
 
                 return False
 
             case (ast.POP_ALL, _, _):
                 pos = self.state.pos
-                children: list[Pair] = []
+                children = []
                 length = len(self.state.stack)
 
                 self.checkpoint()
@@ -609,6 +605,9 @@ class _Parse:
                 return False
 
             case (ast.RANGE, _, _, start, stop):
+                if self.state.pos >= len(self.source):
+                    return False
+
                 ch = ord(self.source[self.state.pos])
 
                 if ch >= ord(start) and ch <= ord(stop):
@@ -616,6 +615,24 @@ class _Parse:
                     return True
 
                 self.fail(f"{start!r}..{stop!r}")
+                return False
+
+            case (ast.SOI, _, _):
+                return self.state.pos == 0
+
+            case (ast.EOI, _, _):
+                return self.state.pos >= len(self.source)
+
+            case (ast.ANY, _, _):
+                if self.state.pos < len(self.source):
+                    self.state.pos += 1
+                    return True
+                return False
+
+            case (ast.REGEX, _, pattern):
+                if match := re.match(pattern, self.source, 0, pos=self.state.pos):  # pyright: ignore[reportUnknownMemberType]
+                    self.state.pos = match.end()
+                    return True
                 return False
 
     def parse_trivia(self, pairs: list[Pair]) -> bool:
@@ -658,7 +675,7 @@ class _Parse:
 
 
 @dataclass(slots=True)
-class _ParseState:
+class ParseState:
     pos: int
     atomic_depth: int = 0
     rules: list[Rule] = field(default_factory=list)  # pyright: ignore[reportUnknownVariableType]

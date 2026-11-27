@@ -23,7 +23,9 @@ PRECEDENCES: dict[TokenKind, Precedence] = {
 _RE_ESCAPE = re.compile(r"(\\u\{[0-9a-fA-F]{2,6}\}|\\x[0-9a-fA-F]{2}|\\.)")
 
 
-class Parser:
+class Grammar:
+    """Parse a pest grammar."""
+
     __slots__ = (
         "eoi",
         "length",
@@ -37,7 +39,7 @@ class Parser:
         self.tokens = tokens
         self.pos = 0
         self.length = len(tokens)
-        self.eoi: Token = (TOKEN_EOI, self.length, self.length)
+        self.eoi: Token = (TOKEN_EOF, self.length, self.length)
 
     @classmethod
     def parse(cls, source: str) -> tuple[dict[str, _ast.Rule], list[str]]:
@@ -53,7 +55,7 @@ class Parser:
 
         rules: dict[str, _ast.Rule] = {}
 
-        while self.kind() != TOKEN_EOI:
+        while self.kind() != TOKEN_EOF:
             rule_doc: list[str] = []
 
             while self.kind() == TOKEN_RULE_DOC:
@@ -70,6 +72,7 @@ class Parser:
 
             self.eat(TOKEN_LBRACE)
             expression = self.parse_expression()
+            self.eat(TOKEN_RBRACE)
 
             rules[rule_name] = (
                 _ast.RULE,
@@ -151,8 +154,8 @@ class Parser:
 
             raise PestGrammarSyntaxError(
                 "expected a string literal after '^'",
-                self.current(),
-                self.source,
+                token=self.current(),
+                source=self.source,
             )
 
         if kind in (TOKEN_CHAR, TOKEN_ESC_CHAR):
@@ -163,10 +166,20 @@ class Parser:
             return (_ast.RANGE, token, tag, start_ch, stop_ch)
 
         if kind == TOKEN_AMP:
-            return (_ast.POSITIVE_PREDICATE, self.next(), tag, self.parse_expression())
+            return (
+                _ast.POSITIVE_PREDICATE,
+                self.next(),
+                tag,
+                self.parse_expression(precedence=PRECEDENCE_PREFIX),
+            )
 
         if kind == TOKEN_EXCLAIM:
-            return (_ast.NEGATIVE_PREDICATE, self.next(), tag, self.parse_expression())
+            return (
+                _ast.NEGATIVE_PREDICATE,
+                self.next(),
+                tag,
+                self.parse_expression(precedence=PRECEDENCE_PREFIX),
+            )
 
         if kind == TOKEN_LPAREN:
             token = self.next()
@@ -229,11 +242,21 @@ class Parser:
         if kind == TOKEN_DROP:
             return (_ast.DROP, self.next(), tag)
 
+        if kind == TOKEN_ANY:
+            return (_ast.ANY, self.next(), tag)
+
+        if kind == TOKEN_SOI:
+            return (_ast.SOI, self.next(), tag)
+
+        if kind == TOKEN_EOI:
+            token = self.next()
+            return (_ast.RULE, token, "EOI", (_ast.EOI, token, tag), 0, ())
+
         raise PestGrammarSyntaxError(
             f"unexpected token {TOKEN_NAMES[self.kind()]} "
             f"({token_value(self.current(), self.source)})",
-            self.current(),
-            self.source,
+            token=self.current(),
+            source=self.source,
         )
 
     def parse_infix_expression(
@@ -252,8 +275,8 @@ class Parser:
 
         raise PestGrammarSyntaxError(
             f"unknown infix operator ({token_value(op_token, self.source)})",
-            op_token,
-            self.source,
+            token=op_token,
+            source=self.source,
         )
 
     def parse_postfix_expression(self, expr: _ast.Expression) -> _ast.Expression:
@@ -284,8 +307,8 @@ class Parser:
                 if min_ < 0:
                     raise PestGrammarSyntaxError(
                         "repeat min must be greater or equal to zero",
-                        token,
-                        self.source,
+                        token=token,
+                        source=self.source,
                     )
 
                 if self.kind() == TOKEN_RBRACE:
@@ -303,14 +326,15 @@ class Parser:
                 if max_ < 0:
                     raise PestGrammarSyntaxError(
                         "repeat max must be greater or equal to zero",
-                        token,
-                        self.source,
+                        token=token,
+                        source=self.source,
                     )
 
                 self.eat(TOKEN_RBRACE)
                 return (_ast.REPEAT_MIN_MAX, token, expr, min_, max_)
 
             if kind == TOKEN_COMMA:
+                self.pos += 1
                 max_ = int(token_value(self.eat(TOKEN_INTEGER), self.source))
                 self.eat(TOKEN_RBRACE)
                 return (_ast.REPEAT_MAX, token, expr, max_)
@@ -318,8 +342,8 @@ class Parser:
             raise PestGrammarSyntaxError(
                 "expected a number or comma "
                 f"({token_value(self.current(), self.source)})",
-                self.current(),
-                self.source,
+                token=self.current(),
+                source=self.source,
             )
 
         return expr
@@ -334,7 +358,7 @@ class Parser:
         """Return the kind of the current token without advancing the pointer."""
         if self.pos < self.length:
             return self.tokens[self.pos][0]
-        return TOKEN_EOI
+        return TOKEN_EOF
 
     def value(self) -> str:
         """Return the string value associated with the current token."""
@@ -359,15 +383,16 @@ class Parser:
     def peek_kind(self, n: int = 1) -> int:
         if self.pos + n < self.length:
             return self.tokens[self.pos + n][0]
-        return TOKEN_EOI
+        return TOKEN_EOF
 
     def eat(self, kind: TokenKind, message: str | None = None) -> Token:
         token = self.current()
         if token[0] != kind:
             raise PestGrammarSyntaxError(
-                message or f"unexpected {token_value(token, self.source)!r}",
-                token,
-                self.source,
+                message
+                or f"expected {TOKEN_NAMES[kind]}, found {token_value(token, self.source)!r}",
+                token=token,
+                source=self.source,
             )
 
         self.pos += 1
@@ -405,8 +430,8 @@ class Parser:
                 # No digits
                 raise PestGrammarSyntaxError(
                     "invalid escape sequence",
-                    token,
-                    self.source,
+                    token=token,
+                    source=self.source,
                 )
             elif part.startswith("\\u"):
                 code_point = int(part[3:-1], 16)
@@ -417,8 +442,8 @@ class Parser:
             else:
                 raise PestGrammarSyntaxError(
                     "invalid escape sequence",
-                    token,
-                    self.source,
+                    token=token,
+                    source=self.source,
                 )
 
         return "".join(unescaped)

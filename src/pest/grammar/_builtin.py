@@ -1,63 +1,26 @@
-"""Built-in Unicode rules."""
+from ._ast import RANGE, REGEX, RULE, Expression, Rule
+from ._modifiers import SILENT
+from ._tokens import TOKEN_BUILTIN, Token
 
-from __future__ import annotations
+# NOTE: ANY, SOI and EOI have their own tokens and AST nodes.
 
-from typing import TYPE_CHECKING, Self
+_TOKEN: Token = (TOKEN_BUILTIN, -1, -1)
 
-from pest.grammar.expression import RegexExpression
-from pest.grammar.rule import SILENT, BuiltInRule
+_ASCII_RULE_MAP: dict[str, Expression] = {
+    "ASCII_DIGIT": (RANGE, _TOKEN, None, "0", "9"),
+    "ASCII_NONZERO_DIGIT": (RANGE, _TOKEN, None, "1", "9"),
+    "ASCII_BIN_DIGIT": (RANGE, _TOKEN, None, "0", "1"),
+    "ASCII_OCT_DIGIT": (RANGE, _TOKEN, None, "0", "7"),
+    "ASCII_HEX_DIGIT": (REGEX, _TOKEN, r"[0-9a-fA-F]"),
+    "ASCII_ALPHANUMERIC": (REGEX, _TOKEN, r"[0-9a-zA-Z]"),
+    "ASCII": (RANGE, _TOKEN, None, "\u0000", "\u007f"),
+    "ASCII_ALPHA_LOWER": (RANGE, _TOKEN, None, "a", "z"),
+    "ASCII_ALPHA_UPPER": (RANGE, _TOKEN, None, "A", "Z"),
+    "ASCII_ALPHA": (REGEX, _TOKEN, r"[a-zA-Z]"),
+    "NEWLINE": (REGEX, _TOKEN, r"\r?\n|\r"),
+}
 
-if TYPE_CHECKING:
-    from pest.grammar.expression import Expression
-
-
-class UnicodePropertyRule(BuiltInRule):
-    """Represents a built-in Unicode property rule."""
-
-    __slots__ = ()
-
-    def __init__(self, pattern: str, name: str):
-        super().__init__(name, RegexExpression(pattern), SILENT)
-
-    def __str__(self) -> str:
-        return self.name
-
-    def with_children(self, expressions: list[Expression]) -> Self:
-        """Return a new instance of this expression with child expressions replaced."""
-        assert len(expressions) == 1
-        return self
-
-
-def _make_registry(
-    prop_type: str, mapping_or_list: dict[str, str] | list[str]
-) -> dict[str, UnicodePropertyRule]:
-    """Build registry of Unicode properties.
-
-    Args:
-        prop_type: "gc", "Binary", or "Script".
-        mapping_or_list:
-            - for "gc" or "Binary": dict {NAME_IN_PEST: UnicodePropertyValue}
-            - for "Script": list of Unicode script names (CamelCase)
-    """
-    registry: dict[str, UnicodePropertyRule] = {}
-
-    if prop_type in {"gc", "Binary"}:
-        assert isinstance(mapping_or_list, dict)
-        for key, value in mapping_or_list.items():
-            registry[key] = UnicodePropertyRule(rf"\p{{{value}}}", key)
-
-    elif prop_type == "Script":
-        for script_name in mapping_or_list:
-            key = script_name.upper().replace("-", "_")
-            registry[key] = UnicodePropertyRule(rf"\p{{Script={script_name}}}", key)
-
-    else:
-        raise ValueError(f"Unknown property type: {prop_type}")
-
-    return registry
-
-
-GENERAL_CATEGORY_MAP = {
+_GENERAL_CATEGORY_MAP = {
     "LETTER": "L",
     "CASED_LETTER": "LC",
     "UPPERCASE_LETTER": "Lu",
@@ -98,10 +61,7 @@ GENERAL_CATEGORY_MAP = {
     "UNASSIGNED": "Cn",
 }
 
-
-UNICODE_GENERAL_CATEGORY_RULES = _make_registry("gc", GENERAL_CATEGORY_MAP)
-
-BINARY_PROPERTY_MAP = {
+_BINARY_PROPERTY_MAP = {
     "ALPHABETIC": "Alphabetic",
     "BIDI_CONTROL": "Bidi_Control",
     "BIDI_MIRRORED": "Bidi_Mirrored",
@@ -163,9 +123,7 @@ BINARY_PROPERTY_MAP = {
     "XID_START": "XID_Start",
 }
 
-UNICODE_BINARY_PROPERTY_RULES = _make_registry("Binary", BINARY_PROPERTY_MAP)
-
-SCRIPT_NAMES = [
+_SCRIPT_NAMES = [
     "Adlam",
     "Ahom",
     "Anatolian_Hieroglyphs",
@@ -331,10 +289,20 @@ SCRIPT_NAMES = [
     "Zanabazar_Square",
 ]
 
-UNICODE_SCRIPT_PROPERTY_RULES = _make_registry("Script", SCRIPT_NAMES)
-
-UNICODE_RULES = {
-    **UNICODE_GENERAL_CATEGORY_RULES,
-    **UNICODE_BINARY_PROPERTY_RULES,
-    **UNICODE_SCRIPT_PROPERTY_RULES,
+BUILTIN_RULES: dict[str, Rule] = {
+    name: (RULE, _TOKEN, name, expr, SILENT, ())
+    for name, expr in _ASCII_RULE_MAP.items()
 }
+
+for k, v in _GENERAL_CATEGORY_MAP.items():
+    expr: Expression = (REGEX, _TOKEN, rf"\p{{{v}}}")
+    BUILTIN_RULES[k] = (RULE, _TOKEN, k, expr, SILENT, ())
+
+for k, v in _BINARY_PROPERTY_MAP.items():
+    expr = (REGEX, _TOKEN, rf"\p{{{v}}}")
+    BUILTIN_RULES[k] = (RULE, _TOKEN, k, expr, SILENT, ())
+
+for script_name in _SCRIPT_NAMES:
+    key = script_name.upper().replace("-", "_")
+    expr = (REGEX, _TOKEN, rf"\p{{Script={script_name}}}")
+    BUILTIN_RULES[key] = (RULE, _TOKEN, key, expr, SILENT, ())

@@ -4,9 +4,11 @@ from typing import Literal
 
 __all__ = (
     "TOKEN_AMP",
+    "TOKEN_ANY",
     "TOKEN_ASSIGN",
     "TOKEN_ASTERISK",
     "TOKEN_AT",
+    "TOKEN_BUILTIN",
     "TOKEN_CARET",
     "TOKEN_CHAR",
     "TOKEN_COMMA",
@@ -15,6 +17,7 @@ __all__ = (
     "TOKEN_DOUBLE_DOT",
     "TOKEN_DROP",
     "TOKEN_EOI",
+    "TOKEN_EOF",
     "TOKEN_ESC_CHAR",
     "TOKEN_EXCLAIM",
     "TOKEN_GRAMMAR_DOC",
@@ -39,8 +42,8 @@ __all__ = (
     "TOKEN_RULE_DOC",
     "TOKEN_SOI",
     "TOKEN_SPAN",
-    "TOKEN_STRING",
     "TOKEN_STRING_ESC",
+    "TOKEN_STRING",
     "TOKEN_TILDE",
     "TOKEN_UNDERSCORE",
     "TOKEN_UNKNOWN",
@@ -88,59 +91,67 @@ type TokenKind = Literal[
     39,
     40,
     41,
+    42,
+    43,
+    44,
 ]
 
 type Token = tuple[TokenKind, int, int]
 """Token type, start index and end index."""
 
 TOKEN_AMP: Literal[1] = 1
-TOKEN_ASSIGN: Literal[2] = 2
-TOKEN_ASTERISK: Literal[3] = 3
-TOKEN_AT: Literal[4] = 4
-TOKEN_CARET: Literal[5] = 5
-TOKEN_CHAR: Literal[6] = 6
-TOKEN_COMMA: Literal[7] = 7
-TOKEN_COMMENT_TEXT: Literal[8] = 8
-TOKEN_DOLLAR: Literal[9] = 9
-TOKEN_DOUBLE_DOT: Literal[10] = 10
-TOKEN_DROP: Literal[11] = 11
-TOKEN_EOI: Literal[12] = 12
-TOKEN_ESC_CHAR: Literal[13] = 13
-TOKEN_EXCLAIM: Literal[14] = 14
-TOKEN_GRAMMAR_DOC: Literal[15] = 15
-TOKEN_HASH: Literal[16] = 16
-TOKEN_IDENTIFIER: Literal[17] = 17
-TOKEN_INTEGER: Literal[18] = 18
-TOKEN_LBRACE: Literal[19] = 19
-TOKEN_LBRACKET: Literal[20] = 20
-TOKEN_LPAREN: Literal[21] = 21
-TOKEN_PEEK_ALL: Literal[22] = 22
-TOKEN_PEEK: Literal[23] = 23
-TOKEN_PIPE: Literal[24] = 24
-TOKEN_PLUS: Literal[25] = 25
-TOKEN_POP_ALL: Literal[26] = 26
-TOKEN_POP: Literal[27] = 27
-TOKEN_PUSH_LITERAL: Literal[28] = 28
-TOKEN_PUSH: Literal[29] = 29
-TOKEN_QUESTION: Literal[30] = 30
-TOKEN_RBRACE: Literal[31] = 31
-TOKEN_RBRACKET: Literal[32] = 32
-TOKEN_RPAREN: Literal[33] = 33
-TOKEN_RULE_DOC: Literal[34] = 34
-TOKEN_SOI: Literal[35] = 35
-TOKEN_SPAN: Literal[36] = 36
-TOKEN_STRING: Literal[37] = 37
-TOKEN_STRING_ESC: Literal[38] = 38
-TOKEN_TILDE: Literal[39] = 39
-TOKEN_UNDERSCORE: Literal[40] = 40
-TOKEN_UNKNOWN: Literal[41] = 41
+TOKEN_ANY: Literal[2] = 2
+TOKEN_ASSIGN: Literal[3] = 3
+TOKEN_ASTERISK: Literal[4] = 4
+TOKEN_AT: Literal[5] = 5
+TOKEN_BUILTIN: Literal[6] = 6
+TOKEN_CARET: Literal[7] = 7
+TOKEN_CHAR: Literal[8] = 8
+TOKEN_COMMA: Literal[9] = 9
+TOKEN_COMMENT_TEXT: Literal[10] = 10
+TOKEN_DOLLAR: Literal[11] = 11
+TOKEN_DOUBLE_DOT: Literal[12] = 12
+TOKEN_DROP: Literal[13] = 13
+TOKEN_EOI: Literal[14] = 14
+TOKEN_EOF: Literal[15] = 15
+TOKEN_ESC_CHAR: Literal[16] = 16
+TOKEN_EXCLAIM: Literal[17] = 17
+TOKEN_GRAMMAR_DOC: Literal[18] = 18
+TOKEN_HASH: Literal[19] = 19
+TOKEN_IDENTIFIER: Literal[20] = 20
+TOKEN_INTEGER: Literal[21] = 21
+TOKEN_LBRACE: Literal[22] = 22
+TOKEN_LBRACKET: Literal[23] = 23
+TOKEN_LPAREN: Literal[24] = 24
+TOKEN_PEEK_ALL: Literal[25] = 25
+TOKEN_PEEK: Literal[26] = 26
+TOKEN_PIPE: Literal[27] = 27
+TOKEN_PLUS: Literal[28] = 28
+TOKEN_POP_ALL: Literal[29] = 29
+TOKEN_POP: Literal[30] = 30
+TOKEN_PUSH_LITERAL: Literal[31] = 31
+TOKEN_PUSH: Literal[32] = 32
+TOKEN_QUESTION: Literal[33] = 33
+TOKEN_RBRACE: Literal[34] = 34
+TOKEN_RBRACKET: Literal[35] = 35
+TOKEN_RPAREN: Literal[36] = 36
+TOKEN_RULE_DOC: Literal[37] = 37
+TOKEN_SOI: Literal[38] = 38
+TOKEN_SPAN: Literal[39] = 39
+TOKEN_STRING_ESC: Literal[40] = 40
+TOKEN_STRING: Literal[41] = 41
+TOKEN_TILDE: Literal[42] = 42
+TOKEN_UNDERSCORE: Literal[43] = 43
+TOKEN_UNKNOWN: Literal[44] = 44
 
 TOKEN_NAMES = (
     None,
     "AMP",
+    "ANY",
     "ASSIGN",
     "ASTERISK",
     "AT",
+    "BUILTIN",
     "CARET",
     "CHAR",
     "COMMA",
@@ -149,6 +160,7 @@ TOKEN_NAMES = (
     "DOUBLE_DOT",
     "DROP",
     "EOI",
+    "EOF",
     "ESC_CHAR",
     "EXCLAIM",
     "GRAMMAR_DOC",
@@ -173,8 +185,8 @@ TOKEN_NAMES = (
     "RULE_DOC",
     "SOI",
     "SPAN",
-    "STRING",
     "STRING_ESC",
+    "STRING",
     "TILDE",
     "UNDERSCORE",
     "UNKNOWN",
@@ -182,9 +194,11 @@ TOKEN_NAMES = (
 
 TOKEN_MAP = {
     TOKEN_AMP: "TOKEN_AMP",
+    TOKEN_ANY: "TOKEN_ANY",
     TOKEN_ASSIGN: "TOKEN_ASSIGN",
     TOKEN_ASTERISK: "TOKEN_ASTERISK",
     TOKEN_AT: "TOKEN_AT",
+    TOKEN_BUILTIN: "TOKEN_BUILTIN",
     TOKEN_CARET: "TOKEN_CARET",
     TOKEN_CHAR: "TOKEN_CHAR",
     TOKEN_COMMA: "TOKEN_COMMA",
@@ -193,6 +207,7 @@ TOKEN_MAP = {
     TOKEN_DOUBLE_DOT: "TOKEN_DOUBLE_DOT",
     TOKEN_DROP: "TOKEN_DROP",
     TOKEN_EOI: "TOKEN_EOI",
+    TOKEN_EOF: "TOKEN_EOF",
     TOKEN_ESC_CHAR: "TOKEN_ESC_CHAR",
     TOKEN_EXCLAIM: "TOKEN_EXCLAIM",
     TOKEN_GRAMMAR_DOC: "TOKEN_GRAMMAR_DOC",
@@ -217,8 +232,8 @@ TOKEN_MAP = {
     TOKEN_RULE_DOC: "TOKEN_RULE_DOC",
     TOKEN_SOI: "TOKEN_SOI",
     TOKEN_SPAN: "TOKEN_SPAN",
-    TOKEN_STRING: "TOKEN_STRING",
     TOKEN_STRING_ESC: "TOKEN_STRING_ESC",
+    TOKEN_STRING: "TOKEN_STRING",
     TOKEN_TILDE: "TOKEN_TILDE",
     TOKEN_UNDERSCORE: "TOKEN_UNDERSCORE",
     TOKEN_UNKNOWN: "TOKEN_UNKNOWN",

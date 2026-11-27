@@ -13,8 +13,10 @@ from typing import TYPE_CHECKING, NamedTuple, overload
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from .grammar.rule import Rule
-    from .state import RuleFrame
+    from .grammar._ast import Rule
+
+
+# TODO: dataclasses
 
 
 class Token:
@@ -27,7 +29,7 @@ class Token:
 
     __slots__ = ("rule", "pos")
 
-    def __init__(self, rule: Rule | RuleFrame, pos: int) -> None:
+    def __init__(self, rule: Rule, pos: int) -> None:
         self.rule = rule
         self.pos = pos
 
@@ -38,7 +40,7 @@ class Start(Token):
     __slots__ = ()
 
     def __repr__(self) -> str:
-        return f"Start(rule={self.rule.name!r}, pos={self.pos})"
+        return f"Start(rule={self.rule[2]!r}, pos={self.pos})"
 
 
 class End(Token):
@@ -47,7 +49,10 @@ class End(Token):
     __slots__ = ()
 
     def __repr__(self) -> str:
-        return f"End(rule={self.rule.name!r}, pos={self.pos})"
+        return f"End(rule={self.rule[2]!r}, pos={self.pos})"
+
+
+# TODO: don't use namedtuple
 
 
 class Span(NamedTuple):
@@ -154,17 +159,17 @@ class Pair:
         input_: str,
         start: int,
         end: int,
-        rule: Rule | RuleFrame,
+        rule: Rule,
         children: list[Pair] | None = None,
         tag: str | None = None,
     ):
         self.input = input_
-        self.rule = rule
+        self.rule = rule  # TODO: expose rule.name somehow
         self.start = start
         self.end = end
         self.children = children or []
         self.tag = tag
-        self.name = rule.name
+        self.name = rule[2]
 
     def __str__(self) -> str:
         return self.input[self.start : self.end]
@@ -201,7 +206,7 @@ class Pair:
     def dump(self) -> dict[str, object]:
         """Return a pest-debug-like JSON structure representing this pair."""
         d: dict[str, object] = {
-            "rule": self.rule.name,
+            "rule": self.rule[2],
             "span": {
                 "str": self.input[self.start : self.end],
                 "start": self.start,

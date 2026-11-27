@@ -1,12 +1,10 @@
-"""Exceptions that occur when parsing an input with a pest grammar."""
-
 from __future__ import annotations
 
 from itertools import chain
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from pest.state import ParserState
+    from .grammar._ast import Rule
 
 
 class PestParsingError(Exception):
@@ -14,30 +12,38 @@ class PestParsingError(Exception):
 
     # TODO: docs
 
-    def __init__(self, state: ParserState):
-        super().__init__(
-            self.expected(state.furthest_expected, state.furthest_unexpected)
-        )
-        self.state = state
+    def __init__(
+        self,
+        *,
+        source: str,
+        furthest_pos: int,
+        furthest_expected: dict[str, list[str]],
+        furthest_unexpected: dict[str, list[str]],
+        furthest_stack: list[Rule],
+    ):
+        super().__init__(self.expected(furthest_expected, furthest_unexpected))
+        self.source = source
+        self.furthest_pos = furthest_pos
+        self.furthest_expected = furthest_expected
+        self.furthest_unexpected = furthest_unexpected
+        self.furthest_stack = furthest_stack
 
     def __str__(self) -> str:
         return self.detailed_message()
 
     def detailed_message(self) -> str:
         """Return an error message formatted with extra context info."""
-        line, lineno, col = error_context(self.state.input, self.state.furthest_pos)
+        line, lineno, col = error_context(self.source, self.furthest_pos)
 
         msg = self.args[0]
         pad = " " * len(str(lineno))
         pointer = (" " * (col - 1)) + "^"
         no_pointer = " " * (col)
-        rule_stack = " > ".join(f.name for f in self.state.furthest_stack)
+        rule_stack = " > ".join(f[2] for f in self.furthest_stack)
 
         # TODO: if this is short, put it on the same line as msg
         # TODO: suppress this if `(None)`
-        labels = self.expected_labels(
-            self.state.furthest_expected, self.state.furthest_unexpected
-        )
+        labels = self.expected_labels(self.furthest_expected, self.furthest_unexpected)
 
         return (
             f"{msg}\n"

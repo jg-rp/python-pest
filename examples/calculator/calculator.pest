@@ -18,6 +18,6 @@ program      =   { SOI ~ expr ~ EOI }
       neg    =   { "-" } // Negation
     postfix  =  _{ fac }
       fac    =   { "!" } // Factorial
-    primary  =  _{ int | "(" ~ expr ~ ")" | ident }
+    primary  =  _{ ident | int | "(" ~ expr ~ ")" }
       int    =  @{ (ASCII_NONZERO_DIGIT ~ ASCII_DIGIT+ | ASCII_DIGIT) }
       ident  =  @{ ASCII_ALPHA+ }

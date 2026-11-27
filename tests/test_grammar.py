@@ -7,15 +7,13 @@ See LICENSE_PEST.txt
 
 import pytest
 
-from pest import PestParsingError
-
-from .conftest import ParserLike as Parser
+from pest import Parser, PestParsingError
 
 
 @pytest.fixture(scope="module")
-def grammar() -> str:
+def parser() -> Parser:
     with open("tests/grammars/grammar.pest", encoding="utf-8") as fd:
-        return fd.read()
+        return Parser.from_grammar(fd.read())
 
 
 def test_string_rule(parser: Parser) -> None:

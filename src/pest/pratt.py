@@ -3,15 +3,13 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, ClassVar, Generic, TypeVar
+from typing import TYPE_CHECKING, ClassVar
 
 if TYPE_CHECKING:
     from pest import Pair, Stream
 
-ExprT = TypeVar("ExprT")
 
-
-class PrattParser(ABC, Generic[ExprT]):
+class PrattParser[ExprT](ABC):
     """Generic Pratt parser base class operating on a pest `Stream` of `Pair`s.
 
     Subclasses define how to construct AST nodes by overriding the four

@@ -5,25 +5,9 @@ from collections.abc import Callable
 import pytest
 from _pytest.fixtures import SubRequest
 
-from pest import Parser
-
-# Always regenerate the calculator parser before running tests.
-with open("examples/calculator/calculator.pest", encoding="utf-8") as fd:
-    _parser = Parser.from_grammar(fd.read())
-
-with open("examples/calculator/parser.py", "w", encoding="utf-8") as fd:
-    fd.write(_parser.generate())
-
-with open("examples/calculator/grammar_encoded_prec.pest") as fd:
-    _parser = Parser.from_grammar(fd.read())
-
-with open(
-    "examples/calculator/grammar_encoded_prec_parser.py", "w", encoding="utf-8"
-) as fd:
-    fd.write(_parser.generate())
-
 sys.path.append(os.getcwd())
 
+from examples.calculator import Rule
 from examples.calculator._ast import (
     Expression,
     InfixExpr,
@@ -33,12 +17,13 @@ from examples.calculator._ast import (
     VarExpr,
 )
 from examples.calculator.grammar_encoded_prec import (
+    PARSER as GRAMMAR_ENCODED_PREC_PARSER,
+)
+from examples.calculator.grammar_encoded_prec import (
     parse_program as parse_program_implicit,
 )
-from examples.calculator.grammar_encoded_prec_parser import parse as parse_implicit
-from examples.calculator.parser import Rule, parse
 from examples.calculator.pratt import CalculatorParser
-from examples.calculator.prec_climber import parse_program
+from examples.calculator.prec_climber import PARSER, parse_program
 from pest import PestParsingError
 
 
@@ -48,7 +33,7 @@ def parser(request: SubRequest) -> Callable[[str], Expression]:
     if request.param == "precedence":
 
         def precedence_parser(source: str) -> Expression:
-            pairs = parse(Rule.PROGRAM, source)
+            pairs = PARSER.parse(Rule.PROGRAM, source)
             return parse_program(pairs)
 
         return precedence_parser
@@ -64,7 +49,7 @@ def parser(request: SubRequest) -> Callable[[str], Expression]:
     if request.param == "grammar":
 
         def grammar_parse(source: str) -> Expression:
-            pairs = parse_implicit(Rule.PROGRAM, source)
+            pairs = GRAMMAR_ENCODED_PREC_PARSER.parse(Rule.PROGRAM, source)
             return parse_program_implicit(pairs)
 
         return grammar_parse
