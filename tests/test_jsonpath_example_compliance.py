@@ -12,22 +12,12 @@ from typing import TYPE_CHECKING, Any
 
 import pytest
 
-from pest import Parser
-
-with open("examples/jsonpath/jsonpath.pest", encoding="utf-8") as fd:
-    grammar = fd.read()
-
-with open("examples/jsonpath/parser.py", "w", encoding="utf-8") as fd:
-    fd.write(Parser.from_grammar(grammar).generate())
-
 sys.path.append(os.getcwd())
 
 from examples.jsonpath.exceptions import JSONPathError
 from examples.jsonpath.jsonpath import JSONPathParser
 
 if TYPE_CHECKING:
-    from _pytest.fixtures import SubRequest
-
     from examples.jsonpath import JSONValue
     from pest import Pairs
 
@@ -45,9 +35,7 @@ class Case:
     tags: list[str] = field(default_factory=list[str])
 
 
-# We're skipping these because we don't want to depend on the `regex` package
-# for the sake of an example. The regex package supports Unicode properties,
-# `re` from the standard Python library does not.
+# TODO: update the example to use regex, we depend on it now.
 SKIP = {
     "functions, match, filter, match function, unicode char class, uppercase",
     "functions, match, filter, match function, unicode char class negated, uppercase",
@@ -86,32 +74,9 @@ class GeneratedParser:
         return self._parse(start_rule, input_, start_pos=start_pos)
 
 
-class UnoptimizedJSONPathParser(JSONPathParser):
-    PARSER = Parser.from_grammar(grammar, optimizer=None)
-
-
-class GeneratedJSONPathParser(JSONPathParser):
-    PARSER = GeneratedParser(Parser.from_grammar(grammar).generate())
-
-
-class UnoptimizedGeneratedJSONPathParser(JSONPathParser):
-    PARSER = GeneratedParser(Parser.from_grammar(grammar, optimizer=None).generate())
-
-
-@pytest.fixture(
-    scope="module",
-    params=["not optimized", "optimized", "generated", "optimized generated"],
-)
-def jsonpath(request: SubRequest) -> JSONPathParser:
-    assert isinstance(request.param, str)
-    if request.param == "not optimized":
-        return UnoptimizedJSONPathParser()
-    if request.param == "optimized":
-        return JSONPathParser()
-    if request.param == "generated":
-        return UnoptimizedGeneratedJSONPathParser()
-    assert request.param == "optimized generated"
-    return GeneratedJSONPathParser()
+@pytest.fixture(scope="module")
+def jsonpath() -> JSONPathParser:
+    return JSONPathParser()
 
 
 @pytest.mark.parametrize("case", valid_cases(), ids=operator.attrgetter("name"))

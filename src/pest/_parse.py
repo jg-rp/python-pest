@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import copy
 import json
 from contextlib import contextmanager
 from dataclasses import dataclass, field
@@ -60,7 +59,7 @@ class Parse:
         self.furthest_stack: list[Rule] = []
 
     def checkpoint(self) -> None:
-        self.history.append(copy.deepcopy(self.state))
+        self.history.append(self.state.copy())
 
     def ok(self) -> None:
         self.history.pop()
@@ -597,7 +596,10 @@ class Parse:
                 return False
 
             case (ast.CI_STRING, _, value):
-                if self.source[self.state.pos : len(value)].lower() == value.lower():
+                if (
+                    self.source[self.state.pos : self.state.pos + len(value)].lower()
+                    == value.lower()
+                ):
                     self.state.pos += len(value)
                     return True
 
@@ -680,3 +682,13 @@ class ParseState:
     atomic_depth: int = 0
     rules: list[Rule] = field(default_factory=list)  # pyright: ignore[reportUnknownVariableType]
     stack: list[str] = field(default_factory=list)  # pyright: ignore[reportUnknownVariableType]
+
+    def copy(self) -> ParseState:
+        # Shallow copies are OK because `Rule` is a tuple composed of tuples, strings
+        # and ints.
+        return ParseState(
+            pos=self.pos,
+            atomic_depth=self.atomic_depth,
+            rules=list(self.rules),
+            stack=list(self.stack),
+        )

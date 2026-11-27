@@ -28,7 +28,7 @@ from pest import PestParsingError
 
 
 @pytest.fixture(params=["precedence", "pratt", "grammar"], scope="module")
-def parser(request: SubRequest) -> Callable[[str], Expression]:
+def parse_expression(request: SubRequest) -> Callable[[str], Expression]:
     """Parameterized fixture providing both parser implementations."""
     if request.param == "precedence":
 
@@ -55,12 +55,6 @@ def parser(request: SubRequest) -> Callable[[str], Expression]:
         return grammar_parse
 
     raise ValueError(f"Unknown parser type {request.param!r}")
-
-
-@pytest.fixture
-def parse_expression(parser: Callable[[str], Expression]):
-    """Fixture returning a callable that parses a source string into an AST."""
-    return parser
 
 
 def eval_expr(

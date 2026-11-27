@@ -7,13 +7,13 @@ See LICENSE_PEST.txt
 
 import pytest
 
-from .conftest import ParserLike as Parser
+from pest import Parser
 
 
 @pytest.fixture(scope="module")
-def grammar() -> str:
+def parser() -> Parser:
     with open("tests/grammars/lists.pest", encoding="utf-8") as fd:
-        return fd.read()
+        return Parser.from_grammar(fd.read())
 
 
 def test_item(parser: Parser) -> None:

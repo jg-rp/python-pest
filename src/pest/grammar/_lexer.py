@@ -85,9 +85,6 @@ def tokenize(source: str) -> list[Token]:
         elif ch == "~":
             tokens.append((TOKEN_TILDE, pos, pos + 1))
             pos += 1
-        elif ch == "_":
-            tokens.append((TOKEN_UNDERSCORE, pos, pos + 1))
-            pos += 1
         elif ch == ".":
             if pos + 1 < length and source[pos + 1] == ".":
                 tokens.append((TOKEN_DOUBLE_DOT, pos, pos + 2))
@@ -131,7 +128,10 @@ def tokenize(source: str) -> list[Token]:
             tokens.append(token)
         elif _is_name_first_ch(ord(ch)):
             word = _scan(RE_IDENTIFIER, source, pos)
-            if word == "DROP":
+            if word == "_":
+                tokens.append((TOKEN_UNDERSCORE, pos, pos + 1))
+                pos += 1
+            elif word == "DROP":
                 tokens.append((TOKEN_DROP, pos, pos + 4))
                 pos += 4
             elif word == "PEEK_ALL":

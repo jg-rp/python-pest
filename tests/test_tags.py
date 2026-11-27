@@ -14,8 +14,8 @@ DOT={"."}"""
 
 
 @pytest.fixture(scope="module")
-def grammar() -> str:
-    return GRAMMAR
+def parser() -> Parser:
+    return Parser.from_grammar(GRAMMAR)
 
 
 def test_opt_tag_star(parser: Parser) -> None:
