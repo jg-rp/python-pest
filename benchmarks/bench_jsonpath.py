@@ -4,7 +4,6 @@ import json
 import os
 import sys
 import timeit
-import types
 from typing import TYPE_CHECKING, Any, NamedTuple
 
 from pest import Parser
@@ -16,38 +15,10 @@ from examples.jsonpath.jsonpath import JSONPathParser
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
 
-    from pest import Pairs
-
 with open("examples/jsonpath/jsonpath.pest") as fd:
     grammar = fd.read()
 
-
-class GeneratedParser:
-    def __init__(self, code: str, *, module_name: str = "generated_parser"):
-        # Create an in-memory module for the generated code
-        module = types.ModuleType(module_name)
-        exec(compile(code, filename=f"{module_name}.py", mode="exec"), module.__dict__)  # noqa: S102
-        # Keep a reference to the generated entry point
-        self._parse = module.parse
-
-    def parse(self, start_rule: str, input_: str, *, start_pos: int = 0) -> Pairs:  # noqa: D102
-        return self._parse(start_rule, input_, start_pos=start_pos)
-
-
-class OptimizedJSONPathParser(JSONPathParser):
-    PARSER = Parser.from_grammar(grammar)
-
-
-class UnoptimizedJSONPathParser(JSONPathParser):
-    PARSER = Parser.from_grammar(grammar, optimizer=None)
-
-
-class GeneratedJSONPathParser(JSONPathParser):
-    PARSER = GeneratedParser(Parser.from_grammar(grammar).generate())
-
-
-class UnoptimizedGeneratedJSONPathParser(JSONPathParser):
-    PARSER = GeneratedParser(Parser.from_grammar(grammar, optimizer=None).generate())
+PARSER = Parser.from_grammar(grammar)
 
 
 class CTSCase(NamedTuple):
@@ -67,7 +38,6 @@ def valid_queries() -> Sequence[CTSCase]:
 
 
 QUERIES = valid_queries()
-PEST = GeneratedParser(Parser.from_grammar(grammar).generate())
 
 COMPILE_AND_FIND_STMT = """\
 for path, data in QUERIES:
@@ -97,7 +67,7 @@ def benchmark(number: int = 10, best_of: int = 3) -> None:
         COMPILE_AND_FIND_STMT,
         globals={
             "QUERIES": QUERIES,
-            "PARSER": GeneratedJSONPathParser(),
+            "PARSER": PARSER,
         },
         number=number,
         repeat=best_of,

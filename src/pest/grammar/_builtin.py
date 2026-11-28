@@ -1,3 +1,5 @@
+import regex as re
+
 from ._ast import RANGE, REGEX, RULE, Expression, Rule
 from ._modifiers import SILENT
 from ._tokens import TOKEN_BUILTIN, Token
@@ -11,13 +13,13 @@ _ASCII_RULE_MAP: dict[str, Expression] = {
     "ASCII_NONZERO_DIGIT": (RANGE, _TOKEN, None, "1", "9"),
     "ASCII_BIN_DIGIT": (RANGE, _TOKEN, None, "0", "1"),
     "ASCII_OCT_DIGIT": (RANGE, _TOKEN, None, "0", "7"),
-    "ASCII_HEX_DIGIT": (REGEX, _TOKEN, r"[0-9a-fA-F]"),
-    "ASCII_ALPHANUMERIC": (REGEX, _TOKEN, r"[0-9a-zA-Z]"),
+    "ASCII_HEX_DIGIT": (REGEX, _TOKEN, re.compile(r"[0-9a-fA-F]")),
+    "ASCII_ALPHANUMERIC": (REGEX, _TOKEN, re.compile(r"[0-9a-zA-Z]")),
     "ASCII": (RANGE, _TOKEN, None, "\u0000", "\u007f"),
     "ASCII_ALPHA_LOWER": (RANGE, _TOKEN, None, "a", "z"),
     "ASCII_ALPHA_UPPER": (RANGE, _TOKEN, None, "A", "Z"),
-    "ASCII_ALPHA": (REGEX, _TOKEN, r"[a-zA-Z]"),
-    "NEWLINE": (REGEX, _TOKEN, r"\r?\n|\r"),
+    "ASCII_ALPHA": (REGEX, _TOKEN, re.compile(r"[a-zA-Z]")),
+    "NEWLINE": (REGEX, _TOKEN, re.compile(r"\r?\n|\r")),
 }
 
 _GENERAL_CATEGORY_MAP = {
@@ -295,14 +297,14 @@ BUILTIN_RULES: dict[str, Rule] = {
 }
 
 for k, v in _GENERAL_CATEGORY_MAP.items():
-    expr: Expression = (REGEX, _TOKEN, rf"\p{{{v}}}")
+    expr: Expression = (REGEX, _TOKEN, re.compile(rf"\p{{{v}}}"))
     BUILTIN_RULES[k] = (RULE, _TOKEN, k, expr, SILENT, ())
 
 for k, v in _BINARY_PROPERTY_MAP.items():
-    expr = (REGEX, _TOKEN, rf"\p{{{v}}}")
+    expr = (REGEX, _TOKEN, re.compile(rf"\p{{{v}}}"))
     BUILTIN_RULES[k] = (RULE, _TOKEN, k, expr, SILENT, ())
 
 for script_name in _SCRIPT_NAMES:
     key = script_name.upper().replace("-", "_")
-    expr = (REGEX, _TOKEN, rf"\p{{Script={script_name}}}")
+    expr = (REGEX, _TOKEN, re.compile(rf"\p{{Script={script_name}}}"))
     BUILTIN_RULES[key] = (RULE, _TOKEN, key, expr, SILENT, ())

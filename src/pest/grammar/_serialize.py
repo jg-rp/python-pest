@@ -16,11 +16,11 @@ def serialize_expression(expression: Expression) -> str:
             modifier_ = modifier_to_str(modifier)
             return f"{doc_}{name} = {modifier_}{{ {serialize_expression(expr)} }}"
 
-        case (_ast.CHOICE, _, left, right):
-            return f"{serialize_expression(left)} | {serialize_expression(right)}"
+        case (_ast.CHOICE, _, expressions):
+            return " | ".join(serialize_expression(e) for e in expressions)
 
-        case (_ast.SEQUENCE, _, left, right):
-            return f"{serialize_expression(left)} ~ {serialize_expression(right)}"
+        case (_ast.SEQUENCE, _, expressions):
+            return " ~ ".join(serialize_expression(e) for e in expressions)
 
         case (_ast.GROUP, _, tag, expr):
             tag_ = f"#{tag}=" if tag else ""

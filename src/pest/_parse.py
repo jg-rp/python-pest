@@ -2,10 +2,7 @@ from __future__ import annotations
 
 import json
 from contextlib import contextmanager
-from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Generator
-
-import regex as re
 
 from .grammar import (
     ATOMIC,
@@ -27,15 +24,20 @@ class Parse:
     __slots__ = (
         "_trivia",
         "_suppress_failures",
+        "atomic_depth",
         "furthest_expected",
         "furthest_pos",
         "furthest_stack",
         "furthest_unexpected",
-        "history",
+        "pos",
+        "pos_history",
+        "rule_stack",
+        "rule_stack_history",
+        "stack",
+        "stack_history",
         "neg_pred_depth",
         "rules",
         "source",
-        "state",
         "tags",
     )
 
@@ -43,8 +45,16 @@ class Parse:
         self.rules = rules
         self.source = text
 
-        self.state = ParseState(pos=start_pos)
-        self.history: list[ParseState] = []
+        self.pos = start_pos
+        self.pos_history: list[int] = []
+
+        self.rule_stack: list[Rule] = []
+        self.rule_stack_history: list[list[Rule]] = []
+
+        self.stack: list[str] = []
+        self.stack_history: list[list[str]] = []
+
+        self.atomic_depth: int = 0
 
         self.tags: list[str] = []
 
@@ -59,43 +69,49 @@ class Parse:
         self.furthest_stack: list[Rule] = []
 
     def checkpoint(self) -> None:
-        self.history.append(self.state.copy())
+        self.pos_history.append(self.pos)
+        self.rule_stack_history.append(list(self.rule_stack))
+        self.stack_history.append(list(self.stack))
 
     def ok(self) -> None:
-        self.history.pop()
+        self.pos_history.pop()
+        self.rule_stack_history.pop()
+        self.stack_history.pop()
 
     def restore(self) -> None:
-        self.state = self.history.pop()
+        self.pos = self.pos_history.pop()
+        self.rule_stack = self.rule_stack_history.pop()
+        self.stack = self.stack_history.pop()
 
     def push(self, value: str) -> None:
-        self.state.stack.append(value)
+        self.stack.append(value)
 
     def drop(self) -> None:
-        self.state.stack.pop()
+        self.stack.pop()
 
     def peek(self) -> str | None:
-        return self.state.stack[-1] if self.state.stack else None
+        return self.stack[-1] if self.stack else None
 
     def peek_slice(
         self, start: int | None = None, end: int | None = None
     ) -> Sequence[str]:
         if start is None and end is None:
-            return self.state.stack[:]
-        return self.state.stack[slice(start, end)]
+            return self.stack[:]
+        return self.stack[slice(start, end)]
 
     @contextmanager
     def atomic_checkpoint(self, rule: Rule) -> Generator[Parse, None, None]:
-        depth = self.state.atomic_depth
-        self.state.rules.append(rule)
+        depth = self.atomic_depth
+        self.rule_stack.append(rule)
         yield self
-        self.state.rules.pop()
-        self.state.atomic_depth = depth
+        self.rule_stack.pop()
+        self.atomic_depth = depth
 
     @contextmanager
     def rule(self, rule: Rule) -> Generator[Parse, None, None]:
-        self.state.rules.append(rule)
+        self.rule_stack.append(rule)
         yield self
-        self.state.rules.pop()
+        self.rule_stack.pop()
 
     @contextmanager
     def suppress_failures(self) -> Generator[Parse, None, None]:
@@ -123,12 +139,12 @@ class Parse:
             return
 
         is_neg_context = self.neg_pred_depth % 2 == 1
-        rule_name = rule_name or self.state.rules[-1][2]
-        pos = pos or self.state.pos
+        rule_name = rule_name or self.rule_stack[-1][2]
+        pos = pos or self.pos
 
         if pos > self.furthest_pos:
             self.furthest_pos = pos
-            self.furthest_stack = list(self.state.rules)
+            self.furthest_stack = list(self.rule_stack)
             if is_neg_context:
                 self.furthest_unexpected = {rule_name: [label]}
                 self.furthest_expected = {}
@@ -146,7 +162,7 @@ class Parse:
                 target[rule_name] = [label]
 
     def parse_rule(self, rule: Rule, pairs: list[Pair]) -> bool:
-        start = self.state.pos
+        start = self.pos
         children: list[Pair] = []
 
         _, _, name, expression, modifier, _ = rule
@@ -156,12 +172,12 @@ class Parse:
             "WHITESPACE",
         ):
             with self.atomic_checkpoint(rule):
-                self.state.atomic_depth += 1
+                self.atomic_depth += 1
                 matched = self.parse_expression(expression, children)
 
         elif modifier & NONATOMIC:
             with self.atomic_checkpoint(rule):
-                self.state.atomic_depth = 0
+                self.atomic_depth = 0
                 matched = self.parse_expression(expression, children)
 
         else:
@@ -196,7 +212,7 @@ class Parse:
                 input_=self.source,
                 rule=rule,
                 start=start,
-                end=self.state.pos,
+                end=self.pos,
                 children=children,
                 tag=self.tags.pop() if self.tags else None,
             )
@@ -218,39 +234,45 @@ class Parse:
             case (ast.RULE, _, _, _, _, _):
                 return self.parse_rule(expression, pairs)
 
-            case (ast.CHOICE, _, left, right):
-                self.checkpoint()
+            case (ast.CHOICE, _, expressions):
                 children: list[Pair] = []
 
-                if self.parse_expression(left, children):
-                    self.ok()
-                    pairs.extend(children)
-                    return True
+                for expr in expressions:
+                    self.checkpoint()
+                    if self.parse_expression(expr, children):
+                        self.ok()
+                        pairs.extend(children)
+                        return True
 
-                self.restore()
-                self.checkpoint()
+                    children.clear()
+                    self.restore()
 
-                if self.parse_expression(right, children):
-                    self.ok()
-                    pairs.extend(children)
-                    return True
-
-                self.restore()
                 return False
 
-            case (ast.SEQUENCE, _, left, right):
+            case (ast.SEQUENCE, _, expressions):
                 children = []
 
-                if not self.parse_expression(left, children):
-                    return False
+                for i, expr in enumerate(expressions):
+                    if not (self.parse_expression(expr, children)):
+                        return False
 
-                self.parse_trivia(children)
-
-                if not self.parse_expression(right, children):
-                    return False
+                    if i < len(expressions) - 1:
+                        self.parse_trivia(children)
 
                 pairs.extend(children)
                 return True
+
+            case (ast.ANY, _, _):
+                if self.pos < len(self.source):
+                    self.pos += 1
+                    return True
+                return False
+
+            case (ast.REGEX, _, pattern):
+                if match := pattern.match(self.source, pos=self.pos):  # pyright: ignore[reportUnknownMemberType]
+                    self.pos = match.end()
+                    return True
+                return False
 
             case (ast.GROUP, _, tag, expr):
                 if tag:
@@ -483,18 +505,18 @@ class Parse:
                 return True
 
             case (ast.PUSH, _, _, expr):
-                start = self.state.pos
+                start = self.pos
                 children = []
 
                 if not self.parse_expression(expr, children):
                     return False
 
-                self.push(self.source[start : self.state.pos])
+                self.push(self.source[start : self.pos])
                 pairs.extend(children)
                 return True
 
             case (ast.PEEK_SLICE, _, _, start, stop):
-                pos = self.state.pos
+                pos = self.pos
 
                 for literal in self.peek_slice(start, stop):
                     if self.source.startswith(literal, pos):
@@ -504,16 +526,14 @@ class Parse:
                         self.fail(literal)
                         return False
 
-                self.state.pos = pos
+                self.pos = pos
                 return True
 
             case (ast.PEEK, _, _):
                 peeked = self.peek()
 
-                if peeked is not None and self.source.startswith(
-                    peeked, self.state.pos
-                ):
-                    self.state.pos += len(peeked)
+                if peeked is not None and self.source.startswith(peeked, self.pos):
+                    self.pos += len(peeked)
                     return True
 
                 if peeked:
@@ -522,11 +542,11 @@ class Parse:
                 return False
 
             case (ast.PEEK_ALL, _, _):
-                pos = self.state.pos
-                length = len(self.state.stack)
+                pos = self.pos
+                length = len(self.stack)
                 children = []
 
-                for i, literal in enumerate(reversed(self.state.stack)):
+                for i, literal in enumerate(reversed(self.stack)):
                     if not self.source.startswith(literal, pos):
                         self.fail(literal)
                         return False
@@ -536,18 +556,16 @@ class Parse:
                     if i < length - 1:
                         self.parse_trivia(children)
 
-                self.state.pos = pos
+                self.pos = pos
                 pairs.extend(children)
                 return True
 
             case (ast.POP, _, _):
                 peeked = self.peek()
 
-                if peeked is not None and self.source.startswith(
-                    peeked, self.state.pos
-                ):
-                    self.state.stack.pop()
-                    self.state.pos += len(peeked)
+                if peeked is not None and self.source.startswith(peeked, self.pos):
+                    self.stack.pop()
+                    self.pos += len(peeked)
                     return True
 
                 if peeked:
@@ -556,15 +574,12 @@ class Parse:
                 return False
 
             case (ast.POP_ALL, _, _):
-                pos = self.state.pos
+                pos = self.pos
                 children = []
-                length = len(self.state.stack)
+                length = len(self.stack)
 
-                self.checkpoint()
-
-                for i, literal in enumerate(reversed(self.state.stack)):
+                for i, literal in enumerate(reversed(self.stack)):
                     if not self.source.startswith(literal, pos):
-                        self.restore()
                         self.fail(literal)
                         return False
 
@@ -573,23 +588,22 @@ class Parse:
                     if i < length - 1:
                         self.parse_trivia(children)
 
-                self.state.stack.clear()
-                self.ok()
-                self.state.pos = pos
+                self.stack.clear()
+                self.pos = pos
                 pairs.extend(children)
                 return True
 
             case (ast.DROP, _, _):
-                if self.state.stack:
-                    self.state.stack.pop()
+                if self.stack:
+                    self.stack.pop()
                     return True
 
                 self.fail("drop from empty stack")
                 return False
 
             case (ast.STRING, _, value):
-                if self.source.startswith(value, self.state.pos):
-                    self.state.pos += len(value)
+                if self.source.startswith(value, self.pos):
+                    self.pos += len(value)
                     return True
 
                 self.fail(json.dumps(value))
@@ -597,48 +611,36 @@ class Parse:
 
             case (ast.CI_STRING, _, value):
                 if (
-                    self.source[self.state.pos : self.state.pos + len(value)].lower()
+                    self.source[self.pos : self.pos + len(value)].lower()
                     == value.lower()
                 ):
-                    self.state.pos += len(value)
+                    self.pos += len(value)
                     return True
 
                 self.fail(json.dumps(value))
                 return False
 
             case (ast.RANGE, _, _, start, stop):
-                if self.state.pos >= len(self.source):
+                if self.pos >= len(self.source):
                     return False
 
-                ch = ord(self.source[self.state.pos])
+                ch = ord(self.source[self.pos])
 
                 if ch >= ord(start) and ch <= ord(stop):
-                    self.state.pos += 1
+                    self.pos += 1
                     return True
 
                 self.fail(f"{start!r}..{stop!r}")
                 return False
 
             case (ast.SOI, _, _):
-                return self.state.pos == 0
+                return self.pos == 0
 
             case (ast.EOI, _, _):
-                return self.state.pos >= len(self.source)
-
-            case (ast.ANY, _, _):
-                if self.state.pos < len(self.source):
-                    self.state.pos += 1
-                    return True
-                return False
-
-            case (ast.REGEX, _, pattern):
-                if match := re.match(pattern, self.source, 0, pos=self.state.pos):  # pyright: ignore[reportUnknownMemberType]
-                    self.state.pos = match.end()
-                    return True
-                return False
+                return self.pos >= len(self.source)
 
     def parse_trivia(self, pairs: list[Pair]) -> bool:
-        if not self._trivia or self.state.atomic_depth > 0:
+        if not self._trivia or self.atomic_depth > 0:
             return False
 
         whitespace_rule = self.rules.get("WHITESPACE")
@@ -674,21 +676,3 @@ class Parse:
                     break
 
         return matched
-
-
-@dataclass(slots=True)
-class ParseState:
-    pos: int
-    atomic_depth: int = 0
-    rules: list[Rule] = field(default_factory=list)  # pyright: ignore[reportUnknownVariableType]
-    stack: list[str] = field(default_factory=list)  # pyright: ignore[reportUnknownVariableType]
-
-    def copy(self) -> ParseState:
-        # Shallow copies are OK because `Rule` is a tuple composed of tuples, strings
-        # and ints.
-        return ParseState(
-            pos=self.pos,
-            atomic_depth=self.atomic_depth,
-            rules=list(self.rules),
-            stack=list(self.stack),
-        )

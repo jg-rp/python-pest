@@ -12,6 +12,7 @@ wheels/
 # Dev
 dev.py
 .vscode/
+profile.html
 
 # Docs
 site/

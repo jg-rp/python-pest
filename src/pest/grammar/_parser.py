@@ -268,10 +268,14 @@ class Grammar:
         span_ = span(left[1], right[1])
 
         if kind == TOKEN_PIPE:
-            return (_ast.CHOICE, span_, left, right)
+            if right[0] == _ast.CHOICE:
+                return (_ast.CHOICE, span_, (left, *right[2]))
+            return (_ast.CHOICE, span_, (left, right))
 
         if kind == TOKEN_TILDE:
-            return (_ast.SEQUENCE, span_, left, right)
+            if right[0] == _ast.SEQUENCE:
+                return (_ast.SEQUENCE, span_, (left, *right[2]))
+            return (_ast.SEQUENCE, span_, (left, right))
 
         raise PestGrammarSyntaxError(
             f"unknown infix operator ({token_value(op_token, self.source)})",

@@ -89,8 +89,8 @@ def _children(expression: Expression) -> list[Expression]:
         case (_ast.RULE, _, _, expr, _, _):
             return [expr]
 
-        case (_ast.CHOICE | _ast.SEQUENCE, _, left, right):
-            return [left, right]
+        case (_ast.CHOICE | _ast.SEQUENCE, _, expressions):
+            return list(expressions)
 
         case (
             _ast.GROUP | _ast.POSITIVE_PREDICATE | _ast.NEGATIVE_PREDICATE,

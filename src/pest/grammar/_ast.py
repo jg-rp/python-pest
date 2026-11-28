@@ -1,5 +1,7 @@
 from typing import Literal
 
+import regex
+
 from ._tokens import Token
 
 CHOICE: Literal[1] = 1
@@ -64,7 +66,7 @@ type Expression = (
     | Any
 )
 
-type Choice = tuple[Literal[1], Token, Expression, Expression]  # | infix
+type Choice = tuple[Literal[1], Token, tuple[Expression, ...]]
 type Group = tuple[Literal[2], Token, str | None, Expression]
 type Optional = tuple[Literal[3], Token, Expression]  # ? postfix
 type Repeat = tuple[Literal[4], Token, Expression]  # * postfix
@@ -75,7 +77,7 @@ type RepeatMax = tuple[Literal[8], Token, Expression, int]  # {,n} postfix
 type RepeatMinMax = tuple[Literal[9], Token, Expression, int, int]  # {n,m} postfix
 type PositivePredicate = tuple[Literal[10], Token, str | None, Expression]  # & prefix
 type NegativePredicate = tuple[Literal[11], Token, str | None, Expression]  # ! prefix
-type Sequence = tuple[Literal[12], Token, Expression, Expression]  # ~ infix
+type Sequence = tuple[Literal[12], Token, tuple[Expression, ...]]
 
 type PushLiteral = tuple[Literal[13], Token, str | None, str]
 type Push = tuple[Literal[14], Token, str | None, Expression]
@@ -92,7 +94,7 @@ type Range = tuple[Literal[24], Token, str | None, str, str]
 
 # (type, token, name, expression, modifier, doc)
 type Rule = tuple[Literal[25], Token, str, Expression, int, tuple[str, ...]]
-type Regex = tuple[Literal[26], Token, str]  # Regex pattern
+type Regex = tuple[Literal[26], Token, regex.Pattern[str]]
 
 type StartOfInput = tuple[Literal[27], Token, str | None]
 type EndOfInput = tuple[Literal[28], Token, str | None]
